@@ -141,15 +141,15 @@ export const JobSidebar = ({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Job Description'ı sil?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Job Description?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bu işlem geri alınamaz. Job description ve tüm CV'ler silinecektir.
+              This action cannot be undone. The job description and all resumes will be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>İptal</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Sil
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
