@@ -1,0 +1,128 @@
+import { Upload, FileText } from "lucide-react";
+import { useState } from "react";
+
+interface Resume {
+  id: string;
+  name: string;
+  filename: string;
+  match: number;
+}
+
+const mockResumes: Resume[] = [
+  { id: "1", name: "Naor Stella", filename: "Stella CV 2023.pdf", match: 79 },
+  { id: "2", name: "Raphael Suarez", filename: "RaphSuarez_CV_.pdf", match: 79 },
+  { id: "3", name: "Henry Lee", filename: "Henry Lee - CV.pdf", match: 79 },
+  { id: "4", name: "Jennifer Diaz", filename: "JenD Resume.pdf", match: 78 },
+  { id: "5", name: "Mia Sha", filename: "", match: 76 },
+];
+
+export const ResumeUpload = () => {
+  const [isDragging, setIsDragging] = useState(false);
+
+  return (
+    <div className="w-96 bg-background border-l border-border flex flex-col">
+      <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary rounded-lg mb-2">
+            <Upload className="w-6 h-6 text-foreground" />
+          </div>
+          <h3 className="font-semibold text-foreground">Upload Resumes</h3>
+        </div>
+
+        <div
+          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+            isDragging
+              ? "border-primary bg-primary/5"
+              : "border-border bg-muted/30"
+          }`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+          }}
+        >
+          <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">
+            Drag and drop resumes here
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="font-bold text-xl text-center text-foreground">
+            How does it work?
+          </h3>
+          <ol className="space-y-2 text-sm text-foreground">
+            <li className="flex gap-2">
+              <span className="font-semibold">1.</span>
+              <span>Enter your job description on the left.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-semibold">2.</span>
+              <span>Upload several resumes on the right.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-semibold">3.</span>
+              <span>Get a sorted list of applicants in seconds.</span>
+            </li>
+          </ol>
+        </div>
+
+        <div
+          className="border-2 border-dashed border-border rounded-lg p-6 space-y-3"
+        >
+          <div className="text-xs text-muted-foreground leading-relaxed space-y-2">
+            <p className="font-medium text-foreground">
+              We are currently seeking a highly motivated and skilled customer
+              service representative to join our team. As a customer service
+              representative, you will be the primary point of contact for our
+              users and will be responsible for providing timely and effective
+              assistance to ensure our users have a seamless experience on our
+              platform.
+            </p>
+            <p className="font-semibold text-foreground mt-3">
+              Responsibilities include:
+            </p>
+            <p>
+              Maintaining a high level of customer satisfaction by providing
+              friendly and helpful support to users Troubleshooting and
+              resolving user issues related to the platform and its
+              functionalities
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {mockResumes.map((resume, index) => (
+            <div
+              key={resume.id}
+              className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+            >
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <span className="text-sm font-medium text-muted-foreground">
+                  {index + 1}.
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {resume.name}
+                  </p>
+                  {resume.filename && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {resume.filename}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="text-success font-semibold text-sm">
+                {resume.match}%
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
