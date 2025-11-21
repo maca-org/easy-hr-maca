@@ -130,7 +130,9 @@ export const JobSidebar = ({
                 </div>
                 <div className="flex items-center justify-between text-xs text-sidebar-foreground/70">
                   <span>{job.date}</span>
-                  <span>{job.resumes.length} resumes</span>
+                  {job.resumes.length > 0 && (
+                    <span>{job.resumes.length} resume{job.resumes.length !== 1 ? 's' : ''}</span>
+                  )}
                 </div>
               </>
             )}
