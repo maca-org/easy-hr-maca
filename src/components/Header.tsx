@@ -33,12 +33,18 @@ export const Header = () => {
           <button className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">
             Settings
           </button>
-          <div className={`px-3 py-1.5 rounded-md text-sm font-medium ${getBalanceColor()}`}>
+          <button 
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-opacity hover:opacity-80 ${getBalanceColor()}`}
+            onClick={() => console.log('Navigate to Settings')}
+          >
             ${balance.toFixed(2)}
-          </div>
-          <div className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white font-semibold">
+          </button>
+          <button 
+            className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white font-semibold transition-opacity hover:opacity-80"
+            onClick={() => console.log('Navigate to Settings')}
+          >
             M
-          </div>
+          </button>
         </nav>
       </div>
     </header>
