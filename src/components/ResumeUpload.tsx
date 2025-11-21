@@ -23,15 +23,8 @@ export const ResumeUpload = ({ resumes, onUploadResumes }: ResumeUploadProps) =>
   return (
     <div className="w-96 bg-background border-l border-border flex flex-col">
       <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary rounded-lg mb-2">
-            <Upload className="w-6 h-6 text-foreground" />
-          </div>
-          <h3 className="font-semibold text-foreground">Upload Resumes</h3>
-        </div>
-
         <div
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
             isDragging
               ? "border-primary bg-primary/5"
               : "border-border bg-muted/30"
@@ -56,11 +49,12 @@ export const ResumeUpload = ({ resumes, onUploadResumes }: ResumeUploadProps) =>
             className="hidden"
             onChange={(e) => handleFiles(e.target.files)}
           />
-          <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">
+          <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
+          <h3 className="font-semibold text-foreground mb-2">Upload Resumes</h3>
+          <p className="text-sm text-muted-foreground mb-1">
             Drag and drop resumes here or click to browse
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground">
             Only PDF format is supported
           </p>
         </div>
