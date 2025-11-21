@@ -1,8 +1,18 @@
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Job } from "@/pages/Index";
 import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 
 interface JobSidebarProps {
   jobs: Job[];
@@ -10,6 +20,7 @@ interface JobSidebarProps {
   onSelectJob: (id: string) => void;
   onAddJob: () => void;
   onUpdateJobTitle: (id: string, title: string) => void;
+  onDeleteJob: (id: string) => void;
 }
 
 export const JobSidebar = ({
@@ -18,10 +29,13 @@ export const JobSidebar = ({
   onSelectJob,
   onAddJob,
   onUpdateJobTitle,
+  onDeleteJob,
 }: JobSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
 
   const filteredJobs = jobs.filter((job) =>
     job.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -37,6 +51,20 @@ export const JobSidebar = ({
       onUpdateJobTitle(id, editTitle.trim());
     }
     setEditingId(null);
+  };
+
+  const handleDeleteClick = (jobId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setJobToDelete(jobId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (jobToDelete) {
+      onDeleteJob(jobToDelete);
+    }
+    setDeleteDialogOpen(false);
+    setJobToDelete(null);
   };
 
   return (
@@ -67,7 +95,7 @@ export const JobSidebar = ({
             key={job.id}
             onClick={() => onSelectJob(job.id)}
             onDoubleClick={() => handleDoubleClick(job)}
-            className={`p-3 rounded-lg cursor-pointer transition-colors ${
+            className={`group p-3 rounded-lg cursor-pointer transition-colors ${
               job.id === activeJobId
                 ? "bg-sidebar-accent border border-sidebar-border"
                 : "bg-sidebar-accent/50 hover:bg-sidebar-accent/80"
@@ -87,9 +115,19 @@ export const JobSidebar = ({
               />
             ) : (
               <>
-                <h3 className="text-sidebar-foreground font-medium text-sm line-clamp-2 mb-2">
-                  {job.title}
-                </h3>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h3 className="text-sidebar-foreground font-medium text-sm line-clamp-2 flex-1">
+                    {job.title}
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                    onClick={(e) => handleDeleteClick(job.id, e)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </div>
                 <div className="flex items-center justify-between text-xs text-sidebar-foreground/70">
                   <span>{job.date}</span>
                   <span>{job.resumes.length} resumes</span>
@@ -99,6 +137,23 @@ export const JobSidebar = ({
           </div>
         ))}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Job Description'ı sil?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bu işlem geri alınamaz. Job description ve tüm CV'ler silinecektir.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>İptal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Sil
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 };
