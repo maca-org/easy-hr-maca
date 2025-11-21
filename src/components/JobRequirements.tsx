@@ -20,13 +20,13 @@ export const JobRequirements = ({
 
       <div className="flex-1 p-6 overflow-y-auto">
         <h2 className="text-lg font-semibold mb-2 text-foreground">
-          İş tanımını buraya girin ↓
+          Enter job description here ↓
         </h2>
 
         <Textarea
           value={requirements}
           onChange={(e) => onUpdateRequirements(e.target.value)}
-          placeholder="Gereken yetenekler, nitelikler, konum, deneyim vb. listeleyin.&#10;Mümkün olduğunca ayrıntılı olun.&#10;Genel veya gereksiz bilgilerden, jargondan kaçının.&#10;&#10;Bunu yaptıktan sonra, sağ taraftan CV yüklemeye başlayın →"
+          placeholder="List required skills, qualifications, location, experience, etc.&#10;Be as detailed as possible.&#10;Avoid general or unnecessary information and jargon.&#10;&#10;Once done, start uploading resumes from the right side →"
           className="min-h-[400px] resize-none border-border text-foreground placeholder:text-muted-foreground"
         />
       </div>
