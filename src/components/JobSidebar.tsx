@@ -119,14 +119,12 @@ export const JobSidebar = ({
                   <h3 className="text-sidebar-foreground font-medium text-sm line-clamp-2 flex-1">
                     {job.title}
                   </h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 hover:bg-transparent hover:border-b-2 hover:border-destructive rounded-none"
+                  <button
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 flex flex-col items-center gap-0.5 hover:after:w-full after:w-0 after:h-0.5 after:bg-destructive after:transition-all after:duration-200"
                     onClick={(e) => handleDeleteClick(job.id, e)}
                   >
                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
+                  </button>
                 </div>
                 <div className="flex items-center justify-between text-xs text-sidebar-foreground/70">
                   <span>{job.date}</span>
