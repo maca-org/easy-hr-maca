@@ -123,7 +123,7 @@ export const JobSidebar = ({
                     className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 flex flex-col items-center gap-0.5 hover:after:w-full after:w-0 after:h-0.5 after:bg-destructive after:transition-all after:duration-200"
                     onClick={(e) => handleDeleteClick(job.id, e)}
                   >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    <Trash2 className="h-4 w-4 text-destructive" />
                   </button>
                 </div>
                 <div className="flex items-center justify-between text-xs text-sidebar-foreground/70">
