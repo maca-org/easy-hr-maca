@@ -59,49 +59,53 @@ export const ResumeUpload = ({ resumes, onUploadResumes }: ResumeUploadProps) =>
           </p>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="font-bold text-xl text-center text-foreground">
-            How does it work?
-          </h3>
-          <ol className="space-y-2 text-sm text-foreground">
-            <li className="flex gap-2">
-              <span className="font-semibold">1.</span>
-              <span>Enter your job description on the left.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="font-semibold">2.</span>
-              <span>Upload several resumes on the right.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="font-semibold">3.</span>
-              <span>Get a sorted list of applicants in seconds.</span>
-            </li>
-          </ol>
-        </div>
+        {resumes.length === 0 && (
+          <>
+            <div className="space-y-4">
+              <h3 className="font-bold text-xl text-center text-foreground">
+                How does it work?
+              </h3>
+              <ol className="space-y-2 text-sm text-foreground">
+                <li className="flex gap-2">
+                  <span className="font-semibold">1.</span>
+                  <span>Enter your job description on the left.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-semibold">2.</span>
+                  <span>Upload several resumes on the right.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-semibold">3.</span>
+                  <span>Get a sorted list of applicants in seconds.</span>
+                </li>
+              </ol>
+            </div>
 
-        <div
-          className="border-2 border-dashed border-border rounded-lg p-6 space-y-3"
-        >
-          <div className="text-xs text-muted-foreground leading-relaxed space-y-2">
-            <p className="font-medium text-foreground">
-              We are currently seeking a highly motivated and skilled customer
-              service representative to join our team. As a customer service
-              representative, you will be the primary point of contact for our
-              users and will be responsible for providing timely and effective
-              assistance to ensure our users have a seamless experience on our
-              platform.
-            </p>
-            <p className="font-semibold text-foreground mt-3">
-              Responsibilities include:
-            </p>
-            <p>
-              Maintaining a high level of customer satisfaction by providing
-              friendly and helpful support to users Troubleshooting and
-              resolving user issues related to the platform and its
-              functionalities
-            </p>
-          </div>
-        </div>
+            <div
+              className="border-2 border-dashed border-border rounded-lg p-6 space-y-3"
+            >
+              <div className="text-xs text-muted-foreground leading-relaxed space-y-2">
+                <p className="font-medium text-foreground">
+                  We are currently seeking a highly motivated and skilled customer
+                  service representative to join our team. As a customer service
+                  representative, you will be the primary point of contact for our
+                  users and will be responsible for providing timely and effective
+                  assistance to ensure our users have a seamless experience on our
+                  platform.
+                </p>
+                <p className="font-semibold text-foreground mt-3">
+                  Responsibilities include:
+                </p>
+                <p>
+                  Maintaining a high level of customer satisfaction by providing
+                  friendly and helpful support to users Troubleshooting and
+                  resolving user issues related to the platform and its
+                  functionalities
+                </p>
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="space-y-2">
           {resumes.map((resume, index) => (
