@@ -20,22 +20,8 @@ export interface Job {
 }
 
 const Index = () => {
-  const [jobs, setJobs] = useState<Job[]>([
-    {
-      id: "1",
-      title: "Junior Business Analyst",
-      date: "20 Nov 2025",
-      requirements: "",
-      resumes: [
-        { id: "1", name: "Naor Stella", filename: "Stella CV 2023.pdf", match: 79 },
-        { id: "2", name: "Raphael Suarez", filename: "RaphSuarez_CV_.pdf", match: 79 },
-        { id: "3", name: "Henry Lee", filename: "Henry Lee - CV.pdf", match: 79 },
-        { id: "4", name: "Jennifer Diaz", filename: "JenD Resume.pdf", match: 78 },
-        { id: "5", name: "Mia Sha", filename: "", match: 76 },
-      ],
-    },
-  ]);
-  const [activeJobId, setActiveJobId] = useState<string>("1");
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [activeJobId, setActiveJobId] = useState<string>("");
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
