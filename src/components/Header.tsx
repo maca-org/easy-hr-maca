@@ -1,7 +1,16 @@
 import { Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
+import { useState } from "react";
 
 export const Header = () => {
+  const [balance, setBalance] = useState(5.00);
+
+  const getBalanceColor = () => {
+    if (balance >= 5) return "bg-green-100 text-green-800";
+    if (balance < 1) return "bg-red-100 text-red-800";
+    return "bg-yellow-100 text-yellow-800";
+  };
+
   return (
     <header className="border-b border-border bg-background px-6 py-4">
       <div className="flex items-center justify-between">
@@ -24,8 +33,8 @@ export const Header = () => {
           <Button variant="ghost" className="text-foreground hover:text-primary">
             Settings
           </Button>
-          <div className="px-3 py-1.5 bg-yellow-100 text-yellow-800 rounded-md text-sm font-medium">
-            $4.65
+          <div className={`px-3 py-1.5 rounded-md text-sm font-medium ${getBalanceColor()}`}>
+            ${balance.toFixed(2)}
           </div>
           <div className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white font-semibold">
             M
