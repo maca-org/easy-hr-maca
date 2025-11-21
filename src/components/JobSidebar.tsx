@@ -122,7 +122,7 @@ export const JobSidebar = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 hover:bg-transparent hover:border-b-2 hover:border-destructive rounded-none"
                     onClick={(e) => handleDeleteClick(job.id, e)}
                   >
                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
