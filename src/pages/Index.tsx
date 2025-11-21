@@ -53,6 +53,30 @@ const Index = () => {
     setJobs(jobs.map((job) => (job.id === id ? { ...job, title } : job)));
   };
 
+  const handleDeleteJob = (id: string) => {
+    setJobs(jobs.filter((job) => job.id !== id));
+    if (activeJobId === id) {
+      setActiveJobId("");
+    }
+  };
+
+  const handleUploadResumes = (files: File[]) => {
+    const newResumes: Resume[] = files.map((file) => ({
+      id: Date.now().toString() + Math.random(),
+      name: file.name.replace(/\.(pdf|docx?)$/i, ""),
+      filename: file.name,
+      match: Math.floor(Math.random() * 20) + 70, // Temporary random match
+    }));
+
+    setJobs(
+      jobs.map((job) =>
+        job.id === activeJobId
+          ? { ...job, resumes: [...job.resumes, ...newResumes] }
+          : job
+      )
+    );
+  };
+
   return (
     <div className="h-screen flex flex-col bg-background">
       <Header />
@@ -63,6 +87,7 @@ const Index = () => {
           onSelectJob={setActiveJobId}
           onAddJob={handleAddJob}
           onUpdateJobTitle={handleUpdateJobTitle}
+          onDeleteJob={handleDeleteJob}
         />
         {activeJob && (
           <>
@@ -70,7 +95,10 @@ const Index = () => {
               requirements={activeJob.requirements}
               onUpdateRequirements={handleUpdateRequirements}
             />
-            <ResumeUpload resumes={activeJob.resumes} />
+            <ResumeUpload
+              resumes={activeJob.resumes}
+              onUploadResumes={handleUploadResumes}
+            />
           </>
         )}
       </div>

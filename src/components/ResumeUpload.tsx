@@ -4,10 +4,24 @@ import { Resume } from "@/pages/Index";
 
 interface ResumeUploadProps {
   resumes: Resume[];
+  onUploadResumes: (files: File[]) => void;
 }
 
-export const ResumeUpload = ({ resumes }: ResumeUploadProps) => {
+export const ResumeUpload = ({ resumes, onUploadResumes }: ResumeUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return;
+    const fileArray = Array.from(files).filter(
+      (file) =>
+        file.type === "application/pdf" ||
+        file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        file.type === "application/msword"
+    );
+    if (fileArray.length > 0) {
+      onUploadResumes(fileArray);
+    }
+  };
 
   return (
     <div className="w-96 bg-background border-l border-border flex flex-col">
@@ -33,11 +47,24 @@ export const ResumeUpload = ({ resumes }: ResumeUploadProps) => {
           onDrop={(e) => {
             e.preventDefault();
             setIsDragging(false);
+            handleFiles(e.dataTransfer.files);
           }}
+          onClick={() => document.getElementById("file-upload")?.click()}
         >
+          <input
+            id="file-upload"
+            type="file"
+            multiple
+            accept=".pdf,.doc,.docx"
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
           <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">
-            Drag and drop resumes here
+            CV'leri sürükleyip bırakın veya tıklayın
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            PDF, DOC, DOCX formatları destekleniyor
           </p>
         </div>
 
