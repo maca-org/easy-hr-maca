@@ -24,15 +24,15 @@ export const Header = () => {
         </div>
         
         <nav className="flex items-center gap-6">
-          <Button variant="ghost" className="text-foreground hover:text-primary">
+          <button className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-200">
             Pricing
-          </Button>
-          <Button variant="ghost" className="text-foreground hover:text-primary">
+          </button>
+          <button className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-200">
             Support
-          </Button>
-          <Button variant="ghost" className="text-foreground hover:text-primary">
+          </button>
+          <button className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-200">
             Settings
-          </Button>
+          </button>
           <div className={`px-3 py-1.5 rounded-md text-sm font-medium ${getBalanceColor()}`}>
             ${balance.toFixed(2)}
           </div>
