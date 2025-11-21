@@ -1,22 +1,12 @@
 import { Upload, FileText } from "lucide-react";
 import { useState } from "react";
+import { Resume } from "@/pages/Index";
 
-interface Resume {
-  id: string;
-  name: string;
-  filename: string;
-  match: number;
+interface ResumeUploadProps {
+  resumes: Resume[];
 }
 
-const mockResumes: Resume[] = [
-  { id: "1", name: "Naor Stella", filename: "Stella CV 2023.pdf", match: 79 },
-  { id: "2", name: "Raphael Suarez", filename: "RaphSuarez_CV_.pdf", match: 79 },
-  { id: "3", name: "Henry Lee", filename: "Henry Lee - CV.pdf", match: 79 },
-  { id: "4", name: "Jennifer Diaz", filename: "JenD Resume.pdf", match: 78 },
-  { id: "5", name: "Mia Sha", filename: "", match: 76 },
-];
-
-export const ResumeUpload = () => {
+export const ResumeUpload = ({ resumes }: ResumeUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
 
   return (
@@ -96,7 +86,7 @@ export const ResumeUpload = () => {
         </div>
 
         <div className="space-y-2">
-          {mockResumes.map((resume, index) => (
+          {resumes.map((resume, index) => (
             <div
               key={resume.id}
               className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
