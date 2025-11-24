@@ -98,14 +98,14 @@ const Index = () => {
     updateStoredJobs(updatedJobs);
   };
 
-  const handleGenerateQuestions = async () => {
+  const handleSave = async () => {
     if (!activeJob?.requirements.trim()) {
       toast.error("Please enter a job description first");
       return;
     }
 
     try {
-      // Save to database - this should always succeed
+      // Save to database
       const { data: existingJob } = await supabase
         .from('jobs')
         .select('id')
@@ -158,22 +158,32 @@ const Index = () => {
         console.error('n8n error:', n8nError);
         toast.warning("Saved to DB but n8n webhook failed.");
       }
-
-      // Generate questions
-      const questions = generateQuestions(activeJob.requirements);
-      
-      const updatedJobs = jobs.map((job) =>
-        job.id === activeJobId
-          ? { ...job, questions }
-          : job
-      );
-      updateStoredJobs(updatedJobs);
-
-      navigate(`/questions-review?id=${activeJobId}`);
     } catch (error) {
       console.error('Error saving job:', error);
       toast.error("Failed to save job description");
     }
+  };
+
+  const handleGenerateQuestions = async () => {
+    if (!activeJob?.requirements.trim()) {
+      toast.error("Please enter a job description first");
+      return;
+    }
+
+    // First save to DB
+    await handleSave();
+
+    // Generate questions
+    const questions = generateQuestions(activeJob.requirements);
+    
+    const updatedJobs = jobs.map((job) =>
+      job.id === activeJobId
+        ? { ...job, questions }
+        : job
+    );
+    updateStoredJobs(updatedJobs);
+
+    navigate(`/questions-review?id=${activeJobId}`);
   };
 
   return (
@@ -193,6 +203,7 @@ const Index = () => {
               requirements={activeJob.requirements}
               jobId={activeJob.id}
               onUpdateRequirements={handleUpdateRequirements}
+              onSave={handleSave}
               onGenerateQuestions={handleGenerateQuestions}
             />
             <ResumeUpload
