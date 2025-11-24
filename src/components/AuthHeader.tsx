@@ -19,12 +19,12 @@ export default function AuthHeader({ userEmail }: AuthHeaderProps) {
     setIsLoggingOut(true);
     await supabase.auth.signOut();
     toast.success("Signed out successfully");
-    navigate("/auth");
+    navigate("/");
     setIsLoggingOut(false);
   };
 
   const handleHomeClick = () => {
-    navigate("/dashboard");
+    navigate("/jobs");
   };
 
   const getInitials = (email: string) => {

@@ -22,6 +22,7 @@ export type Database = {
           questions: Json | null
           title: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -30,6 +31,7 @@ export type Database = {
           questions?: Json | null
           title?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -38,8 +40,17 @@ export type Database = {
           questions?: Json | null
           title?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "job_openings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notes: {
         Row: {
