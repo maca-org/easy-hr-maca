@@ -193,25 +193,7 @@ const Index = () => {
         setActiveJobId(newJob.id);
       }
 
-      // Try to send to n8n - don't let this block the save
-      try {
-        const { error: n8nError } = await supabase.functions.invoke('send-to-n8n', {
-          body: {
-            job_id: dbJobId,
-            description: activeJob.requirements,
-          },
-        });
-
-        if (n8nError) {
-          console.error('n8n error:', n8nError);
-          toast.warning("Saved to DB but n8n webhook failed.");
-        } else {
-          toast.success("Job Description saved & sent to n8n!");
-        }
-      } catch (n8nError) {
-        console.error('n8n error:', n8nError);
-        toast.warning("Saved to DB but n8n webhook failed.");
-      }
+      toast.success("Job Description saved!");
     } catch (error) {
       console.error('Error saving job:', error);
       toast.error("Failed to save job description");
