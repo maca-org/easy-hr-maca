@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { generateQuestions } from "@/utils/questionGenerator";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Resume {
   id: string;
@@ -103,23 +104,79 @@ const Index = () => {
     updateStoredJobs(updatedJobs);
   };
 
-  const handleGenerateQuestions = () => {
+  const handleGenerateQuestions = async () => {
     if (!activeJob?.requirements.trim()) {
       toast.error("Please enter a job description first");
       return;
     }
 
-    const questions = generateQuestions(activeJob.requirements);
-    
-    const updatedJobs = jobs.map((job) =>
-      job.id === activeJobId
-        ? { ...job, questions }
-        : job
-    );
-    updateStoredJobs(updatedJobs);
+    try {
+      // Save to database
+      const { data: existingJob, error: fetchError } = await supabase
+        .from('jobs')
+        .select('id')
+        .eq('id', activeJobId)
+        .maybeSingle();
 
-    toast.success("Questions generated successfully!");
-    navigate(`/questions-review?id=${activeJobId}`);
+      let dbJobId = activeJobId;
+
+      if (existingJob) {
+        // Update existing job
+        const { error: updateError } = await supabase
+          .from('jobs')
+          .update({
+            title: activeJob.title,
+            description: activeJob.requirements,
+          })
+          .eq('id', activeJobId);
+
+        if (updateError) throw updateError;
+      } else {
+        // Insert new job
+        const { data: newJob, error: insertError } = await supabase
+          .from('jobs')
+          .insert({
+            id: activeJobId,
+            title: activeJob.title,
+            description: activeJob.requirements,
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        dbJobId = newJob.id;
+      }
+
+      // Send to n8n
+      const { error: n8nError } = await supabase.functions.invoke('send-to-n8n', {
+        body: {
+          job_id: dbJobId,
+          description: activeJob.requirements,
+        },
+      });
+
+      if (n8nError) {
+        console.error('n8n error:', n8nError);
+        toast.error("Failed to send to n8n");
+      } else {
+        toast.success("Job Description saved & sent to n8n!");
+      }
+
+      // Generate questions
+      const questions = generateQuestions(activeJob.requirements);
+      
+      const updatedJobs = jobs.map((job) =>
+        job.id === activeJobId
+          ? { ...job, questions }
+          : job
+      );
+      updateStoredJobs(updatedJobs);
+
+      navigate(`/questions-review?id=${activeJobId}`);
+    } catch (error) {
+      console.error('Error saving job:', error);
+      toast.error("Failed to save job description");
+    }
   };
 
   return (
