@@ -39,6 +39,7 @@ const Index = () => {
   
   const [jobs, setJobs] = useState<Job[]>([]);
   const [activeJobId, setActiveJobId] = useState<string>("");
+  const [hasQuestions, setHasQuestions] = useState<boolean>(false);
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
@@ -75,6 +76,37 @@ const Index = () => {
 
     fetchJobs();
   }, []);
+
+  // Check if active job has questions
+  useEffect(() => {
+    const checkQuestions = async () => {
+      if (!activeJobId) {
+        setHasQuestions(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("job_openings")
+        .select("questions")
+        .eq("id", activeJobId)
+        .single();
+
+      if (error) {
+        console.error("Error checking questions:", error);
+        setHasQuestions(false);
+        return;
+      }
+
+      const questionsExist = data?.questions && 
+        typeof data.questions === 'object' && 
+        Array.isArray(data.questions) && 
+        data.questions.length > 0;
+
+      setHasQuestions(questionsExist);
+    };
+
+    checkQuestions();
+  }, [activeJobId]);
 
   const handleAddJob = () => {
     const newJob: Job = {
@@ -271,6 +303,7 @@ const Index = () => {
               title={activeJob.title}
               requirements={activeJob.requirements}
               jobId={activeJob.id}
+              hasQuestions={hasQuestions}
               onUpdateTitle={handleUpdateTitle}
               onUpdateRequirements={handleUpdateRequirements}
               onSave={handleSave}
