@@ -20,6 +20,9 @@ export interface Question {
   type: "mcq" | "open";
   question: string;
   options?: string[];
+  correct_answer?: string;
+  skill?: string;
+  difficulty?: "easy" | "medium" | "hard";
 }
 
 export interface Job {
