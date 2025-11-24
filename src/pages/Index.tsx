@@ -111,11 +111,18 @@ const Index = () => {
         return;
       }
 
+      // Only query database with valid UUIDs (not timestamp IDs)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(activeJobId)) {
+        setHasQuestions(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("job_openings")
         .select("questions")
         .eq("id", activeJobId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error checking questions:", error);
@@ -223,12 +230,12 @@ const Index = () => {
   const handleSave = async () => {
     if (!activeJob?.requirements.trim()) {
       toast.error("Please enter a job description first");
-      return;
+      return null;
     }
 
     if (!user) {
       toast.error("You must be logged in to save jobs");
-      return;
+      return null;
     }
 
     try {
@@ -293,9 +300,11 @@ const Index = () => {
       }
 
       toast.success("Job Description saved!");
+      return dbJobId; // Return the database ID
     } catch (error) {
       console.error('Error saving job:', error);
       toast.error("Failed to save job description");
+      return null;
     }
   };
 
@@ -305,14 +314,19 @@ const Index = () => {
       return;
     }
 
-    // First save to DB
-    await handleSave();
+    // First save to DB and get the database ID
+    const dbJobId = await handleSave();
+    
+    if (!dbJobId) {
+      toast.error("Failed to save job before generating questions");
+      return;
+    }
 
     try {
-      // Send to n8n webhook
+      // Send to n8n webhook with the correct database ID
       const { data, error } = await supabase.functions.invoke('send-to-n8n', {
         body: {
-          job_id: activeJobId,
+          job_id: dbJobId,
           title: activeJob.title,
           description: activeJob.requirements,
         },
@@ -326,12 +340,13 @@ const Index = () => {
       const questions = generateQuestions(activeJob.requirements);
       
       setJobs(jobs.map((job) =>
-        job.id === activeJobId
+        job.id === dbJobId
           ? { ...job, questions }
           : job
       ));
 
-      navigate(`/questions-review?id=${activeJobId}`);
+      // Navigate with the correct database ID
+      navigate(`/questions-review?id=${dbJobId}`);
     } catch (error) {
       console.error('Error sending to n8n:', error);
       toast.error("Failed to send to n8n");
