@@ -100,7 +100,7 @@ export const QuestionsReview = () => {
     };
 
     fetchQuestions();
-  }, [jobId]);
+  }, [jobId, user]);
 
   // Polling mechanism
   useEffect(() => {
