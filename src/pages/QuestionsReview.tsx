@@ -22,6 +22,7 @@ export const QuestionsReview = () => {
   
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPolling, setIsPolling] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -37,7 +38,6 @@ export const QuestionsReview = () => {
     const fetchQuestions = async () => {
       if (!jobId) return;
 
-      setLoading(true);
       const { data, error } = await supabase
         .from("job_openings")
         .select("questions")
@@ -48,17 +48,76 @@ export const QuestionsReview = () => {
         console.error("Error fetching questions:", error);
         toast.error("Failed to load questions");
         setLoading(false);
+        setIsPolling(false);
         return;
       }
 
-      if (data?.questions && Array.isArray(data.questions)) {
+      // Check if questions is an empty object or has actual questions
+      const hasQuestions = data?.questions && 
+        typeof data.questions === 'object' && 
+        Array.isArray(data.questions) && 
+        data.questions.length > 0;
+
+      if (hasQuestions) {
         setQuestions(data.questions as unknown as Question[]);
+        setLoading(false);
+        setIsPolling(false);
+        toast.success("Questions loaded successfully!");
+      } else {
+        // No questions yet, check if we should start polling
+        if (!isPolling && loading) {
+          setIsPolling(true);
+          toast.info("Waiting for questions to be generated...");
+        }
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchQuestions();
   }, [jobId]);
+
+  // Polling mechanism
+  useEffect(() => {
+    if (!isPolling || !jobId) return;
+
+    let pollCount = 0;
+    const maxPolls = 60; // Poll for max 2 minutes (60 * 2 seconds)
+
+    const pollInterval = setInterval(async () => {
+      pollCount++;
+
+      console.log(`Polling for questions... (${pollCount}/${maxPolls})`);
+
+      const { data, error } = await supabase
+        .from("job_openings")
+        .select("questions")
+        .eq("id", jobId)
+        .single();
+
+      if (error) {
+        console.error("Polling error:", error);
+        return;
+      }
+
+      const hasQuestions = data?.questions && 
+        typeof data.questions === 'object' && 
+        Array.isArray(data.questions) && 
+        data.questions.length > 0;
+
+      if (hasQuestions) {
+        setQuestions(data.questions as unknown as Question[]);
+        setIsPolling(false);
+        toast.success("Questions generated successfully!");
+        clearInterval(pollInterval);
+      } else if (pollCount >= maxPolls) {
+        setIsPolling(false);
+        toast.error("Questions generation timed out. Please refresh manually.");
+        clearInterval(pollInterval);
+      }
+    }, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [isPolling, jobId]);
 
   if (!jobId) {
     return (
@@ -76,7 +135,28 @@ export const QuestionsReview = () => {
       <div className="h-screen flex flex-col bg-background">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">Loading questions...</p>
+          <div className="text-center space-y-3">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">Loading questions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isPolling && questions.length === 0) {
+    return (
+      <div className="h-screen flex flex-col bg-background">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-3 max-w-md">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-foreground font-medium text-lg">Generating Questions...</p>
+            <p className="text-muted-foreground text-sm">
+              n8n is processing your job description and generating personalized interview questions. 
+              This usually takes 20-60 seconds.
+            </p>
+          </div>
         </div>
       </div>
     );
