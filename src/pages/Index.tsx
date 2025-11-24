@@ -166,7 +166,6 @@ const Index = () => {
         const { data: newJob, error: insertError } = await supabase
           .from('jobs')
           .insert({
-            id: activeJobId,
             description: activeJob.requirements,
           })
           .select()
@@ -175,11 +174,12 @@ const Index = () => {
         if (insertError) throw insertError;
         dbJobId = newJob.id;
         
-        // Update state with created_at date from DB
+        // Update state with the database-generated ID and created_at date
         setJobs(jobs.map((job) =>
           job.id === activeJobId 
             ? { 
-                ...job, 
+                ...job,
+                id: newJob.id,
                 date: new Date(newJob.created_at).toLocaleDateString("en-GB", {
                   day: "2-digit",
                   month: "short",
@@ -188,6 +188,9 @@ const Index = () => {
               } 
             : job
         ));
+        
+        // Update activeJobId to the database-generated ID
+        setActiveJobId(newJob.id);
       }
 
       // Try to send to n8n - don't let this block the save
