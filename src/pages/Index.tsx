@@ -196,7 +196,8 @@ const Index = () => {
       toast.success("Job Description saved!");
     } catch (error) {
       console.error('Error saving job:', error);
-      toast.error("Failed to save job description");
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`Failed to save job description: ${errorMessage}`);
     }
   };
 
