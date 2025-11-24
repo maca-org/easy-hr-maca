@@ -221,16 +221,34 @@ const Index = () => {
     // First save to DB
     await handleSave();
 
-    // Generate questions
-    const questions = generateQuestions(activeJob.requirements);
-    
-    setJobs(jobs.map((job) =>
-      job.id === activeJobId
-        ? { ...job, questions }
-        : job
-    ));
+    try {
+      // Send to n8n webhook
+      const { data, error } = await supabase.functions.invoke('send-to-n8n', {
+        body: {
+          job_id: activeJobId,
+          title: activeJob.title,
+          description: activeJob.requirements,
+        },
+      });
 
-    navigate(`/questions-review?id=${activeJobId}`);
+      if (error) throw error;
+
+      toast.success("Job sent to n8n successfully");
+      
+      // Generate questions locally as well
+      const questions = generateQuestions(activeJob.requirements);
+      
+      setJobs(jobs.map((job) =>
+        job.id === activeJobId
+          ? { ...job, questions }
+          : job
+      ));
+
+      navigate(`/questions-review?id=${activeJobId}`);
+    } catch (error) {
+      console.error('Error sending to n8n:', error);
+      toast.error("Failed to send to n8n");
+    }
   };
 
   return (
