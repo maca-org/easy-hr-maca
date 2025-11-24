@@ -31,6 +31,9 @@ serve(async (req) => {
       );
     }
 
+    console.log('Sending to n8n webhook:', n8nWebhookUrl);
+    console.log('Payload:', { job_id, title, description });
+
     // Send to n8n webhook
     const response = await fetch(n8nWebhookUrl, {
       method: 'POST',
@@ -44,8 +47,13 @@ serve(async (req) => {
       }),
     });
 
+    console.log('n8n response status:', response.status);
+    console.log('n8n response statusText:', response.statusText);
+
     if (!response.ok) {
-      throw new Error(`n8n webhook failed: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('n8n webhook error response:', errorText);
+      throw new Error(`n8n webhook failed: ${response.status} ${response.statusText}`);
     }
 
     const responseData = await response.json().catch(() => ({}));
