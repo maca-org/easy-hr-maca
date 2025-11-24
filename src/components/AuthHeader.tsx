@@ -1,0 +1,73 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { LogOut, User } from "lucide-react";
+import { toast } from "sonner";
+
+interface AuthHeaderProps {
+  userEmail?: string;
+}
+
+export default function AuthHeader({ userEmail }: AuthHeaderProps) {
+  const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setIsLoggingOut(true);
+    await supabase.auth.signOut();
+    toast.success("Signed out successfully");
+    navigate("/auth");
+    setIsLoggingOut(false);
+  };
+
+  const handleHomeClick = () => {
+    navigate("/dashboard");
+  };
+
+  const getInitials = (email: string) => {
+    return email.charAt(0).toUpperCase();
+  };
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <button
+          onClick={handleHomeClick}
+          className="flex items-center gap-2 text-xl font-bold hover:opacity-80 transition-opacity"
+        >
+          <span>MyApp</span>
+        </button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {userEmail ? getInitials(userEmail) : <User className="h-5 w-5" />}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 bg-background" align="end" forceMount>
+            {userEmail && (
+              <div className="flex flex-col space-y-1 p-2">
+                <p className="text-sm font-medium leading-none">{userEmail}</p>
+              </div>
+            )}
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={handleSignOut}
+              disabled={isLoggingOut}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>{isLoggingOut ? "Signing out..." : "Sign Out"}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </header>
+  );
+}
