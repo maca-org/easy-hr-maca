@@ -1,13 +1,19 @@
 import { Textarea } from "./ui/textarea";
+import { Button } from "./ui/button";
+import { Check } from "lucide-react";
 
 interface JobRequirementsProps {
   requirements: string;
+  jobId: string;
   onUpdateRequirements: (requirements: string) => void;
+  onGenerateQuestions: () => void;
 }
 
 export const JobRequirements = ({
   requirements,
+  jobId,
   onUpdateRequirements,
+  onGenerateQuestions,
 }: JobRequirementsProps) => {
   return (
     <div className="flex-1 flex flex-col bg-background">
@@ -26,9 +32,20 @@ export const JobRequirements = ({
         <Textarea
           value={requirements}
           onChange={(e) => onUpdateRequirements(e.target.value)}
-          placeholder="List required skills, qualifications, location, experience, etc.&#10;Be as detailed as possible.&#10;Avoid general or unnecessary information and jargon.&#10;&#10;Once done, start uploading resumes from the right side →"
+          placeholder="List required skills, qualifications, location, experience, etc.&#10;Be as detailed as possible.&#10;Avoid general or unnecessary information and jargon.&#10;&#10;Once done, click 'Save & Generate Questions' below."
           className="min-h-[400px] resize-none border-border text-foreground placeholder:text-muted-foreground"
         />
+
+        <div className="flex justify-end mt-4">
+          <Button 
+            onClick={onGenerateQuestions}
+            disabled={!requirements.trim()}
+            className="gap-2"
+          >
+            <Check className="w-4 h-4" />
+            Save & Generate Questions
+          </Button>
+        </div>
       </div>
     </div>
   );
