@@ -14,24 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
-      jobs: {
+      job_openings: {
         Row: {
           created_at: string
           description: string
           id: string
           questions: Json | null
+          title: string | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string
           description: string
           id?: string
           questions?: Json | null
+          title?: string | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string
           description?: string
           id?: string
           questions?: Json | null
+          title?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
