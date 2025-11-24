@@ -19,7 +19,6 @@ interface JobSidebarProps {
   activeJobId: string;
   onSelectJob: (id: string) => void;
   onAddJob: () => void;
-  onUpdateJobTitle: (id: string, title: string) => void;
   onDeleteJob: (id: string) => void;
 }
 
@@ -28,30 +27,15 @@ export const JobSidebar = ({
   activeJobId,
   onSelectJob,
   onAddJob,
-  onUpdateJobTitle,
   onDeleteJob,
 }: JobSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
 
   const filteredJobs = jobs.filter((job) =>
-    job.title.toLowerCase().includes(searchQuery.toLowerCase())
+    job.date.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const handleDoubleClick = (job: Job) => {
-    setEditingId(job.id);
-    setEditTitle(job.title);
-  };
-
-  const handleTitleSave = (id: string) => {
-    if (editTitle.trim()) {
-      onUpdateJobTitle(id, editTitle.trim());
-    }
-    setEditingId(null);
-  };
 
   const handleDeleteClick = (jobId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -94,46 +78,29 @@ export const JobSidebar = ({
           <div
             key={job.id}
             onClick={() => onSelectJob(job.id)}
-            onDoubleClick={() => handleDoubleClick(job)}
             className={`group p-3 rounded-lg cursor-pointer transition-colors ${
               job.id === activeJobId
                 ? "bg-sidebar-accent border border-sidebar-border"
                 : "bg-sidebar-accent/50 hover:bg-sidebar-accent/80"
             }`}
           >
-            {editingId === job.id ? (
-              <Input
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                onBlur={() => handleTitleSave(job.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleTitleSave(job.id);
-                  if (e.key === "Escape") setEditingId(null);
-                }}
-                autoFocus
-                className="h-8 text-sm"
-              />
-            ) : (
-              <>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="text-sidebar-foreground font-medium text-sm line-clamp-2 flex-1">
-                    {job.title}
-                  </h3>
-                  <button
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 flex flex-col items-center gap-0.5 hover:after:w-3.5 after:w-0 after:h-0.5 after:bg-destructive after:transition-all after:duration-200"
-                    onClick={(e) => handleDeleteClick(job.id, e)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between text-xs text-sidebar-foreground/70">
-                  <span>{job.date}</span>
-                  {job.resumes.length > 0 && (
-                    <span>{job.resumes.length} resume{job.resumes.length !== 1 ? 's' : ''}</span>
-                  )}
-                </div>
-              </>
-            )}
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <h3 className="text-sidebar-foreground font-medium text-sm line-clamp-2 flex-1">
+                Job Description
+              </h3>
+              <button
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 flex flex-col items-center gap-0.5 hover:after:w-3.5 after:w-0 after:h-0.5 after:bg-destructive after:transition-all after:duration-200"
+                onClick={(e) => handleDeleteClick(job.id, e)}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </button>
+            </div>
+            <div className="flex items-center justify-between text-xs text-sidebar-foreground/70">
+              <span>{job.date}</span>
+              {job.resumes.length > 0 && (
+                <span>{job.resumes.length} resume{job.resumes.length !== 1 ? 's' : ''}</span>
+              )}
+            </div>
           </div>
         ))}
       </div>

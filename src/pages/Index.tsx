@@ -24,7 +24,6 @@ export interface Question {
 
 export interface Job {
   id: string;
-  title: string;
   date: string;
   requirements: string;
   resumes: Resume[];
@@ -53,7 +52,6 @@ const Index = () => {
   const handleAddJob = () => {
     const newJob: Job = {
       id: Date.now().toString(),
-      title: "New Job Position",
       date: new Date().toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "short",
@@ -75,10 +73,6 @@ const Index = () => {
     updateStoredJobs(updatedJobs);
   };
 
-  const handleUpdateJobTitle = (id: string, title: string) => {
-    const updatedJobs = jobs.map((job) => (job.id === id ? { ...job, title } : job));
-    updateStoredJobs(updatedJobs);
-  };
 
   const handleDeleteJob = (id: string) => {
     const updatedJobs = jobs.filter((job) => job.id !== id);
@@ -111,8 +105,8 @@ const Index = () => {
     }
 
     try {
-      // Save to database
-      const { data: existingJob, error: fetchError } = await supabase
+      // Save to database - this should always succeed
+      const { data: existingJob } = await supabase
         .from('jobs')
         .select('id')
         .eq('id', activeJobId)
@@ -125,7 +119,6 @@ const Index = () => {
         const { error: updateError } = await supabase
           .from('jobs')
           .update({
-            title: activeJob.title,
             description: activeJob.requirements,
           })
           .eq('id', activeJobId);
@@ -137,7 +130,6 @@ const Index = () => {
           .from('jobs')
           .insert({
             id: activeJobId,
-            title: activeJob.title,
             description: activeJob.requirements,
           })
           .select()
@@ -147,19 +139,24 @@ const Index = () => {
         dbJobId = newJob.id;
       }
 
-      // Send to n8n
-      const { error: n8nError } = await supabase.functions.invoke('send-to-n8n', {
-        body: {
-          job_id: dbJobId,
-          description: activeJob.requirements,
-        },
-      });
+      // Try to send to n8n - don't let this block the save
+      try {
+        const { error: n8nError } = await supabase.functions.invoke('send-to-n8n', {
+          body: {
+            job_id: dbJobId,
+            description: activeJob.requirements,
+          },
+        });
 
-      if (n8nError) {
+        if (n8nError) {
+          console.error('n8n error:', n8nError);
+          toast.warning("Saved to DB but n8n webhook failed.");
+        } else {
+          toast.success("Job Description saved & sent to n8n!");
+        }
+      } catch (n8nError) {
         console.error('n8n error:', n8nError);
-        toast.error("Failed to send to n8n");
-      } else {
-        toast.success("Job Description saved & sent to n8n!");
+        toast.warning("Saved to DB but n8n webhook failed.");
       }
 
       // Generate questions
@@ -188,7 +185,6 @@ const Index = () => {
           activeJobId={activeJobId}
           onSelectJob={setActiveJobId}
           onAddJob={handleAddJob}
-          onUpdateJobTitle={handleUpdateJobTitle}
           onDeleteJob={handleDeleteJob}
         />
         {activeJob && (
