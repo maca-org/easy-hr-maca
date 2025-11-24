@@ -294,7 +294,7 @@ export const QuestionsReview = () => {
           <div className="w-[30%] min-w-[300px]">
             <Card className="p-6 sticky top-0 space-y-6">
               <div>
-                <h3 className="font-semibold text-lg text-foreground mb-2">{job.title}</h3>
+                <h3 className="font-semibold text-lg text-foreground mb-2">Job Description</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Total Questions:</span>
