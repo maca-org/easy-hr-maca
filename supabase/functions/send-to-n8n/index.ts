@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { job_id, description } = await req.json();
+    const { job_id, title, description } = await req.json();
 
     if (!description) {
       return new Response(
@@ -39,6 +39,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         job_id,
+        title,
         description,
       }),
     });
