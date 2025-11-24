@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit2, Trash2, Plus, X, CheckCircle2, Award } from "lucide-react";
+import { Edit2, Trash2, Plus, X, CheckCircle2, Award, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Question } from "./Index";
@@ -23,6 +23,7 @@ export const QuestionsReview = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPolling, setIsPolling] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -119,6 +120,40 @@ export const QuestionsReview = () => {
     return () => clearInterval(pollInterval);
   }, [isPolling, jobId]);
 
+  const handleManualRefresh = async () => {
+    if (!jobId || refreshing) return;
+
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase
+        .from("job_openings")
+        .select("questions")
+        .eq("id", jobId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching questions:", error);
+        toast.error("Failed to refresh questions");
+        return;
+      }
+
+      const hasQuestions = data?.questions && 
+        typeof data.questions === 'object' && 
+        Array.isArray(data.questions) && 
+        data.questions.length > 0;
+
+      if (hasQuestions) {
+        setQuestions(data.questions as unknown as Question[]);
+        setIsPolling(false);
+        toast.success("Questions loaded successfully!");
+      } else {
+        toast.info("No questions found yet. They may still be generating.");
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   if (!jobId) {
     return (
       <div className="h-screen flex flex-col bg-background">
@@ -149,13 +184,22 @@ export const QuestionsReview = () => {
       <div className="h-screen flex flex-col bg-background">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-3 max-w-md">
+          <div className="text-center space-y-4 max-w-md">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
             <p className="text-foreground font-medium text-lg">Generating Questions...</p>
             <p className="text-muted-foreground text-sm">
               n8n is processing your job description and generating personalized interview questions. 
               This usually takes 20-60 seconds.
             </p>
+            <Button
+              onClick={handleManualRefresh}
+              disabled={refreshing}
+              variant="outline"
+              className="mt-4"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? "Checking..." : "Check Now"}
+            </Button>
           </div>
         </div>
       </div>
