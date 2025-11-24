@@ -3,6 +3,9 @@ import { JobSidebar } from "@/components/JobSidebar";
 import { JobRequirements } from "@/components/JobRequirements";
 import { ResumeUpload } from "@/components/ResumeUpload";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { generateQuestions } from "@/utils/questionGenerator";
+import { toast } from "sonner";
 
 export interface Resume {
   id: string;
@@ -11,19 +14,40 @@ export interface Resume {
   match: number;
 }
 
+export interface Question {
+  id: string;
+  type: "mcq" | "open";
+  question: string;
+  options?: string[];
+}
+
 export interface Job {
   id: string;
   title: string;
   date: string;
   requirements: string;
   resumes: Resume[];
+  questions: Question[];
 }
 
 const Index = () => {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const navigate = useNavigate();
+  
+  // Load jobs from localStorage
+  const getStoredJobs = (): Job[] => {
+    const stored = localStorage.getItem("hr-screening-jobs");
+    return stored ? JSON.parse(stored) : [];
+  };
+
+  const [jobs, setJobs] = useState<Job[]>(getStoredJobs());
   const [activeJobId, setActiveJobId] = useState<string>("");
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
+
+  const updateStoredJobs = (updatedJobs: Job[]) => {
+    localStorage.setItem("hr-screening-jobs", JSON.stringify(updatedJobs));
+    setJobs(updatedJobs);
+  };
 
   const handleAddJob = () => {
     const newJob: Job = {
@@ -36,25 +60,28 @@ const Index = () => {
       }),
       requirements: "",
       resumes: [],
+      questions: [],
     };
-    setJobs([...jobs, newJob]);
+    const updatedJobs = [...jobs, newJob];
+    updateStoredJobs(updatedJobs);
     setActiveJobId(newJob.id);
   };
 
   const handleUpdateRequirements = (requirements: string) => {
-    setJobs(
-      jobs.map((job) =>
-        job.id === activeJobId ? { ...job, requirements } : job
-      )
+    const updatedJobs = jobs.map((job) =>
+      job.id === activeJobId ? { ...job, requirements } : job
     );
+    updateStoredJobs(updatedJobs);
   };
 
   const handleUpdateJobTitle = (id: string, title: string) => {
-    setJobs(jobs.map((job) => (job.id === id ? { ...job, title } : job)));
+    const updatedJobs = jobs.map((job) => (job.id === id ? { ...job, title } : job));
+    updateStoredJobs(updatedJobs);
   };
 
   const handleDeleteJob = (id: string) => {
-    setJobs(jobs.filter((job) => job.id !== id));
+    const updatedJobs = jobs.filter((job) => job.id !== id);
+    updateStoredJobs(updatedJobs);
     if (activeJobId === id) {
       setActiveJobId("");
     }
@@ -68,13 +95,31 @@ const Index = () => {
       match: Math.floor(Math.random() * 20) + 70, // Temporary random match
     }));
 
-    setJobs(
-      jobs.map((job) =>
-        job.id === activeJobId
-          ? { ...job, resumes: [...job.resumes, ...newResumes] }
-          : job
-      )
+    const updatedJobs = jobs.map((job) =>
+      job.id === activeJobId
+        ? { ...job, resumes: [...job.resumes, ...newResumes] }
+        : job
     );
+    updateStoredJobs(updatedJobs);
+  };
+
+  const handleGenerateQuestions = () => {
+    if (!activeJob?.requirements.trim()) {
+      toast.error("Please enter a job description first");
+      return;
+    }
+
+    const questions = generateQuestions(activeJob.requirements);
+    
+    const updatedJobs = jobs.map((job) =>
+      job.id === activeJobId
+        ? { ...job, questions }
+        : job
+    );
+    updateStoredJobs(updatedJobs);
+
+    toast.success("Questions generated successfully!");
+    navigate(`/questions-review?id=${activeJobId}`);
   };
 
   return (
@@ -93,7 +138,9 @@ const Index = () => {
           <>
             <JobRequirements
               requirements={activeJob.requirements}
+              jobId={activeJob.id}
               onUpdateRequirements={handleUpdateRequirements}
+              onGenerateQuestions={handleGenerateQuestions}
             />
             <ResumeUpload
               resumes={activeJob.resumes}
