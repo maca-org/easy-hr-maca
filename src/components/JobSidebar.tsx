@@ -108,7 +108,8 @@ export const JobSidebar = ({
         {filteredJobs.map((job) => (
           <div
             key={job.id}
-            className={`group p-3 rounded-lg transition-colors ${
+            onClick={() => onSelectJob(job.id)}
+            className={`group p-3 rounded-lg transition-colors cursor-pointer ${
               job.id === activeJobId
                 ? "bg-sidebar-accent border border-sidebar-border"
                 : "bg-sidebar-accent/50 hover:bg-sidebar-accent/80"
