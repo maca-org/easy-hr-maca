@@ -1,4 +1,4 @@
-import { Plus, Search, Trash2, Pencil, Check, X } from "lucide-react";
+import { Plus, Search, Trash2, Check, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Job } from "@/pages/Index";
@@ -108,8 +108,7 @@ export const JobSidebar = ({
         {filteredJobs.map((job) => (
           <div
             key={job.id}
-            onClick={() => onSelectJob(job.id)}
-            className={`group p-3 rounded-lg cursor-pointer transition-colors ${
+            className={`group p-3 rounded-lg transition-colors ${
               job.id === activeJobId
                 ? "bg-sidebar-accent border border-sidebar-border"
                 : "bg-sidebar-accent/50 hover:bg-sidebar-accent/80"
@@ -140,27 +139,28 @@ export const JobSidebar = ({
                 </div>
               ) : (
                 <>
-                  <h3 className="text-sidebar-foreground font-medium text-sm line-clamp-2 flex-1">
+                  <h3 
+                    className="text-sidebar-foreground font-medium text-sm line-clamp-2 flex-1 cursor-pointer hover:opacity-70 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditClick(job, e);
+                    }}
+                  >
                     {job.title || "Job Description"}
                   </h3>
-                  <div className="flex gap-1 flex-shrink-0">
-                    <button
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-sidebar-accent/80 rounded"
-                      onClick={(e) => handleEditClick(job, e)}
-                    >
-                      <Pencil className="h-3.5 w-3.5 text-sidebar-foreground/70" />
-                    </button>
-                    <button
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-sidebar-accent/80 rounded"
-                      onClick={(e) => handleDeleteClick(job.id, e)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                    </button>
-                  </div>
+                  <button
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-sidebar-accent/80 rounded flex-shrink-0"
+                    onClick={(e) => handleDeleteClick(job.id, e)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </button>
                 </>
               )}
             </div>
-            <div className="flex items-center justify-between text-xs text-sidebar-foreground/70">
+            <div 
+              className="flex items-center justify-between text-xs text-sidebar-foreground/70"
+              onClick={() => onSelectJob(job.id)}
+            >
               <span>{job.date}</span>
               {job.resumes.length > 0 && (
                 <span>{job.resumes.length} resume{job.resumes.length !== 1 ? 's' : ''}</span>
