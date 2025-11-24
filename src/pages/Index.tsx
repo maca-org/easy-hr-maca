@@ -185,6 +185,26 @@ const Index = () => {
     toast.success("Job deleted successfully");
   };
 
+  const handleRenameJob = async (id: string, newTitle: string) => {
+    // Update in Supabase
+    const { error } = await supabase
+      .from("job_openings")
+      .update({ title: newTitle })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error renaming job:", error);
+      toast.error("Failed to rename job");
+      return;
+    }
+
+    // Update state
+    setJobs(jobs.map((job) =>
+      job.id === id ? { ...job, title: newTitle } : job
+    ));
+    toast.success("Job renamed successfully");
+  };
+
   const handleUploadResumes = (files: File[]) => {
     const newResumes: Resume[] = files.map((file) => ({
       id: Date.now().toString() + Math.random(),
@@ -328,6 +348,7 @@ const Index = () => {
           onSelectJob={setActiveJobId}
           onAddJob={handleAddJob}
           onDeleteJob={handleDeleteJob}
+          onRenameJob={handleRenameJob}
         />
         {activeJob && (
           <>
