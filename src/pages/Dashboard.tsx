@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { LogOut, Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
+import AuthHeader from "@/components/AuthHeader";
 
 interface Note {
   id: string;
@@ -69,12 +70,6 @@ export default function Dashboard() {
     } else {
       setNotes(data || []);
     }
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast.success("Signed out successfully");
-    navigate("/auth");
   };
 
   const openCreateDialog = () => {
@@ -158,18 +153,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-muted/50">
-      <header className="border-b bg-background">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">My Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">{user.email}</span>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
+      <AuthHeader userEmail={user.email} />
 
       <main className="container mx-auto px-4 py-8">
         <Card>
