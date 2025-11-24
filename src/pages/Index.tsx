@@ -166,6 +166,7 @@ const Index = () => {
         const { data: newJob, error: insertError } = await supabase
           .from('jobs')
           .insert({
+            id: activeJobId,
             description: activeJob.requirements,
           })
           .select()
