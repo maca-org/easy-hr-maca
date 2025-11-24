@@ -1,8 +1,10 @@
 import { Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const Header = () => {
+  const navigate = useNavigate();
   const [balance, setBalance] = useState(5.00);
 
   const getBalanceColor = () => {
@@ -24,7 +26,10 @@ export const Header = () => {
         </div>
         
         <nav className="flex items-center gap-6">
-          <button className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">
+          <button 
+            onClick={() => navigate("/")}
+            className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200"
+          >
             Home
           </button>
           <button className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">
