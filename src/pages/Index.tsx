@@ -2,7 +2,7 @@ import { Header } from "@/components/Header";
 import { JobSidebar } from "@/components/JobSidebar";
 import { JobRequirements } from "@/components/JobRequirements";
 import { ResumeUpload } from "@/components/ResumeUpload";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { generateQuestions } from "@/utils/questionGenerator";
 import { toast } from "sonner";
@@ -33,21 +33,43 @@ export interface Job {
 const Index = () => {
   const navigate = useNavigate();
   
-  // Load jobs from localStorage
-  const getStoredJobs = (): Job[] => {
-    const stored = localStorage.getItem("hr-screening-jobs");
-    return stored ? JSON.parse(stored) : [];
-  };
-
-  const [jobs, setJobs] = useState<Job[]>(getStoredJobs());
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [activeJobId, setActiveJobId] = useState<string>("");
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
-  const updateStoredJobs = (updatedJobs: Job[]) => {
-    localStorage.setItem("hr-screening-jobs", JSON.stringify(updatedJobs));
-    setJobs(updatedJobs);
-  };
+  // Load jobs from Supabase on mount
+  useEffect(() => {
+    const fetchJobs = async () => {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching jobs:", error);
+        toast.error("Failed to load jobs");
+        return;
+      }
+
+      if (data) {
+        const mappedJobs: Job[] = data.map((row) => ({
+          id: row.id,
+          date: new Date(row.created_at).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+          requirements: row.description,
+          resumes: [],
+          questions: [],
+        }));
+        setJobs(mappedJobs);
+      }
+    };
+
+    fetchJobs();
+  }, []);
 
   const handleAddJob = () => {
     const newJob: Job = {
@@ -61,25 +83,36 @@ const Index = () => {
       resumes: [],
       questions: [],
     };
-    const updatedJobs = [...jobs, newJob];
-    updateStoredJobs(updatedJobs);
+    setJobs([...jobs, newJob]);
     setActiveJobId(newJob.id);
   };
 
   const handleUpdateRequirements = (requirements: string) => {
-    const updatedJobs = jobs.map((job) =>
+    setJobs(jobs.map((job) =>
       job.id === activeJobId ? { ...job, requirements } : job
-    );
-    updateStoredJobs(updatedJobs);
+    ));
   };
 
 
-  const handleDeleteJob = (id: string) => {
-    const updatedJobs = jobs.filter((job) => job.id !== id);
-    updateStoredJobs(updatedJobs);
+  const handleDeleteJob = async (id: string) => {
+    // Delete from Supabase
+    const { error } = await supabase
+      .from("jobs")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting job:", error);
+      toast.error("Failed to delete job");
+      return;
+    }
+
+    // Update state
+    setJobs(jobs.filter((job) => job.id !== id));
     if (activeJobId === id) {
       setActiveJobId("");
     }
+    toast.success("Job deleted successfully");
   };
 
   const handleUploadResumes = (files: File[]) => {
@@ -90,12 +123,11 @@ const Index = () => {
       match: Math.floor(Math.random() * 20) + 70, // Temporary random match
     }));
 
-    const updatedJobs = jobs.map((job) =>
+    setJobs(jobs.map((job) =>
       job.id === activeJobId
         ? { ...job, resumes: [...job.resumes, ...newResumes] }
         : job
-    );
-    updateStoredJobs(updatedJobs);
+    ));
   };
 
   const handleSave = async () => {
@@ -124,6 +156,11 @@ const Index = () => {
           .eq('id', activeJobId);
 
         if (updateError) throw updateError;
+        
+        // Update state with saved data
+        setJobs(jobs.map((job) =>
+          job.id === activeJobId ? { ...job, requirements: activeJob.requirements } : job
+        ));
       } else {
         // Insert new job
         const { data: newJob, error: insertError } = await supabase
@@ -137,6 +174,20 @@ const Index = () => {
 
         if (insertError) throw insertError;
         dbJobId = newJob.id;
+        
+        // Update state with created_at date from DB
+        setJobs(jobs.map((job) =>
+          job.id === activeJobId 
+            ? { 
+                ...job, 
+                date: new Date(newJob.created_at).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })
+              } 
+            : job
+        ));
       }
 
       // Try to send to n8n - don't let this block the save
@@ -176,12 +227,11 @@ const Index = () => {
     // Generate questions
     const questions = generateQuestions(activeJob.requirements);
     
-    const updatedJobs = jobs.map((job) =>
+    setJobs(jobs.map((job) =>
       job.id === activeJobId
         ? { ...job, questions }
         : job
-    );
-    updateStoredJobs(updatedJobs);
+    ));
 
     navigate(`/questions-review?id=${activeJobId}`);
   };
