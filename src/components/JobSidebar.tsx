@@ -1,4 +1,4 @@
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, Check, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Job } from "@/pages/Index";
@@ -20,6 +20,7 @@ interface JobSidebarProps {
   onSelectJob: (id: string) => void;
   onAddJob: () => void;
   onDeleteJob: (id: string) => void;
+  onRenameJob: (id: string, newTitle: string) => void;
 }
 
 export const JobSidebar = ({
@@ -28,10 +29,13 @@ export const JobSidebar = ({
   onSelectJob,
   onAddJob,
   onDeleteJob,
+  onRenameJob,
 }: JobSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   const filteredJobs = jobs.filter((job) =>
     job.date.toLowerCase().includes(searchQuery.toLowerCase())
@@ -49,6 +53,33 @@ export const JobSidebar = ({
     }
     setDeleteDialogOpen(false);
     setJobToDelete(null);
+  };
+
+  const handleEditClick = (job: Job, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingJobId(job.id);
+    setEditingTitle(job.title || "Job Description");
+  };
+
+  const handleSaveRename = (jobId: string) => {
+    if (editingTitle.trim()) {
+      onRenameJob(jobId, editingTitle.trim());
+    }
+    setEditingJobId(null);
+    setEditingTitle("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingJobId(null);
+    setEditingTitle("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, jobId: string) => {
+    if (e.key === "Enter") {
+      handleSaveRename(jobId);
+    } else if (e.key === "Escape") {
+      handleCancelEdit();
+    }
   };
 
   return (
@@ -85,15 +116,49 @@ export const JobSidebar = ({
             }`}
           >
             <div className="flex items-start justify-between gap-2 mb-2">
-              <h3 className="text-sidebar-foreground font-medium text-sm line-clamp-2 flex-1">
-                Job Description
-              </h3>
-              <button
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 flex flex-col items-center gap-0.5 hover:after:w-3.5 after:w-0 after:h-0.5 after:bg-destructive after:transition-all after:duration-200"
-                onClick={(e) => handleDeleteClick(job.id, e)}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </button>
+              {editingJobId === job.id ? (
+                <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
+                  <Input
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, job.id)}
+                    className="h-7 text-sm"
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => handleSaveRename(job.id)}
+                    className="flex-shrink-0"
+                  >
+                    <Check className="h-4 w-4 text-green-600" />
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="flex-shrink-0"
+                  >
+                    <X className="h-4 w-4 text-destructive" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-sidebar-foreground font-medium text-sm line-clamp-2 flex-1">
+                    {job.title || "Job Description"}
+                  </h3>
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-sidebar-accent/80 rounded"
+                      onClick={(e) => handleEditClick(job, e)}
+                    >
+                      <Pencil className="h-3.5 w-3.5 text-sidebar-foreground/70" />
+                    </button>
+                    <button
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-sidebar-accent/80 rounded"
+                      onClick={(e) => handleDeleteClick(job.id, e)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
             <div className="flex items-center justify-between text-xs text-sidebar-foreground/70">
               <span>{job.date}</span>
