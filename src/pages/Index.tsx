@@ -25,6 +25,7 @@ export interface Question {
 export interface Job {
   id: string;
   date: string;
+  title: string;
   requirements: string;
   resumes: Resume[];
   questions: Question[];
@@ -42,7 +43,7 @@ const Index = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       const { data, error } = await supabase
-        .from("jobs")
+        .from("job_openings")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -60,6 +61,7 @@ const Index = () => {
             month: "short",
             year: "numeric",
           }),
+          title: row.title || "",
           requirements: row.description,
           resumes: [],
           questions: [],
@@ -79,6 +81,7 @@ const Index = () => {
         month: "short",
         year: "numeric",
       }),
+      title: "",
       requirements: "",
       resumes: [],
       questions: [],
@@ -93,11 +96,17 @@ const Index = () => {
     ));
   };
 
+  const handleUpdateTitle = (title: string) => {
+    setJobs(jobs.map((job) =>
+      job.id === activeJobId ? { ...job, title } : job
+    ));
+  };
+
 
   const handleDeleteJob = async (id: string) => {
     // Delete from Supabase
     const { error } = await supabase
-      .from("jobs")
+      .from("job_openings")
       .delete()
       .eq("id", id);
 
@@ -139,7 +148,7 @@ const Index = () => {
     try {
       // Save to database
       const { data: existingJob } = await supabase
-        .from('jobs')
+        .from('job_openings')
         .select('id')
         .eq('id', activeJobId)
         .maybeSingle();
@@ -149,8 +158,9 @@ const Index = () => {
       if (existingJob) {
         // Update existing job
         const { error: updateError } = await supabase
-          .from('jobs')
+          .from('job_openings')
           .update({
+            title: activeJob.title,
             description: activeJob.requirements,
           })
           .eq('id', activeJobId);
@@ -159,13 +169,14 @@ const Index = () => {
         
         // Update state with saved data
         setJobs(jobs.map((job) =>
-          job.id === activeJobId ? { ...job, requirements: activeJob.requirements } : job
+          job.id === activeJobId ? { ...job, title: activeJob.title, requirements: activeJob.requirements } : job
         ));
       } else {
         // Insert new job
         const { data: newJob, error: insertError } = await supabase
-          .from('jobs')
+          .from('job_openings')
           .insert({
+            title: activeJob.title,
             description: activeJob.requirements,
           })
           .select()
@@ -180,6 +191,7 @@ const Index = () => {
             ? { 
                 ...job,
                 id: newJob.id,
+                title: newJob.title || "",
                 date: new Date(newJob.created_at).toLocaleDateString("en-GB", {
                   day: "2-digit",
                   month: "short",
@@ -235,8 +247,10 @@ const Index = () => {
         {activeJob && (
           <>
             <JobRequirements
+              title={activeJob.title}
               requirements={activeJob.requirements}
               jobId={activeJob.id}
+              onUpdateTitle={handleUpdateTitle}
               onUpdateRequirements={handleUpdateRequirements}
               onSave={handleSave}
               onGenerateQuestions={handleGenerateQuestions}
