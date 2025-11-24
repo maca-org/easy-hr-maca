@@ -14,12 +14,14 @@ import { Edit2, Trash2, Plus, X, CheckCircle2, Award, RefreshCw } from "lucide-r
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Question } from "./Index";
+import type { User } from "@supabase/supabase-js";
 
 export const QuestionsReview = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const jobId = searchParams.get("id");
   
+  const [user, setUser] = useState<User | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPolling, setIsPolling] = useState(false);
@@ -34,8 +36,31 @@ export const QuestionsReview = () => {
   const [newDifficulty, setNewDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [newCorrectAnswer, setNewCorrectAnswer] = useState("");
 
+  // Check authentication
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/");
+        return;
+      }
+      setUser(session.user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/");
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
   // Fetch questions from Supabase
   useEffect(() => {
+    if (!user) return;
+    
     const fetchQuestions = async () => {
       if (!jobId) return;
 

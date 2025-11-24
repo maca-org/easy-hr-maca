@@ -19,7 +19,7 @@ export default function Auth() {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/dashboard");
+        navigate("/jobs");
       }
     });
   }, [navigate]);
@@ -53,7 +53,7 @@ export default function Auth() {
       setLoading(false);
     } else {
       toast.success("Signed in successfully!");
-      navigate("/dashboard");
+      navigate("/jobs");
     }
   };
 
@@ -81,7 +81,7 @@ export default function Auth() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/jobs`,
       },
     });
 
@@ -100,7 +100,7 @@ export default function Auth() {
         toast.error("Please sign in with your new account");
         setIsSignUp(false);
       } else {
-        navigate("/dashboard");
+        navigate("/jobs");
       }
       setLoading(false);
     }

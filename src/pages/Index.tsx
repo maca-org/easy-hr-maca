@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { generateQuestions } from "@/utils/questionGenerator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 export interface Resume {
   id: string;
@@ -37,18 +38,43 @@ export interface Job {
 const Index = () => {
   const navigate = useNavigate();
   
+  const [user, setUser] = useState<User | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [activeJobId, setActiveJobId] = useState<string>("");
   const [hasQuestions, setHasQuestions] = useState<boolean>(false);
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
-  // Load jobs from Supabase on mount
+  // Check authentication
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/");
+        return;
+      }
+      setUser(session.user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/");
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  // Load jobs from Supabase on mount (filtered by user)
+  useEffect(() => {
+    if (!user) return;
+
     const fetchJobs = async () => {
       const { data, error } = await supabase
         .from("job_openings")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -75,7 +101,7 @@ const Index = () => {
     };
 
     fetchJobs();
-  }, []);
+  }, [user]);
 
   // Check if active job has questions
   useEffect(() => {
@@ -180,6 +206,11 @@ const Index = () => {
       return;
     }
 
+    if (!user) {
+      toast.error("You must be logged in to save jobs");
+      return;
+    }
+
     try {
       // Save to database
       const { data: existingJob } = await supabase
@@ -207,12 +238,13 @@ const Index = () => {
           job.id === activeJobId ? { ...job, title: activeJob.title, requirements: activeJob.requirements } : job
         ));
       } else {
-        // Insert new job
+        // Insert new job with user_id
         const { data: newJob, error: insertError } = await supabase
           .from('job_openings')
           .insert({
             title: activeJob.title,
             description: activeJob.requirements,
+            user_id: user.id,
           })
           .select()
           .single();

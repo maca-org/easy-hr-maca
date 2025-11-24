@@ -35,7 +35,7 @@ export default function Dashboard() {
     // Check authentication
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        navigate("/auth");
+        navigate("/");
         return;
       }
       setUser(session.user);
@@ -43,7 +43,7 @@ export default function Dashboard() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
-        navigate("/auth");
+        navigate("/");
       } else {
         setUser(session.user);
       }
