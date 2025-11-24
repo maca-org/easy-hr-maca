@@ -1,12 +1,14 @@
 import { Textarea } from "./ui/textarea";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Check } from "lucide-react";
+import { Check, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface JobRequirementsProps {
   title: string;
   requirements: string;
   jobId: string;
+  hasQuestions: boolean;
   onUpdateTitle: (title: string) => void;
   onUpdateRequirements: (requirements: string) => void;
   onSave: () => void;
@@ -17,11 +19,18 @@ export const JobRequirements = ({
   title,
   requirements,
   jobId,
+  hasQuestions,
   onUpdateTitle,
   onUpdateRequirements,
   onSave,
   onGenerateQuestions,
 }: JobRequirementsProps) => {
+  const navigate = useNavigate();
+
+  const handleReviewQuestions = () => {
+    navigate(`/questions-review?id=${jobId}`);
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-background">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
@@ -77,6 +86,16 @@ export const JobRequirements = ({
           >
             Generate Questions
           </Button>
+          {hasQuestions && (
+            <Button 
+              onClick={handleReviewQuestions}
+              variant="secondary"
+              className="gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              Review Questions
+            </Button>
+          )}
         </div>
       </div>
     </div>
