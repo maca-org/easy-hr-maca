@@ -1,4 +1,4 @@
-import { Plus, Search, Trash2, Check, X } from "lucide-react";
+import { Plus, Search, Trash2, Check, X, Edit2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Job } from "@/pages/Index";
@@ -140,20 +140,24 @@ export const JobSidebar = ({
               ) : (
                 <>
                   <h3 
-                    className="text-sidebar-foreground font-medium text-sm line-clamp-2 flex-1 cursor-pointer hover:opacity-70 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditClick(job, e);
-                    }}
+                    className="text-sidebar-foreground font-medium text-sm line-clamp-2 flex-1"
                   >
                     {job.title || "Job Description"}
                   </h3>
-                  <button
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-sidebar-accent/80 rounded flex-shrink-0"
-                    onClick={(e) => handleDeleteClick(job.id, e)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-sidebar-accent/80 rounded"
+                      onClick={(e) => handleEditClick(job, e)}
+                    >
+                      <Edit2 className="h-3.5 w-3.5 text-sidebar-foreground/70" />
+                    </button>
+                    <button
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-sidebar-accent/80 rounded"
+                      onClick={(e) => handleDeleteClick(job.id, e)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </button>
+                  </div>
                 </>
               )}
             </div>
