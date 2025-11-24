@@ -1,18 +1,23 @@
 import { Textarea } from "./ui/textarea";
+import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Check } from "lucide-react";
 
 interface JobRequirementsProps {
+  title: string;
   requirements: string;
   jobId: string;
+  onUpdateTitle: (title: string) => void;
   onUpdateRequirements: (requirements: string) => void;
   onSave: () => void;
   onGenerateQuestions: () => void;
 }
 
 export const JobRequirements = ({
+  title,
   requirements,
   jobId,
+  onUpdateTitle,
   onUpdateRequirements,
   onSave,
   onGenerateQuestions,
@@ -27,16 +32,33 @@ export const JobRequirements = ({
       </div>
 
       <div className="flex-1 p-6 overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-2 text-foreground">
-          Enter job description here ↓
+        <h2 className="text-lg font-semibold mb-4 text-foreground">
+          Job Opening Details
         </h2>
 
-        <Textarea
-          value={requirements}
-          onChange={(e) => onUpdateRequirements(e.target.value)}
-          placeholder="List required skills, qualifications, location, experience, etc.&#10;Be as detailed as possible.&#10;Avoid general or unnecessary information and jargon.&#10;&#10;Once done, click 'Save & Generate Questions' below."
-          className="min-h-[400px] resize-none border-border text-foreground placeholder:text-muted-foreground"
-        />
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2 text-foreground">
+            Job Title
+          </label>
+          <Input
+            value={title}
+            onChange={(e) => onUpdateTitle(e.target.value)}
+            placeholder="e.g., Senior Software Engineer"
+            className="border-border text-foreground placeholder:text-muted-foreground"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-foreground">
+            Job Description
+          </label>
+          <Textarea
+            value={requirements}
+            onChange={(e) => onUpdateRequirements(e.target.value)}
+            placeholder="List required skills, qualifications, location, experience, etc.&#10;Be as detailed as possible.&#10;Avoid general or unnecessary information and jargon.&#10;&#10;Once done, click 'Save & Generate Questions' below."
+            className="min-h-[400px] resize-none border-border text-foreground placeholder:text-muted-foreground"
+          />
+        </div>
 
         <div className="flex justify-end gap-3 mt-4">
           <Button 
