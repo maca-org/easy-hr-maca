@@ -9,47 +9,74 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Edit2, Trash2, Plus, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Edit2, Trash2, Plus, X, CheckCircle2, Award } from "lucide-react";
 import { toast } from "sonner";
-import type { Question, Job } from "./Index";
+import { supabase } from "@/integrations/supabase/client";
+import type { Question } from "./Index";
 
 export const QuestionsReview = () => {
-  // Get jobs from localStorage
-  const getStoredJobs = (): Job[] => {
-    const stored = localStorage.getItem("hr-screening-jobs");
-    return stored ? JSON.parse(stored) : [];
-  };
-
-  const updateStoredJobs = (updatedJobs: Job[]) => {
-    localStorage.setItem("hr-screening-jobs", JSON.stringify(updatedJobs));
-    setJobs(updatedJobs);
-  };
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const jobId = searchParams.get("id");
   
-  const [jobs, setJobs] = useState<Job[]>(getStoredJobs());
-  const job = jobs.find(j => j.id === jobId);
-  const [questions, setQuestions] = useState<Question[]>(job?.questions || []);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newQuestionType, setNewQuestionType] = useState<"mcq" | "open">("mcq");
   const [newQuestionText, setNewQuestionText] = useState("");
   const [newOptions, setNewOptions] = useState<string[]>(["", "", "", ""]);
+  const [newSkill, setNewSkill] = useState("");
+  const [newDifficulty, setNewDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [newCorrectAnswer, setNewCorrectAnswer] = useState("");
 
+  // Fetch questions from Supabase
   useEffect(() => {
-    if (job) {
-      setQuestions(job.questions);
-    }
-  }, [job]);
+    const fetchQuestions = async () => {
+      if (!jobId) return;
 
-  if (!job) {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("job_openings")
+        .select("questions")
+        .eq("id", jobId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching questions:", error);
+        toast.error("Failed to load questions");
+        setLoading(false);
+        return;
+      }
+
+      if (data?.questions && Array.isArray(data.questions)) {
+        setQuestions(data.questions as unknown as Question[]);
+      }
+      setLoading(false);
+    };
+
+    fetchQuestions();
+  }, [jobId]);
+
+  if (!jobId) {
     return (
       <div className="h-screen flex flex-col bg-background">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">Job not found</p>
+          <p className="text-muted-foreground">Job ID not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="h-screen flex flex-col bg-background">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Loading questions...</p>
         </div>
       </div>
     );
@@ -68,6 +95,7 @@ export const QuestionsReview = () => {
       setQuestions(updated);
       setEditingId(null);
       setEditingQuestion(null);
+      toast.success("Question updated");
     }
   };
 
@@ -78,6 +106,7 @@ export const QuestionsReview = () => {
 
   const handleDelete = (id: string) => {
     setQuestions(questions.filter(q => q.id !== id));
+    toast.success("Question deleted");
   };
 
   const handleAddQuestion = () => {
@@ -85,26 +114,54 @@ export const QuestionsReview = () => {
       id: `${newQuestionType}-${Date.now()}`,
       type: newQuestionType,
       question: newQuestionText,
-      options: newQuestionType === "mcq" ? newOptions.filter(o => o.trim()) : undefined
+      options: newQuestionType === "mcq" ? newOptions.filter(o => o.trim()) : undefined,
+      skill: newSkill || undefined,
+      difficulty: newQuestionType === "mcq" ? newDifficulty : undefined,
+      correct_answer: newQuestionType === "mcq" ? newCorrectAnswer : undefined,
     };
     setQuestions([...questions, newQuestion]);
     setIsAddDialogOpen(false);
     setNewQuestionText("");
     setNewOptions(["", "", "", ""]);
     setNewQuestionType("mcq");
+    setNewSkill("");
+    setNewDifficulty("medium");
+    setNewCorrectAnswer("");
+    toast.success("Question added");
   };
 
-  const handleSaveAndContinue = () => {
-    const updatedJobs = jobs.map(job => 
-      job.id === jobId ? { ...job, questions } : job
-    );
-    updateStoredJobs(updatedJobs);
-    toast.success("Questions saved successfully!");
-    navigate(`/?id=${jobId}`);
+  const handleSaveAndContinue = async () => {
+    try {
+      const { error } = await supabase
+        .from("job_openings")
+        .update({ questions: questions as any })
+        .eq("id", jobId);
+
+      if (error) throw error;
+
+      toast.success("Questions saved successfully!");
+      navigate(`/?id=${jobId}`);
+    } catch (error) {
+      console.error("Error saving questions:", error);
+      toast.error("Failed to save questions");
+    }
   };
 
   const mcqCount = questions.filter(q => q.type === "mcq").length;
   const openCount = questions.filter(q => q.type === "open").length;
+  const easyCount = questions.filter(q => q.difficulty === "easy").length;
+  const mediumCount = questions.filter(q => q.difficulty === "medium").length;
+  const hardCount = questions.filter(q => q.difficulty === "hard").length;
+  const skills = Array.from(new Set(questions.map(q => q.skill).filter(Boolean)));
+
+  const getDifficultyColor = (difficulty?: string) => {
+    switch (difficulty) {
+      case "easy": return "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20";
+      case "medium": return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20";
+      case "hard": return "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20";
+      default: return "";
+    }
+  };
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -123,9 +180,22 @@ export const QuestionsReview = () => {
             {questions.map((question) => (
               <Card key={question.id} className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <Badge variant={question.type === "mcq" ? "default" : "secondary"}>
-                    {question.type === "mcq" ? "MCQ" : "Open-Ended"}
-                  </Badge>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant={question.type === "mcq" ? "default" : "secondary"}>
+                      {question.type === "mcq" ? "MCQ" : "Open-Ended"}
+                    </Badge>
+                    {question.difficulty && (
+                      <Badge variant="outline" className={getDifficultyColor(question.difficulty)}>
+                        {question.difficulty.toUpperCase()}
+                      </Badge>
+                    )}
+                    {question.skill && (
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        <Award className="w-3 h-3" />
+                        {question.skill}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     {editingId === question.id ? (
                       <>
@@ -147,16 +217,52 @@ export const QuestionsReview = () => {
 
                 {editingId === question.id && editingQuestion ? (
                   <div className="space-y-4">
-                    <Textarea
-                      value={editingQuestion.question}
-                      onChange={(e) => setEditingQuestion({ ...editingQuestion, question: e.target.value })}
-                      className="min-h-[80px]"
-                    />
+                    <div>
+                      <Label>Question Text</Label>
+                      <Textarea
+                        value={editingQuestion.question}
+                        onChange={(e) => setEditingQuestion({ ...editingQuestion, question: e.target.value })}
+                        className="min-h-[80px] mt-2"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Skill</Label>
+                        <Input
+                          value={editingQuestion.skill || ""}
+                          onChange={(e) => setEditingQuestion({ ...editingQuestion, skill: e.target.value })}
+                          placeholder="e.g., Process analysis"
+                          className="mt-2"
+                        />
+                      </div>
+                      {editingQuestion.type === "mcq" && (
+                        <div>
+                          <Label>Difficulty</Label>
+                          <Select
+                            value={editingQuestion.difficulty || "medium"}
+                            onValueChange={(value: "easy" | "medium" | "hard") =>
+                              setEditingQuestion({ ...editingQuestion, difficulty: value })
+                            }
+                          >
+                            <SelectTrigger className="mt-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="easy">Easy</SelectItem>
+                              <SelectItem value="medium">Medium</SelectItem>
+                              <SelectItem value="hard">Hard</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+
                     {editingQuestion.type === "mcq" && (
                       <div className="space-y-2">
                         <Label>Options</Label>
                         {editingQuestion.options?.map((option, idx) => (
-                          <div key={idx} className="flex gap-2">
+                          <div key={idx} className="flex gap-2 items-center">
                             <Input
                               value={option}
                               onChange={(e) => {
@@ -191,6 +297,27 @@ export const QuestionsReview = () => {
                           <Plus className="w-4 h-4 mr-2" />
                           Add Option
                         </Button>
+
+                        <div className="mt-4">
+                          <Label>Correct Answer</Label>
+                          <Select
+                            value={editingQuestion.correct_answer || ""}
+                            onValueChange={(value) =>
+                              setEditingQuestion({ ...editingQuestion, correct_answer: value })
+                            }
+                          >
+                            <SelectTrigger className="mt-2">
+                              <SelectValue placeholder="Select correct answer" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {editingQuestion.options?.map((option, idx) => (
+                                <SelectItem key={idx} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -200,11 +327,21 @@ export const QuestionsReview = () => {
                     {question.type === "mcq" && question.options && (
                       <ul className="space-y-2">
                         {question.options.map((option, idx) => (
-                          <li key={idx} className="text-sm text-muted-foreground flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs">
+                          <li
+                            key={idx}
+                            className={`text-sm flex items-center gap-2 p-2 rounded ${
+                              option === question.correct_answer
+                                ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs shrink-0">
                               {String.fromCharCode(65 + idx)}
                             </span>
-                            {option}
+                            <span className="flex-1">{option}</span>
+                            {option === question.correct_answer && (
+                              <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -221,14 +358,14 @@ export const QuestionsReview = () => {
                   Add New Question
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Add New Question</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
                     <Label>Question Type</Label>
-                    <RadioGroup value={newQuestionType} onValueChange={(v) => setNewQuestionType(v as "mcq" | "open")}>
+                    <RadioGroup value={newQuestionType} onValueChange={(v) => setNewQuestionType(v as "mcq" | "open")} className="mt-2">
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="mcq" id="mcq" />
                         <Label htmlFor="mcq">Multiple Choice (MCQ)</Label>
@@ -246,8 +383,35 @@ export const QuestionsReview = () => {
                       value={newQuestionText}
                       onChange={(e) => setNewQuestionText(e.target.value)}
                       placeholder="Enter your question..."
-                      className="min-h-[100px]"
+                      className="min-h-[100px] mt-2"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Skill (Optional)</Label>
+                      <Input
+                        value={newSkill}
+                        onChange={(e) => setNewSkill(e.target.value)}
+                        placeholder="e.g., Process analysis"
+                        className="mt-2"
+                      />
+                    </div>
+                    {newQuestionType === "mcq" && (
+                      <div>
+                        <Label>Difficulty</Label>
+                        <Select value={newDifficulty} onValueChange={(v: "easy" | "medium" | "hard") => setNewDifficulty(v)}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="easy">Easy</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="hard">Hard</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
 
                   {newQuestionType === "mcq" && (
@@ -275,6 +439,22 @@ export const QuestionsReview = () => {
                           Add Option
                         </Button>
                       </div>
+
+                      <div className="mt-4">
+                        <Label>Correct Answer</Label>
+                        <Select value={newCorrectAnswer} onValueChange={setNewCorrectAnswer}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select correct answer" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {newOptions.filter(o => o.trim()).map((option, idx) => (
+                              <SelectItem key={idx} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   )}
 
@@ -294,8 +474,8 @@ export const QuestionsReview = () => {
           <div className="w-[30%] min-w-[300px]">
             <Card className="p-6 sticky top-0 space-y-6">
               <div>
-                <h3 className="font-semibold text-lg text-foreground mb-2">Job Description</h3>
-                <div className="space-y-2 text-sm">
+                <h3 className="font-semibold text-lg text-foreground mb-4">Question Summary</h3>
+                <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Total Questions:</span>
                     <span className="font-semibold text-foreground">{questions.length}</span>
@@ -310,6 +490,45 @@ export const QuestionsReview = () => {
                   </div>
                 </div>
               </div>
+
+              {(easyCount > 0 || mediumCount > 0 || hardCount > 0) && (
+                <div className="border-t border-border pt-4">
+                  <h4 className="font-medium text-sm text-foreground mb-3">Difficulty Breakdown</h4>
+                  <div className="space-y-2 text-sm">
+                    {easyCount > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-green-600 dark:text-green-400">Easy:</span>
+                        <span className="font-semibold">{easyCount}</span>
+                      </div>
+                    )}
+                    {mediumCount > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-yellow-600 dark:text-yellow-400">Medium:</span>
+                        <span className="font-semibold">{mediumCount}</span>
+                      </div>
+                    )}
+                    {hardCount > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-red-600 dark:text-red-400">Hard:</span>
+                        <span className="font-semibold">{hardCount}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {skills.length > 0 && (
+                <div className="border-t border-border pt-4">
+                  <h4 className="font-medium text-sm text-foreground mb-3">Skills Coverage</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {skills.map((skill, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <Button onClick={handleSaveAndContinue} className="w-full">
                 Save Questions & Continue
