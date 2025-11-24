@@ -13,13 +13,39 @@ serve(async (req) => {
   }
 
   try {
-    const { job_id, mcq, open_questions } = await req.json();
+    let { job_id, mcq, open_questions } = await req.json();
 
-    console.log('Received questions from n8n:', { job_id, mcq_count: mcq?.length, open_count: open_questions?.length });
+    console.log('Received questions from n8n:', { 
+      job_id, 
+      mcq_type: typeof mcq,
+      mcq_count: Array.isArray(mcq) ? mcq.length : 'not array',
+      open_type: typeof open_questions,
+      open_count: Array.isArray(open_questions) ? open_questions.length : 'not array'
+    });
 
     if (!job_id) {
       return new Response(
         JSON.stringify({ success: false, error: "Missing job_id" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Parse JSON strings if needed
+    try {
+      if (typeof mcq === 'string' && mcq.trim()) {
+        console.log('Parsing mcq from string...');
+        mcq = JSON.parse(mcq);
+        console.log('mcq parsed successfully, count:', mcq.length);
+      }
+      if (typeof open_questions === 'string' && open_questions.trim()) {
+        console.log('Parsing open_questions from string...');
+        open_questions = JSON.parse(open_questions);
+        console.log('open_questions parsed successfully, count:', open_questions.length);
+      }
+    } catch (parseError) {
+      console.error('Error parsing question data:', parseError);
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid question format" }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -60,6 +86,7 @@ serve(async (req) => {
           difficulty: q.difficulty
         });
       });
+      console.log(`Added ${mcq.length} MCQ questions`);
     }
 
     // Add open questions
@@ -72,6 +99,7 @@ serve(async (req) => {
           skill: q.skill
         });
       });
+      console.log(`Added ${open_questions.length} open questions`);
     }
 
     console.log('Transformed questions:', { count: questions.length });
