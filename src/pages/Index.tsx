@@ -166,7 +166,6 @@ const Index = () => {
         const { data: newJob, error: insertError } = await supabase
           .from('jobs')
           .insert({
-            id: activeJobId,
             description: activeJob.requirements,
           })
           .select()
@@ -197,8 +196,7 @@ const Index = () => {
       toast.success("Job Description saved!");
     } catch (error) {
       console.error('Error saving job:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(`Failed to save job description: ${errorMessage}`);
+      toast.error("Failed to save job description");
     }
   };
 
