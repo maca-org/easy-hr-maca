@@ -6,6 +6,7 @@ interface JobRequirementsProps {
   requirements: string;
   jobId: string;
   onUpdateRequirements: (requirements: string) => void;
+  onSave: () => void;
   onGenerateQuestions: () => void;
 }
 
@@ -13,6 +14,7 @@ export const JobRequirements = ({
   requirements,
   jobId,
   onUpdateRequirements,
+  onSave,
   onGenerateQuestions,
 }: JobRequirementsProps) => {
   return (
@@ -36,14 +38,22 @@ export const JobRequirements = ({
           className="min-h-[400px] resize-none border-border text-foreground placeholder:text-muted-foreground"
         />
 
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-end gap-3 mt-4">
+          <Button 
+            onClick={onSave}
+            disabled={!requirements.trim()}
+            variant="outline"
+            className="gap-2"
+          >
+            <Check className="w-4 h-4" />
+            Save
+          </Button>
           <Button 
             onClick={onGenerateQuestions}
             disabled={!requirements.trim()}
             className="gap-2"
           >
-            <Check className="w-4 h-4" />
-            Save & Generate Questions
+            Generate Questions
           </Button>
         </div>
       </div>
