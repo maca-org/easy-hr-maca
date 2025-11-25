@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit2, Trash2, Plus, X, CheckCircle2, Award, RefreshCw } from "lucide-react";
+import { Edit2, Trash2, Plus, X, CheckCircle2, Award, RefreshCw, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Question } from "./Index";
@@ -317,6 +317,14 @@ export const QuestionsReview = () => {
       <Header />
       <div className="flex flex-col">
         <div className="border-b border-border px-8 py-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/dashboard")}
+            className="mb-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Button>
           <h1 className="text-2xl font-bold text-foreground mb-2">Review & Edit Generated Questions</h1>
           <p className="text-muted-foreground">
             These questions were generated based on your Job Description. You can edit, delete, or add new questions.
