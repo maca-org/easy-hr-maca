@@ -13,6 +13,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 interface JobSidebarProps {
   jobs: Job[];
@@ -104,17 +110,19 @@ export const JobSidebar = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
-        {filteredJobs.map((job) => (
-          <div
-            key={job.id}
-            onClick={() => onSelectJob(job.id)}
-            className={`group p-3 rounded-lg transition-colors cursor-pointer ${
-              job.id === activeJobId
-                ? "bg-sidebar-accent border border-sidebar-border"
-                : "bg-sidebar-accent/50 hover:bg-sidebar-accent/80"
-            }`}
-          >
+      <TooltipProvider>
+        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
+          {filteredJobs.map((job) => (
+            <Tooltip key={job.id}>
+              <TooltipTrigger asChild>
+                <div
+                  onClick={() => onSelectJob(job.id)}
+                  className={`group p-3 rounded-lg transition-all cursor-pointer ${
+                    job.id === activeJobId
+                      ? "bg-sidebar-accent border border-sidebar-border border-l-4 border-l-primary"
+                      : "bg-sidebar-accent/50 hover:bg-sidebar-accent/80 border-l-4 border-l-transparent"
+                  }`}
+                >
             <div className="flex items-start justify-between gap-2 mb-2">
               {editingJobId === job.id ? (
                 <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
@@ -171,9 +179,21 @@ export const JobSidebar = ({
                 <span>{job.resumes.length} resume{job.resumes.length !== 1 ? 's' : ''}</span>
               )}
             </div>
-          </div>
-        ))}
-      </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-xs">
+                <div className="space-y-1">
+                  <p className="font-semibold">{job.title || "Job Description"}</p>
+                  <p className="text-xs text-muted-foreground">Created: {job.date}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {job.resumes.length} resume{job.resumes.length !== 1 ? 's' : ''} uploaded
+                  </p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
