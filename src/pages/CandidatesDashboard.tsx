@@ -16,6 +16,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { JobSidebar } from "@/components/JobSidebar";
+import { Job } from "./Index";
+import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface Candidate {
   id: string;
@@ -40,6 +44,46 @@ export default function CandidatesDashboard() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [jobTitle, setJobTitle] = useState("");
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchJobs = async () => {
+      const { data, error } = await supabase
+        .from("job_openings")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching jobs:", error);
+        return;
+      }
+
+      const formattedJobs: Job[] = (data || []).map((job) => ({
+        id: job.id,
+        title: job.title || "Job Description",
+        date: format(new Date(job.created_at), "dd MMM yyyy"),
+        requirements: job.description,
+        resumes: [],
+        questions: (job.questions as any) || { mcq: [], open: [] },
+      }));
+
+      setJobs(formattedJobs);
+    };
+
+    fetchJobs();
+  }, [user]);
 
   useEffect(() => {
     if (!jobId) return;
@@ -87,6 +131,62 @@ export default function CandidatesDashboard() {
     return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
   };
 
+  const handleSelectJob = (id: string) => {
+    navigate(`/candidates-dashboard?id=${id}`);
+  };
+
+  const handleAddJob = () => {
+    navigate("/");
+  };
+
+  const handleDeleteJob = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("job_openings")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setJobs(jobs.filter((job) => job.id !== id));
+      toast.success("Job deleted successfully");
+
+      if (id === jobId && jobs.length > 1) {
+        const nextJob = jobs.find((job) => job.id !== id);
+        if (nextJob) navigate(`/candidates-dashboard?id=${nextJob.id}`);
+      } else if (jobs.length === 1) {
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Error deleting job:", error);
+      toast.error("Failed to delete job");
+    }
+  };
+
+  const handleRenameJob = async (id: string, newTitle: string) => {
+    try {
+      const { error } = await supabase
+        .from("job_openings")
+        .update({ title: newTitle })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setJobs(jobs.map((job) =>
+        job.id === id ? { ...job, title: newTitle } : job
+      ));
+
+      if (id === jobId) {
+        setJobTitle(newTitle);
+      }
+
+      toast.success("Job renamed successfully");
+    } catch (error) {
+      console.error("Error renaming job:", error);
+      toast.error("Failed to rename job");
+    }
+  };
+
   const cvAbove80 = candidates.filter(c => c.cv_rate >= 80).length;
   const cvBelow80 = candidates.filter(c => c.cv_rate < 80).length;
 
@@ -112,8 +212,17 @@ export default function CandidatesDashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <AuthHeader />
-      <main className="flex-1 p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex flex-1">
+        <JobSidebar
+          jobs={jobs}
+          activeJobId={jobId || ""}
+          onSelectJob={handleSelectJob}
+          onAddJob={handleAddJob}
+          onDeleteJob={handleDeleteJob}
+          onRenameJob={handleRenameJob}
+        />
+        <main className="flex-1 p-6 overflow-auto">
+          <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center gap-4">
             <Button
@@ -342,8 +451,9 @@ export default function CandidatesDashboard() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </main>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
