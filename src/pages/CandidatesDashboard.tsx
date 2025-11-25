@@ -6,11 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, ChevronDown, ArrowLeft } from "lucide-react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -46,6 +41,7 @@ export default function CandidatesDashboard() {
   const [jobTitle, setJobTitle] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -309,7 +305,7 @@ export default function CandidatesDashboard() {
                     <div>Test Result</div>
                     <div>AI Interview</div>
                     <div className="text-center">Contact</div>
-                    <div></div>
+                    <div className="text-right">Details</div>
                   </div>
 
                   {/* Table Rows */}
@@ -325,12 +321,15 @@ export default function CandidatesDashboard() {
                         : overallScore >= 60
                         ? "text-yellow-600"
                         : "text-red-600";
+                    const isExpanded = expandedCandidateId === candidate.id;
 
                     return (
                       <div
                         key={candidate.id}
-                        className="grid grid-cols-[80px_200px_100px_100px_100px_80px_60px] gap-4 px-4 py-4 border rounded-lg hover:bg-muted/30 transition-colors items-center"
+                        className="border rounded-lg overflow-hidden"
                       >
+                        <div className="grid grid-cols-[80px_200px_100px_100px_100px_80px_60px] gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center"
+                        >
                         {/* Overall Score */}
                         <div className={`text-2xl font-bold ${scoreColor}`}>
                           {overallScore}%
@@ -406,49 +405,55 @@ export default function CandidatesDashboard() {
                           )}
                         </div>
 
-                        {/* Insights Dropdown */}
-                        <div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <ChevronDown className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-80">
-                              <div className="p-4 space-y-3">
-                                <div>
-                                  <h4 className="font-semibold text-sm text-green-600 mb-2">
-                                    ✓ Matches Job Description
-                                  </h4>
-                                  {candidate.insights.matching.length > 0 ? (
-                                    <ul className="space-y-1 text-sm text-muted-foreground">
-                                      {candidate.insights.matching.map((item, idx) => (
-                                        <li key={idx}>• {item}</li>
-                                      ))}
-                                    </ul>
-                                  ) : (
-                                    <p className="text-sm text-muted-foreground">-</p>
-                                  )}
-                                </div>
-                                <div>
-                                  <h4 className="font-semibold text-sm text-red-600 mb-2">
-                                    ✗ Does Not Match Job Description
-                                  </h4>
-                                  {candidate.insights.not_matching.length > 0 ? (
-                                    <ul className="space-y-1 text-sm text-muted-foreground">
-                                      {candidate.insights.not_matching.map((item, idx) => (
-                                        <li key={idx}>• {item}</li>
-                                      ))}
-                                    </ul>
-                                  ) : (
-                                    <p className="text-sm text-muted-foreground">-</p>
-                                  )}
-                                </div>
-                              </div>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        {/* Expand Button */}
+                        <div className="flex justify-end">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => setExpandedCandidateId(isExpanded ? null : candidate.id)}
+                          >
+                            <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          </Button>
                         </div>
                       </div>
+
+                      {/* Expanded Insights Section */}
+                      {isExpanded && (
+                        <div className="px-4 py-4 bg-muted/20 border-t">
+                          <div className="space-y-3">
+                            <div>
+                              <h4 className="font-semibold text-sm text-green-600 mb-2">
+                                ✓ Matches Job Description
+                              </h4>
+                              {candidate.insights.matching.length > 0 ? (
+                                <ul className="space-y-1 text-sm text-muted-foreground">
+                                  {candidate.insights.matching.map((item, idx) => (
+                                    <li key={idx}>• {item}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">-</p>
+                              )}
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm text-red-600 mb-2">
+                                ✗ Does Not Match Job Description
+                              </h4>
+                              {candidate.insights.not_matching.length > 0 ? (
+                                <ul className="space-y-1 text-sm text-muted-foreground">
+                                  {candidate.insights.not_matching.map((item, idx) => (
+                                    <li key={idx}>• {item}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">-</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     );
                   })}
                 </div>
