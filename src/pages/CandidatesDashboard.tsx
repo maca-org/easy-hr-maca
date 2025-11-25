@@ -102,7 +102,7 @@ export default function CandidatesDashboard() {
         <AuthHeader />
         <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
-            <p className="text-muted-foreground">Yükleniyor...</p>
+            <p className="text-muted-foreground">Loading...</p>
           </div>
         </main>
       </div>
@@ -125,7 +125,7 @@ export default function CandidatesDashboard() {
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-foreground">{jobTitle}</h1>
-              <p className="text-muted-foreground">Aday Değerlendirme Paneli</p>
+              <p className="text-muted-foreground">Candidate Evaluation Dashboard</p>
             </div>
           </div>
 
@@ -133,15 +133,15 @@ export default function CandidatesDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">CV Değerlendirme</CardTitle>
+                <CardTitle className="text-lg">CV Rating</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">%80 Üzeri:</span>
+                  <span className="text-sm text-muted-foreground">Above 80%:</span>
                   <span className="text-2xl font-bold text-green-600">{cvAbove80}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">%80 Altı:</span>
+                  <span className="text-sm text-muted-foreground">Below 80%:</span>
                   <span className="text-2xl font-bold text-red-600">{cvBelow80}</span>
                 </div>
               </CardContent>
@@ -149,15 +149,15 @@ export default function CandidatesDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Test Sonuçları</CardTitle>
+                <CardTitle className="text-lg">Test Results</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">%80 Üzeri:</span>
+                  <span className="text-sm text-muted-foreground">Above 80%:</span>
                   <span className="text-2xl font-bold text-green-600">{testAbove80}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">%80 Altı:</span>
+                  <span className="text-sm text-muted-foreground">Below 80%:</span>
                   <span className="text-2xl font-bold text-red-600">{testBelow80}</span>
                 </div>
               </CardContent>
@@ -165,15 +165,15 @@ export default function CandidatesDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Test Tamamlanma</CardTitle>
+                <CardTitle className="text-lg">Test Completion</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Tamamlandı:</span>
+                  <span className="text-sm text-muted-foreground">Completed:</span>
                   <span className="text-2xl font-bold text-blue-600">{completedTests}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Bekliyor:</span>
+                  <span className="text-sm text-muted-foreground">Pending:</span>
                   <span className="text-2xl font-bold text-orange-600">{pendingTests}</span>
                 </div>
               </CardContent>
@@ -183,23 +183,23 @@ export default function CandidatesDashboard() {
           {/* Candidates Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Adaylar</CardTitle>
+              <CardTitle>Candidates</CardTitle>
             </CardHeader>
             <CardContent>
               {candidates.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
-                  Henüz aday bulunmuyor
+                  No candidates yet
                 </p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {/* Table Header */}
-                  <div className="grid grid-cols-[80px_200px_100px_100px_100px_80px_60px] gap-4 px-4 py-2 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground">
-                    <div>Skor</div>
-                    <div>Aday</div>
-                    <div>CV Oranı</div>
-                    <div>Test Sonucu</div>
-                    <div>AI Görüşme</div>
-                    <div className="text-center">İletişim</div>
+                  <div className="grid grid-cols-[80px_200px_100px_100px_100px_80px_60px] gap-4 px-4 py-2 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground sticky top-0 z-10">
+                    <div>Score</div>
+                    <div>Candidate</div>
+                    <div>CV Rate</div>
+                    <div>Test Result</div>
+                    <div>AI Interview</div>
+                    <div className="text-center">Contact</div>
                     <div></div>
                   </div>
 
@@ -262,7 +262,7 @@ export default function CandidatesDashboard() {
                           {candidate.ai_interview_score !== null ? (
                             <span className="font-semibold">{candidate.ai_interview_score}%</span>
                           ) : (
-                            <span className="text-muted-foreground text-sm">Yakında</span>
+                            <span className="text-muted-foreground text-sm">Coming Soon</span>
                           )}
                         </div>
 
@@ -305,7 +305,7 @@ export default function CandidatesDashboard() {
                               <div className="p-4 space-y-3">
                                 <div>
                                   <h4 className="font-semibold text-sm text-green-600 mb-2">
-                                    ✓ İş Tanımına Uygun
+                                    ✓ Matches Job Description
                                   </h4>
                                   {candidate.insights.matching.length > 0 ? (
                                     <ul className="space-y-1 text-sm text-muted-foreground">
@@ -319,7 +319,7 @@ export default function CandidatesDashboard() {
                                 </div>
                                 <div>
                                   <h4 className="font-semibold text-sm text-red-600 mb-2">
-                                    ✗ İş Tanımına Uygun Değil
+                                    ✗ Does Not Match Job Description
                                   </h4>
                                   {candidate.insights.not_matching.length > 0 ? (
                                     <ul className="space-y-1 text-sm text-muted-foreground">
