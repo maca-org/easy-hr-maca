@@ -289,7 +289,7 @@ export const QuestionsReview = () => {
       if (error) throw error;
 
       toast.success("Questions saved successfully!");
-      navigate(`/?id=${jobId}`);
+      navigate(`/candidates-dashboard?id=${jobId}`);
     } catch (error) {
       console.error("Error saving questions:", error);
       toast.error("Failed to save questions");
@@ -680,7 +680,7 @@ export const QuestionsReview = () => {
               )}
 
               <Button onClick={handleSaveAndContinue} className="w-full">
-                Save Questions & Continue
+                Adayları Görüntüle
               </Button>
             </Card>
           </div>

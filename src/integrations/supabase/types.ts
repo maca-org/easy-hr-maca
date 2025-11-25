@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      candidates: {
+        Row: {
+          ai_interview_score: number | null
+          completed_test: boolean
+          created_at: string
+          cv_rate: number
+          email: string
+          id: string
+          insights: Json | null
+          job_id: string
+          name: string
+          phone: string | null
+          test_result: number | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_interview_score?: number | null
+          completed_test?: boolean
+          created_at?: string
+          cv_rate: number
+          email: string
+          id?: string
+          insights?: Json | null
+          job_id: string
+          name: string
+          phone?: string | null
+          test_result?: number | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_interview_score?: number | null
+          completed_test?: boolean
+          created_at?: string
+          cv_rate?: number
+          email?: string
+          id?: string
+          insights?: Json | null
+          job_id?: string
+          name?: string
+          phone?: string | null
+          test_result?: number | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       job_openings: {
         Row: {
           created_at: string
