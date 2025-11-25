@@ -680,7 +680,7 @@ export const QuestionsReview = () => {
               )}
 
               <Button onClick={handleSaveAndContinue} className="w-full">
-                Adayları Görüntüle
+                Save & Continue
               </Button>
             </Card>
           </div>
