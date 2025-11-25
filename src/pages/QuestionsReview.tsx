@@ -181,7 +181,7 @@ export const QuestionsReview = () => {
 
   if (!jobId) {
     return (
-      <div className="h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background">
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground">Job ID not found</p>
@@ -192,7 +192,7 @@ export const QuestionsReview = () => {
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background">
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-3">
@@ -206,7 +206,7 @@ export const QuestionsReview = () => {
 
   if (isPolling && questions.length === 0) {
     return (
-      <div className="h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background">
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4 max-w-md">
@@ -313,9 +313,9 @@ export const QuestionsReview = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex flex-col">
         <div className="border-b border-border px-8 py-6">
           <h1 className="text-2xl font-bold text-foreground mb-2">Review & Edit Generated Questions</h1>
           <p className="text-muted-foreground">
@@ -323,9 +323,9 @@ export const QuestionsReview = () => {
           </p>
         </div>
 
-        <div className="flex-1 overflow-hidden flex gap-6 px-8 py-6">
+        <div className="flex gap-6 px-8 py-6">
           {/* Left Section - Questions List */}
-          <div className="flex-1 overflow-y-auto pr-4 space-y-4">
+          <div className="flex-1 pr-4 space-y-4">
             {questions.map((question) => (
               <Card key={question.id} className="p-6">
                 <div className="flex items-start justify-between mb-4">
