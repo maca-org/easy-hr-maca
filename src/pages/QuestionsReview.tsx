@@ -289,7 +289,7 @@ export const QuestionsReview = () => {
       if (error) throw error;
 
       toast.success("Questions saved successfully!");
-      navigate(`/?id=${jobId}`);
+      navigate(`/candidate-details?id=${jobId}`);
     } catch (error) {
       console.error("Error saving questions:", error);
       toast.error("Failed to save questions");
