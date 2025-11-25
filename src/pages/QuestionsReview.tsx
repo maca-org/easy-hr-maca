@@ -319,11 +319,11 @@ export const QuestionsReview = () => {
         <div className="border-b border-border px-8 py-6">
           <Button
             variant="ghost"
+            size="icon"
             onClick={() => navigate(`/?id=${jobId}`)}
             className="mb-4"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Job Description
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl font-bold text-foreground mb-2">Review & Edit Generated Questions</h1>
           <p className="text-muted-foreground">
