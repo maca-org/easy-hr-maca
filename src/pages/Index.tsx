@@ -3,7 +3,7 @@ import { JobSidebar } from "@/components/JobSidebar";
 import { JobRequirements } from "@/components/JobRequirements";
 import { ResumeUpload } from "@/components/ResumeUpload";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { generateQuestions } from "@/utils/questionGenerator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +37,7 @@ export interface Job {
 
 const Index = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const [user, setUser] = useState<User | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -97,11 +98,17 @@ const Index = () => {
           questions: [],
         }));
         setJobs(mappedJobs);
+        
+        // Set active job from URL parameter if present
+        const jobIdFromUrl = searchParams.get("id");
+        if (jobIdFromUrl && mappedJobs.some(job => job.id === jobIdFromUrl)) {
+          setActiveJobId(jobIdFromUrl);
+        }
       }
     };
 
     fetchJobs();
-  }, [user]);
+  }, [user, searchParams]);
 
   // Check if active job has questions
   useEffect(() => {
