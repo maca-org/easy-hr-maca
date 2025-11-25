@@ -219,7 +219,19 @@ const Index = () => {
     toast.success("Job renamed successfully");
   };
 
-  const handleUploadResumes = (files: File[]) => {
+  const handleUploadResumes = async (files: File[]) => {
+    if (!user || !activeJobId) {
+      toast.error("Please select a job and ensure you're logged in");
+      return;
+    }
+
+    // Ensure job is saved to database first
+    const dbJobId = await handleSave();
+    if (!dbJobId) {
+      toast.error("Failed to save job before uploading resumes");
+      return;
+    }
+
     const newResumes: Resume[] = files.map((file) => ({
       id: Date.now().toString() + Math.random(),
       name: file.name.replace(/\.(pdf|docx?)$/i, ""),
@@ -227,11 +239,35 @@ const Index = () => {
       match: Math.floor(Math.random() * 20) + 70, // Temporary random match
     }));
 
-    setJobs(jobs.map((job) =>
-      job.id === activeJobId
-        ? { ...job, resumes: [...job.resumes, ...newResumes] }
-        : job
-    ));
+    // Save candidates to database
+    try {
+      const candidatesData = newResumes.map((resume) => ({
+        name: resume.name,
+        email: `${resume.name.toLowerCase().replace(/\s+/g, '.')}@example.com`, // Placeholder
+        job_id: dbJobId,
+        user_id: user.id,
+        cv_rate: resume.match,
+        completed_test: false,
+      }));
+
+      const { error } = await supabase
+        .from("candidates")
+        .insert(candidatesData);
+
+      if (error) throw error;
+
+      toast.success(`${files.length} candidate(s) added successfully`);
+
+      // Update local state
+      setJobs(jobs.map((job) =>
+        job.id === dbJobId
+          ? { ...job, resumes: [...job.resumes, ...newResumes] }
+          : job
+      ));
+    } catch (error) {
+      console.error("Error saving candidates:", error);
+      toast.error("Failed to save candidates");
+    }
   };
 
   const handleSave = async () => {
