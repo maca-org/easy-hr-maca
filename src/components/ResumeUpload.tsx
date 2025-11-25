@@ -114,7 +114,7 @@ export const ResumeUpload = ({ resumes, onUploadResumes }: ResumeUploadProps) =>
         )}
 
         <div className="space-y-2">
-          {resumes.map((resume, index) => (
+          {[...resumes].sort((a, b) => b.match - a.match).map((resume, index) => (
             <div
               key={resume.id}
               className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"

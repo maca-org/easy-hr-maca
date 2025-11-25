@@ -313,7 +313,11 @@ export default function CandidatesDashboard() {
                   </div>
 
                   {/* Table Rows */}
-                  {candidates.map((candidate) => {
+                  {[...candidates].sort((a, b) => {
+                    const scoreA = calculateOverallScore(a);
+                    const scoreB = calculateOverallScore(b);
+                    return scoreB - scoreA;
+                  }).map((candidate) => {
                     const overallScore = calculateOverallScore(candidate);
                     const scoreColor =
                       overallScore >= 80
