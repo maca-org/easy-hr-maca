@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AuthHeader from "@/components/AuthHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -42,6 +42,7 @@ export default function CandidatesDashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [user, setUser] = useState<any>(null);
   const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null);
+  const [reanalyzingCandidates, setReanalyzingCandidates] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -180,6 +181,45 @@ export default function CandidatesDashboard() {
     } catch (error) {
       console.error("Error renaming job:", error);
       toast.error("Failed to rename job");
+    }
+  };
+
+  const handleReanalyzeCV = async (candidateId: string) => {
+    try {
+      setReanalyzingCandidates(prev => new Set(prev).add(candidateId));
+      
+      // Get candidate data
+      const candidate = candidates.find(c => c.id === candidateId);
+      if (!candidate) {
+        toast.error("Candidate not found");
+        return;
+      }
+
+      // Get job description
+      const { data: jobData, error: jobError } = await supabase
+        .from("job_openings")
+        .select("description")
+        .eq("id", jobId)
+        .single();
+
+      if (jobError || !jobData) {
+        toast.error("Failed to fetch job description");
+        return;
+      }
+
+      // Note: We don't have the original CV file stored, so this would need to be uploaded again
+      // For now, we'll show an error message
+      toast.error("CV file not available. Please upload the CV again to re-analyze.");
+      
+    } catch (error) {
+      console.error("Error re-analyzing CV:", error);
+      toast.error("Failed to re-analyze CV");
+    } finally {
+      setReanalyzingCandidates(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(candidateId);
+        return newSet;
+      });
     }
   };
 
@@ -422,6 +462,19 @@ export default function CandidatesDashboard() {
                       {isExpanded && (
                         <div className="px-4 py-4 bg-muted/20 border-t">
                           <div className="space-y-3">
+                            {/* Re-analyze Button */}
+                            <div className="flex justify-end mb-3">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleReanalyzeCV(candidate.id)}
+                                disabled={reanalyzingCandidates.has(candidate.id)}
+                              >
+                                <RefreshCw className={`h-4 w-4 mr-2 ${reanalyzingCandidates.has(candidate.id) ? 'animate-spin' : ''}`} />
+                                {reanalyzingCandidates.has(candidate.id) ? 'Re-analyzing...' : 'Re-analyze CV'}
+                              </Button>
+                            </div>
+
                             <div>
                               <h4 className="font-semibold text-sm text-green-600 mb-2">
                                 ✓ Matches Job Description
