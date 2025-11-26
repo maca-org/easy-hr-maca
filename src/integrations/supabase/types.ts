@@ -20,12 +20,16 @@ export type Database = {
           completed_test: boolean
           created_at: string
           cv_rate: number
+          cv_text: string | null
           email: string
+          extracted_data: Json | null
           id: string
+          improvement_tips: Json | null
           insights: Json | null
           job_id: string
           name: string
           phone: string | null
+          relevance_analysis: Json | null
           test_result: number | null
           title: string | null
           updated_at: string
@@ -36,12 +40,16 @@ export type Database = {
           completed_test?: boolean
           created_at?: string
           cv_rate: number
+          cv_text?: string | null
           email: string
+          extracted_data?: Json | null
           id?: string
+          improvement_tips?: Json | null
           insights?: Json | null
           job_id: string
           name: string
           phone?: string | null
+          relevance_analysis?: Json | null
           test_result?: number | null
           title?: string | null
           updated_at?: string
@@ -52,12 +60,16 @@ export type Database = {
           completed_test?: boolean
           created_at?: string
           cv_rate?: number
+          cv_text?: string | null
           email?: string
+          extracted_data?: Json | null
           id?: string
+          improvement_tips?: Json | null
           insights?: Json | null
           job_id?: string
           name?: string
           phone?: string | null
+          relevance_analysis?: Json | null
           test_result?: number | null
           title?: string | null
           updated_at?: string
