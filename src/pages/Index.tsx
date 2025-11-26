@@ -305,8 +305,8 @@ const Index = () => {
           reader.readAsDataURL(file);
           const cv_base64 = await base64Promise;
 
-          // Trigger CV analysis
-          const { error: analysisError } = await supabase.functions.invoke('analyze-cv', {
+          // Trigger CV analysis with Lovable AI
+          const { error: analysisError } = await supabase.functions.invoke('analyze-cv-with-ai', {
             body: {
               candidate_id: candidate.id,
               job_id: dbJobId,
