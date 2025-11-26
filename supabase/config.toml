@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.receive-questions]
 verify_jwt = false
+
+[functions.analyze-cv]
+verify_jwt = false
+
+[functions.receive-cv-analysis]
+verify_jwt = false
