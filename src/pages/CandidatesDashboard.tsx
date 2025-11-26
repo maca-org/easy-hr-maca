@@ -207,9 +207,58 @@ export default function CandidatesDashboard() {
         return;
       }
 
-      // Note: We don't have the original CV file stored, so this would need to be uploaded again
-      // For now, we'll show an error message
-      toast.error("CV file not available. Please upload the CV again to re-analyze.");
+      // Get CV file path
+      const { data: candidateData, error: candidateError } = await supabase
+        .from("candidates")
+        .select("cv_file_path")
+        .eq("id", candidateId)
+        .single();
+
+      if (candidateError || !candidateData?.cv_file_path) {
+        toast.error("CV file not found. Please upload the CV again.");
+        return;
+      }
+
+      // Download CV file from storage
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from('cv-files')
+        .download(candidateData.cv_file_path);
+
+      if (downloadError || !fileData) {
+        toast.error("Failed to download CV file");
+        return;
+      }
+
+      // Convert to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const base64 = reader.result as string;
+          const base64Data = base64.split(',')[1];
+          resolve(base64Data);
+        };
+        reader.onerror = reject;
+      });
+      
+      reader.readAsDataURL(fileData);
+      const cv_base64 = await base64Promise;
+
+      // Trigger re-analysis
+      const { error: analysisError } = await supabase.functions.invoke('analyze-cv', {
+        body: {
+          candidate_id: candidateId,
+          job_id: jobId,
+          cv_base64,
+          job_description: jobData.description,
+        },
+      });
+
+      if (analysisError) {
+        toast.error("Failed to re-analyze CV");
+        return;
+      }
+
+      toast.success("CV re-analysis started. Results will update shortly.");
       
     } catch (error) {
       console.error("Error re-analyzing CV:", error);

@@ -241,14 +241,30 @@ const Index = () => {
 
     // Save candidates to database and trigger CV analysis
     try {
-      const candidatesData = newResumes.map((resume) => ({
-        name: resume.name,
-        email: `${resume.name.toLowerCase().replace(/\s+/g, '.')}@example.com`, // Placeholder
-        job_id: dbJobId,
-        user_id: user.id,
-        cv_rate: 0, // Will be updated after analysis
-        completed_test: false,
-      }));
+      const candidatesData = await Promise.all(
+        files.map(async (file, index) => {
+          // Upload CV file to storage
+          const filePath = `${user.id}/${dbJobId}/${Date.now()}_${file.name}`;
+          const { error: uploadError } = await supabase.storage
+            .from('cv-files')
+            .upload(filePath, file);
+
+          if (uploadError) {
+            console.error('Error uploading CV file:', uploadError);
+            throw uploadError;
+          }
+
+          return {
+            name: newResumes[index].name,
+            email: `${newResumes[index].name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            job_id: dbJobId,
+            user_id: user.id,
+            cv_rate: 0,
+            completed_test: false,
+            cv_file_path: filePath,
+          };
+        })
+      );
 
       const { data: insertedCandidates, error } = await supabase
         .from("candidates")

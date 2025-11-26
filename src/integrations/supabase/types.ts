@@ -19,6 +19,7 @@ export type Database = {
           ai_interview_score: number | null
           completed_test: boolean
           created_at: string
+          cv_file_path: string | null
           cv_rate: number
           cv_text: string | null
           email: string
@@ -39,6 +40,7 @@ export type Database = {
           ai_interview_score?: number | null
           completed_test?: boolean
           created_at?: string
+          cv_file_path?: string | null
           cv_rate: number
           cv_text?: string | null
           email: string
@@ -59,6 +61,7 @@ export type Database = {
           ai_interview_score?: number | null
           completed_test?: boolean
           created_at?: string
+          cv_file_path?: string | null
           cv_rate?: number
           cv_text?: string | null
           email?: string
