@@ -35,15 +35,15 @@ serve(async (req) => {
 
     console.log('Sending CV to n8n for analysis:', { candidate_id, job_id });
 
-    // Send to n8n webhook
+    // Send to n8n webhook with the format it expects: cv (base64) and job_description
     const n8nResponse = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         candidate_id,
         job_id,
-        cv_base64,
-        job_description
+        cv: cv_base64, // n8n expects 'cv' field
+        job_description // n8n expects 'job_description' field
       })
     });
 
