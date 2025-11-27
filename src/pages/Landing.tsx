@@ -29,12 +29,12 @@ const Landing = () => {
           </nav>
 
           <div className="flex items-center gap-4">
-            <Link to="/">
+            <Link to="/auth">
               <Button variant="ghost" className="text-foreground">
                 Sign In
               </Button>
             </Link>
-            <Link to="/">
+            <Link to="/auth">
               <Button className="bg-primary hover:bg-primary/90">
                 Get Started
               </Button>
@@ -61,12 +61,12 @@ const Landing = () => {
             </p>
 
             <div className="flex flex-wrap gap-4">
-              <Link to="/">
+              <Link to="/auth">
                 <Button size="lg" className="bg-primary hover:bg-primary/90">
                   Upload CV
                 </Button>
               </Link>
-              <Link to="/">
+              <Link to="/auth">
                 <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/10">
                   Import from Excel
                 </Button>
@@ -109,7 +109,7 @@ const Landing = () => {
                 </p>
               </div>
 
-              <Link to="/">
+              <Link to="/auth">
                 <Button variant="link" className="text-pink hover:text-pink/80 p-0 group/btn">
                   Get started 
                   <span className="ml-2 group-hover/btn:translate-x-1 transition-transform inline-block">→</span>
@@ -131,7 +131,7 @@ const Landing = () => {
                 </p>
               </div>
 
-              <Link to="/">
+              <Link to="/auth">
                 <Button variant="link" className="text-primary hover:text-primary/80 p-0 group/btn">
                   Get started 
                   <span className="ml-2 group-hover/btn:translate-x-1 transition-transform inline-block">→</span>
@@ -206,12 +206,12 @@ const Landing = () => {
               Join hundreds of HR teams who trust Easy HR for their recruitment needs.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/">
+              <Link to="/auth">
                 <Button size="lg" variant="secondary" className="bg-white text-primary hover:bg-white/90">
                   Get Started Free
                 </Button>
               </Link>
-              <Link to="/">
+              <Link to="/auth">
                 <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
                   Schedule Demo
                 </Button>
