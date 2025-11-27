@@ -232,7 +232,7 @@ export default function CandidatesDashboard() {
           <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">{jobTitle}</h1>
+            
           </div>
 
           {/* Stats Cards */}
@@ -252,12 +252,7 @@ export default function CandidatesDashboard() {
                     <span className="text-2xl font-bold text-red-600">{cvBelow80}</span>
                   </div>
                 </div>
-                <Button
-                  onClick={() => navigate(`/?id=${jobId}`)}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                >
+                <Button onClick={() => navigate(`/?id=${jobId}`)} variant="outline" size="sm" className="w-full">
                   View Job Description
                 </Button>
               </CardContent>
