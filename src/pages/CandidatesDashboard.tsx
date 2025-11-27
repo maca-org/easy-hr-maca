@@ -251,7 +251,7 @@ export default function CandidatesDashboard() {
     // Fetch job description once
     const { data: jobData } = await supabase
       .from("job_openings")
-      .select("description")
+      .select("description, title")
       .eq("id", jobId)
       .single();
 
@@ -321,7 +321,8 @@ export default function CandidatesDashboard() {
             candidate_id: newCandidate.id,
             job_id: jobId,
             cv_text: cvText,
-            job_description: jobData.description
+            job_description: jobData.description,
+            job_title: jobData.title
           }
         });
 
