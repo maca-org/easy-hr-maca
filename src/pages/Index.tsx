@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { JobSidebar } from "@/components/JobSidebar";
 import { JobRequirements } from "@/components/JobRequirements";
 import { ResumeUpload } from "@/components/ResumeUpload";
+import { UploadQueue } from "@/components/UploadQueue";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { generateQuestions } from "@/utils/questionGenerator";
@@ -10,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { extractTextFromPDF } from "@/utils/pdfExtractor";
+import { useUploadQueue } from "@/hooks/useUploadQueue";
 
 export interface Resume {
   id: string;
@@ -45,6 +48,8 @@ const Index = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [activeJobId, setActiveJobId] = useState<string>("");
   const [hasQuestions, setHasQuestions] = useState<boolean>(false);
+  const [uploading, setUploading] = useState(false);
+  const uploadQueue = useUploadQueue();
   const [candidatesStats, setCandidatesStats] = useState({
     cvAbove80: 0,
     cvBelow80: 0,
@@ -319,42 +324,139 @@ const Index = () => {
       return;
     }
 
-    const newResumes: Resume[] = files.map((file) => ({
+    const pdfFiles = Array.from(files).filter(file => file.type === "application/pdf");
+    if (pdfFiles.length === 0) {
+      toast.error("Please upload PDF files only");
+      return;
+    }
+
+    // Add files to queue
+    const queueItems = uploadQueue.addToQueue(pdfFiles);
+    setUploading(true);
+
+    // Fetch job description
+    const { data: jobData } = await supabase
+      .from("job_openings")
+      .select("description")
+      .eq("id", dbJobId)
+      .single();
+
+    if (!jobData) {
+      toast.error("Job not found");
+      setUploading(false);
+      queueItems.forEach(item => {
+        uploadQueue.updateQueueItem(item.id, { status: 'failed', error: 'Job not found' });
+      });
+      return;
+    }
+
+    // Process all files in parallel
+    const uploadPromises = pdfFiles.map(async (file, index) => {
+      const queueItem = queueItems[index];
+      
+      try {
+        const candidateName = file.name.replace('.pdf', '');
+
+        // Update queue: extracting
+        uploadQueue.updateQueueItem(queueItem.id, { 
+          status: 'extracting', 
+          progress: 20 
+        });
+
+        // Extract text from PDF
+        const cvText = await extractTextFromPDF(file);
+
+        // Update queue: extracted
+        uploadQueue.updateQueueItem(queueItem.id, { 
+          progress: 40 
+        });
+
+        // Insert candidate into database
+        const { data: newCandidate, error } = await supabase
+          .from("candidates")
+          .insert({
+            job_id: dbJobId,
+            user_id: user.id,
+            name: candidateName,
+            email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            cv_rate: 0,
+            cv_text: cvText
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Update queue: analyzing
+        uploadQueue.updateQueueItem(queueItem.id, { 
+          status: 'analyzing', 
+          progress: 60 
+        });
+
+        // Call analyze-cv edge function
+        const { error: analyzeError } = await supabase.functions.invoke('analyze-cv', {
+          body: {
+            candidate_id: newCandidate.id,
+            job_id: dbJobId,
+            cv_text: cvText,
+            job_description: jobData.description
+          }
+        });
+
+        if (analyzeError) {
+          throw analyzeError;
+        }
+
+        // Update queue: completed
+        uploadQueue.updateQueueItem(queueItem.id, { 
+          status: 'completed', 
+          progress: 100 
+        });
+
+        return { success: true, fileName: file.name };
+
+      } catch (error) {
+        console.error("Error uploading CV:", error);
+        
+        // Update queue: failed
+        uploadQueue.updateQueueItem(queueItem.id, { 
+          status: 'failed', 
+          error: error instanceof Error ? error.message : 'Upload failed' 
+        });
+
+        return { success: false, fileName: file.name, error };
+      }
+    });
+
+    // Wait for all uploads to complete
+    const results = await Promise.allSettled(uploadPromises);
+    
+    // Show summary toast
+    const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+    const failCount = results.length - successCount;
+    
+    if (successCount > 0) {
+      toast.success(`${successCount} CV(s) uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ''}`);
+    }
+    if (failCount > 0 && successCount === 0) {
+      toast.error(`Failed to upload ${failCount} CV(s)`);
+    }
+
+    setUploading(false);
+
+    // Update local state
+    const newResumes: Resume[] = pdfFiles.map((file) => ({
       id: Date.now().toString() + Math.random(),
-      name: file.name.replace(/\.(pdf|docx?)$/i, ""),
+      name: file.name.replace('.pdf', ''),
       filename: file.name,
-      match: Math.floor(Math.random() * 36) + 60, // Random 60-95
+      match: 0,
     }));
 
-    // Save candidates to database with random cv_rate
-    try {
-      const candidatesData = files.map((file, index) => ({
-        name: newResumes[index].name,
-        email: `${newResumes[index].name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-        job_id: dbJobId,
-        user_id: user.id,
-        cv_rate: Math.floor(Math.random() * 36) + 60, // Random 60-95
-        completed_test: false,
-      }));
-
-      const { error } = await supabase
-        .from("candidates")
-        .insert(candidatesData);
-
-      if (error) throw error;
-
-      toast.success(`${files.length} candidate(s) added successfully`);
-
-      // Update local state
-      setJobs(jobs.map((job) =>
-        job.id === dbJobId
-          ? { ...job, resumes: [...job.resumes, ...newResumes] }
-          : job
-      ));
-    } catch (error) {
-      console.error("Error saving candidates:", error);
-      toast.error("Failed to save candidates");
-    }
+    setJobs(jobs.map((job) =>
+      job.id === dbJobId
+        ? { ...job, resumes: [...job.resumes, ...newResumes] }
+        : job
+    ));
   };
 
   const handleSave = async () => {
@@ -572,6 +674,13 @@ const Index = () => {
           </div>
         )}
       </div>
+      <UploadQueue
+        queue={uploadQueue.queue}
+        isOpen={uploadQueue.isQueueOpen}
+        onClose={() => uploadQueue.setIsQueueOpen(false)}
+        onClearCompleted={uploadQueue.clearCompleted}
+        onClearAll={uploadQueue.clearAll}
+      />
     </div>
   );
 };
