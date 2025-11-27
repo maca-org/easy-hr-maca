@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AuthHeader from "@/components/AuthHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -42,6 +42,7 @@ export default function CandidatesDashboard() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [sortBy, setSortBy] = useState<"score" | "name" | "date">("score");
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const fetchUser = async () => {
@@ -82,6 +83,15 @@ export default function CandidatesDashboard() {
     };
     fetchJobs();
   }, [user]);
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   useEffect(() => {
     if (!jobId) return;
     const fetchData = async () => {
@@ -280,6 +290,11 @@ export default function CandidatesDashboard() {
     e.preventDefault();
     setIsDragging(false);
   };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const sortedCandidates = [...candidates].sort((a, b) => {
     switch (sortBy) {
       case "score":
@@ -550,5 +565,16 @@ export default function CandidatesDashboard() {
           </div>
         </main>
       </div>
+
+      {/* Floating Scroll to Top Button */}
+      {showScrollTop && (
+        <Button
+          onClick={scrollToTop}
+          size="icon"
+          className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg animate-fade-in z-50"
+        >
+          <ArrowUp className="h-5 w-5" />
+        </Button>
+      )}
     </div>;
 }
