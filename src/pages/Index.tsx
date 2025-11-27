@@ -478,15 +478,25 @@ const Index = () => {
                       Test Results
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Above 80%:</span>
-                      <span className="font-semibold text-green-600">{candidatesStats.testAbove80}</span>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Above 80%:</span>
+                        <span className="font-semibold text-green-600">{candidatesStats.testAbove80}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Below 80%:</span>
+                        <span className="font-semibold text-yellow-600">{candidatesStats.testBelow80}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Below 80%:</span>
-                      <span className="font-semibold text-yellow-600">{candidatesStats.testBelow80}</span>
-                    </div>
+                    <Button
+                      onClick={() => navigate(`/questions-review?id=${activeJobId}`)}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      Send Candidate Test
+                    </Button>
                   </CardContent>
                 </Card>
 
