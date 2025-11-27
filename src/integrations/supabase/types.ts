@@ -17,6 +17,10 @@ export type Database = {
       candidates: {
         Row: {
           ai_interview_score: number | null
+          assessment_due_date: string | null
+          assessment_link: string | null
+          assessment_sent: boolean
+          assessment_sent_at: string | null
           completed_test: boolean
           created_at: string
           cv_file_path: string | null
@@ -38,6 +42,10 @@ export type Database = {
         }
         Insert: {
           ai_interview_score?: number | null
+          assessment_due_date?: string | null
+          assessment_link?: string | null
+          assessment_sent?: boolean
+          assessment_sent_at?: string | null
           completed_test?: boolean
           created_at?: string
           cv_file_path?: string | null
@@ -59,6 +67,10 @@ export type Database = {
         }
         Update: {
           ai_interview_score?: number | null
+          assessment_due_date?: string | null
+          assessment_link?: string | null
+          assessment_sent?: boolean
+          assessment_sent_at?: string | null
           completed_test?: boolean
           created_at?: string
           cv_file_path?: string | null
