@@ -241,15 +241,25 @@ export default function CandidatesDashboard() {
               <CardHeader>
                 <CardTitle className="text-lg">CV Rating</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Above 80%:</span>
-                  <span className="text-2xl font-bold text-green-600">{cvAbove80}</span>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Above 80%:</span>
+                    <span className="text-2xl font-bold text-green-600">{cvAbove80}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Below 80%:</span>
+                    <span className="text-2xl font-bold text-red-600">{cvBelow80}</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Below 80%:</span>
-                  <span className="text-2xl font-bold text-red-600">{cvBelow80}</span>
-                </div>
+                <Button
+                  onClick={() => navigate(`/?id=${jobId}`)}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  View Job Description
+                </Button>
               </CardContent>
             </Card>
 
