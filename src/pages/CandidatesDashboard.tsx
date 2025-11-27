@@ -215,29 +215,26 @@ export default function CandidatesDashboard() {
       setGeneratingQuestions(false);
     }
   };
-
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || !jobId || !user) return;
-
     const pdfFiles = Array.from(files).filter(file => file.type === "application/pdf");
-    
     if (pdfFiles.length === 0) {
       toast.error("Please upload PDF files only");
       return;
     }
-
     setUploading(true);
-    
     for (const file of pdfFiles) {
       try {
         // Generate random CV rate between 60-95
         const cvRate = Math.floor(Math.random() * 36) + 60;
-        
+
         // Extract candidate name from filename (remove .pdf extension)
         const candidateName = file.name.replace('.pdf', '');
-        
+
         // Insert candidate into database
-        const { error } = await supabase.from("candidates").insert({
+        const {
+          error
+        } = await supabase.from("candidates").insert({
           job_id: jobId,
           user_id: user.id,
           name: candidateName,
@@ -245,48 +242,44 @@ export default function CandidatesDashboard() {
           cv_rate: cvRate,
           cv_text: "CV content extracted"
         });
-
         if (error) throw error;
       } catch (error) {
         console.error("Error uploading CV:", error);
         toast.error(`Failed to upload ${file.name}`);
       }
     }
-
     setUploading(false);
     toast.success(`${pdfFiles.length} CV(s) uploaded successfully`);
-    
+
     // Refresh candidates list
-    const { data: candidatesData } = await supabase
-      .from("candidates")
-      .select("*")
-      .eq("job_id", jobId)
-      .order("created_at", { ascending: false });
-    
+    const {
+      data: candidatesData
+    } = await supabase.from("candidates").select("*").eq("job_id", jobId).order("created_at", {
+      ascending: false
+    });
     if (candidatesData) {
       setCandidates(candidatesData.map(c => ({
         ...c,
-        insights: c.insights as any || { matching: [], not_matching: [] }
+        insights: c.insights as any || {
+          matching: [],
+          not_matching: []
+        }
       })));
     }
   };
-
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     handleFileUpload(e.dataTransfer.files);
   };
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
   };
-
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
   };
-
   const sortedCandidates = [...candidates].sort((a, b) => {
     switch (sortBy) {
       case "score":
@@ -299,7 +292,6 @@ export default function CandidatesDashboard() {
         return 0;
     }
   });
-
   const cvAbove80 = candidates.filter(c => c.cv_rate >= 80).length;
   const cvBelow80 = candidates.filter(c => c.cv_rate < 80).length;
   const testAbove80 = candidates.filter(c => c.test_result !== null && c.test_result >= 80).length;
@@ -324,29 +316,7 @@ export default function CandidatesDashboard() {
           <div className="max-w-7xl mx-auto space-y-6">
           {/* Breadcrumb Navigation */}
           <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink 
-                  onClick={() => navigate("/")}
-                  className="cursor-pointer hover:text-foreground"
-                >
-                  Home
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink 
-                  onClick={() => navigate(`/?id=${jobId}#job-description`)}
-                  className="cursor-pointer hover:text-foreground"
-                >
-                  {jobTitle || "Job Opening"}
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Candidates</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
+            
           </Breadcrumb>
 
           {/* Header */}
@@ -433,12 +403,7 @@ export default function CandidatesDashboard() {
           </div>
 
           {/* Candidates Table */}
-          <Card 
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            className={`transition-colors ${isDragging ? 'border-primary bg-primary/5' : ''}`}
-          >
+          <Card onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave} className={`transition-colors ${isDragging ? 'border-primary bg-primary/5' : ''}`}>
             <CardHeader className="space-y-4 pb-4">
               <div className="flex flex-row items-center justify-between">
                 <div className="space-y-1">
@@ -446,28 +411,15 @@ export default function CandidatesDashboard() {
                   <p className="text-sm text-muted-foreground font-normal">upload cv</p>
                 </div>
                 <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/pdf"
-                    multiple
-                    onChange={(e) => handleFileUpload(e.target.files)}
-                    className="hidden"
-                  />
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    variant="outline"
-                    size="sm"
-                    disabled={uploading}
-                  >
+                  <input ref={fileInputRef} type="file" accept="application/pdf" multiple onChange={e => handleFileUpload(e.target.files)} className="hidden" />
+                  <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" disabled={uploading}>
                     <Upload className="h-4 w-4 mr-2" />
                     {uploading ? "Uploading..." : "Choose Files"}
                   </Button>
                 </div>
               </div>
               
-              {candidates.length > 0 && (
-                <div className="flex items-center gap-2">
+              {candidates.length > 0 && <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Sort by:</span>
                   <Select value={sortBy} onValueChange={(value: "score" | "name" | "date") => setSortBy(value)}>
                     <SelectTrigger className="w-[180px]">
@@ -479,8 +431,7 @@ export default function CandidatesDashboard() {
                       <SelectItem value="date">Upload Date (Newest)</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-              )}
+                </div>}
             </CardHeader>
             <CardContent>
               {candidates.length === 0 ? <div className="text-center py-8">
