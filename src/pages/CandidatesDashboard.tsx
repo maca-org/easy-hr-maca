@@ -262,15 +262,20 @@ export default function CandidatesDashboard() {
               <CardHeader>
                 <CardTitle className="text-lg">Test Results</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Above 80%:</span>
-                  <span className="text-2xl font-bold text-green-600">{testAbove80}</span>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Above 80%:</span>
+                    <span className="text-2xl font-bold text-green-600">{testAbove80}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Below 80%:</span>
+                    <span className="text-2xl font-bold text-red-600">{testBelow80}</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Below 80%:</span>
-                  <span className="text-2xl font-bold text-red-600">{testBelow80}</span>
-                </div>
+                <Button onClick={() => navigate(`/questions-review?id=${jobId}`)} variant="outline" size="sm" className="w-full">
+                  Send Candidate Test
+                </Button>
               </CardContent>
             </Card>
 
@@ -278,15 +283,20 @@ export default function CandidatesDashboard() {
               <CardHeader>
                 <CardTitle className="text-lg">AI Pre-Interview</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Above 80%:</span>
-                  <span className="text-2xl font-bold text-green-600">{testAbove80}</span>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Completed:</span>
+                    <span className="text-2xl font-bold text-green-600">{completedTests}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Pending:</span>
+                    <span className="text-2xl font-bold text-red-600">{pendingTests}</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Below 80%:</span>
-                  <span className="text-2xl font-bold text-red-600">{testBelow80}</span>
-                </div>
+                <Button onClick={() => {}} variant="outline" size="sm" className="w-full">
+                  Make Pre-Interviews
+                </Button>
               </CardContent>
             </Card>
 
