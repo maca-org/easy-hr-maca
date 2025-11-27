@@ -37,7 +37,7 @@ serve(async (req) => {
       body: JSON.stringify({
         candidate_id,
         job_id,
-        cv_text,
+        cv: cv_text,
         job_description,
         callback_url
       }),
