@@ -42,7 +42,6 @@ export default function CandidatesDashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [user, setUser] = useState<any>(null);
   const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null);
-  const [reanalyzingCandidates, setReanalyzingCandidates] = useState<Set<string>>(new Set());
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
 
   useEffect(() => {
@@ -238,93 +237,6 @@ export default function CandidatesDashboard() {
     }
   };
 
-  const handleReanalyzeCV = async (candidateId: string) => {
-    try {
-      setReanalyzingCandidates(prev => new Set(prev).add(candidateId));
-      
-      // Get candidate data
-      const candidate = candidates.find(c => c.id === candidateId);
-      if (!candidate) {
-        toast.error("Candidate not found");
-        return;
-      }
-
-      // Get job description
-      const { data: jobData, error: jobError } = await supabase
-        .from("job_openings")
-        .select("description")
-        .eq("id", jobId)
-        .single();
-
-      if (jobError || !jobData) {
-        toast.error("Failed to fetch job description");
-        return;
-      }
-
-      // Get CV file path
-      const { data: candidateData, error: candidateError } = await supabase
-        .from("candidates")
-        .select("cv_file_path")
-        .eq("id", candidateId)
-        .single();
-
-      if (candidateError || !candidateData?.cv_file_path) {
-        toast.error("CV file not found. Please upload the CV again.");
-        return;
-      }
-
-      // Download CV file from storage
-      const { data: fileData, error: downloadError } = await supabase.storage
-        .from('cv-files')
-        .download(candidateData.cv_file_path);
-
-      if (downloadError || !fileData) {
-        toast.error("Failed to download CV file");
-        return;
-      }
-
-      // Convert to base64
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => {
-          const base64 = reader.result as string;
-          const base64Data = base64.split(',')[1];
-          resolve(base64Data);
-        };
-        reader.onerror = reject;
-      });
-      
-      reader.readAsDataURL(fileData);
-      const cv_base64 = await base64Promise;
-
-      // Trigger re-analysis
-      const { error: analysisError } = await supabase.functions.invoke('analyze-cv', {
-        body: {
-          candidate_id: candidateId,
-          job_id: jobId,
-          cv_base64,
-          job_description: jobData.description,
-        },
-      });
-
-      if (analysisError) {
-        toast.error("Failed to re-analyze CV");
-        return;
-      }
-
-      toast.success("CV re-analysis started. Results will update shortly.");
-      
-    } catch (error) {
-      console.error("Error re-analyzing CV:", error);
-      toast.error("Failed to re-analyze CV");
-    } finally {
-      setReanalyzingCandidates(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(candidateId);
-        return newSet;
-      });
-    }
-  };
 
   const cvAbove80 = candidates.filter(c => c.cv_rate >= 80).length;
   const cvBelow80 = candidates.filter(c => c.cv_rate < 80).length;
@@ -600,19 +512,6 @@ export default function CandidatesDashboard() {
                       {isExpanded && (
                         <div className="px-4 py-4 bg-muted/20 border-t">
                           <div className="space-y-3">
-                            {/* Re-analyze Button */}
-                            <div className="flex justify-end mb-3">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleReanalyzeCV(candidate.id)}
-                                disabled={reanalyzingCandidates.has(candidate.id)}
-                              >
-                                <RefreshCw className={`h-4 w-4 mr-2 ${reanalyzingCandidates.has(candidate.id) ? 'animate-spin' : ''}`} />
-                                {reanalyzingCandidates.has(candidate.id) ? 'Re-analyzing...' : 'Re-analyze CV'}
-                              </Button>
-                            </div>
-
                             <div>
                               <h4 className="font-semibold text-sm text-green-600 mb-2">
                                 ✓ Matches Job Description
