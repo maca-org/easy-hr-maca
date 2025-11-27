@@ -343,7 +343,7 @@ export default function CandidatesDashboard() {
                     <span className="text-2xl font-bold text-red-600">{cvBelow80}</span>
                   </div>
                 </div>
-                <Button onClick={() => navigate(`/?id=${jobId}`)} variant="outline" size="sm" className="w-full">
+                <Button onClick={() => navigate(`/?id=${jobId}#job-description`)} variant="outline" size="sm" className="w-full">
                   View Job Description
                 </Button>
               </CardContent>
