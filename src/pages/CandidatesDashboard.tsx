@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { JobSidebar } from "@/components/JobSidebar";
 import { Job } from "./Index";
 import { toast } from "sonner";
@@ -321,6 +322,33 @@ export default function CandidatesDashboard() {
         <JobSidebar jobs={jobs} activeJobId={jobId || ""} onSelectJob={handleSelectJob} onAddJob={handleAddJob} onDeleteJob={handleDeleteJob} onRenameJob={handleRenameJob} />
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto space-y-6">
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink 
+                  onClick={() => navigate("/")}
+                  className="cursor-pointer hover:text-foreground"
+                >
+                  Home
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink 
+                  onClick={() => navigate(`/?id=${jobId}#job-description`)}
+                  className="cursor-pointer hover:text-foreground"
+                >
+                  {jobTitle || "Job Opening"}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Candidates</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+
           {/* Header */}
           <div className="flex items-center justify-between">
             
