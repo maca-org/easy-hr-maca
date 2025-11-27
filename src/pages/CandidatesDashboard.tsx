@@ -327,18 +327,8 @@ export default function CandidatesDashboard() {
       <AuthHeader />
       <div className="flex flex-1">
         <JobSidebar jobs={jobs} activeJobId={jobId || ""} onSelectJob={handleSelectJob} onAddJob={handleAddJob} onDeleteJob={handleDeleteJob} onRenameJob={handleRenameJob} />
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto space-y-6">
-          {/* Breadcrumb Navigation */}
-          <Breadcrumb>
-            
-          </Breadcrumb>
-
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            
-          </div>
-
+        <main className="flex-1 p-4 overflow-auto">
+          <div className="max-w-7xl mx-auto space-y-4">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
