@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { candidate_id, job_id, cv_text, job_description } = await req.json();
+    const { candidate_id, job_id, cv_text, job_description, job_title } = await req.json();
 
     const CV_ANALYSIS_WEBHOOK_URL = Deno.env.get('CV_ANALYSIS_WEBHOOK_URL');
     if (!CV_ANALYSIS_WEBHOOK_URL) {
@@ -39,6 +39,7 @@ serve(async (req) => {
         job_id,
         cv: cv_text,
         job_description,
+        job_title,
         callback_url
       }),
     });

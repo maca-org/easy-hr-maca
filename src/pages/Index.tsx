@@ -337,7 +337,7 @@ const Index = () => {
     // Fetch job description
     const { data: jobData } = await supabase
       .from("job_openings")
-      .select("description")
+      .select("description, title")
       .eq("id", dbJobId)
       .single();
 
@@ -399,7 +399,8 @@ const Index = () => {
             candidate_id: newCandidate.id,
             job_id: dbJobId,
             cv_text: cvText,
-            job_description: jobData.description
+            job_description: jobData.description,
+            job_title: jobData.title
           }
         });
 
