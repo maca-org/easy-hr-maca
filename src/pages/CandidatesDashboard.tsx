@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { JobSidebar } from "@/components/JobSidebar";
 import { Job } from "./Index";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ interface Candidate {
   test_result: number | null;
   ai_interview_score: number | null;
   completed_test: boolean;
+  created_at: string;
   insights: {
     matching: string[];
     not_matching: string[];
@@ -38,6 +40,7 @@ export default function CandidatesDashboard() {
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [sortBy, setSortBy] = useState<"score" | "name" | "date">("score");
   const fileInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const fetchUser = async () => {
@@ -282,6 +285,20 @@ export default function CandidatesDashboard() {
     e.preventDefault();
     setIsDragging(false);
   };
+
+  const sortedCandidates = [...candidates].sort((a, b) => {
+    switch (sortBy) {
+      case "score":
+        return calculateOverallScore(b) - calculateOverallScore(a);
+      case "name":
+        return a.name.localeCompare(b.name);
+      case "date":
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      default:
+        return 0;
+    }
+  });
+
   const cvAbove80 = candidates.filter(c => c.cv_rate >= 80).length;
   const cvBelow80 = candidates.filter(c => c.cv_rate < 80).length;
   const testAbove80 = candidates.filter(c => c.test_result !== null && c.test_result >= 80).length;
@@ -394,30 +411,48 @@ export default function CandidatesDashboard() {
             onDragLeave={handleDragLeave}
             className={`transition-colors ${isDragging ? 'border-primary bg-primary/5' : ''}`}
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="space-y-1">
-                <CardTitle className="text-xl text-foreground font-semibold">Candidates</CardTitle>
-                <p className="text-sm text-muted-foreground font-normal">upload cv</p>
+            <CardHeader className="space-y-4 pb-4">
+              <div className="flex flex-row items-center justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl text-foreground font-semibold">Candidates</CardTitle>
+                  <p className="text-sm text-muted-foreground font-normal">upload cv</p>
+                </div>
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/pdf"
+                    multiple
+                    onChange={(e) => handleFileUpload(e.target.files)}
+                    className="hidden"
+                  />
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    variant="outline"
+                    size="sm"
+                    disabled={uploading}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {uploading ? "Uploading..." : "Choose Files"}
+                  </Button>
+                </div>
               </div>
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="application/pdf"
-                  multiple
-                  onChange={(e) => handleFileUpload(e.target.files)}
-                  className="hidden"
-                />
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  variant="outline"
-                  size="sm"
-                  disabled={uploading}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  {uploading ? "Uploading..." : "Choose Files"}
-                </Button>
-              </div>
+              
+              {candidates.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Sort by:</span>
+                  <Select value={sortBy} onValueChange={(value: "score" | "name" | "date") => setSortBy(value)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="score">Overall Score</SelectItem>
+                      <SelectItem value="name">Name (A-Z)</SelectItem>
+                      <SelectItem value="date">Upload Date (Newest)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               {candidates.length === 0 ? <div className="text-center py-8">
@@ -438,11 +473,7 @@ export default function CandidatesDashboard() {
                   </div>
 
                   {/* Table Rows */}
-                  {[...candidates].sort((a, b) => {
-                  const scoreA = calculateOverallScore(a);
-                  const scoreB = calculateOverallScore(b);
-                  return scoreB - scoreA;
-                }).map(candidate => {
+                  {sortedCandidates.map(candidate => {
                   const overallScore = calculateOverallScore(candidate);
                   const scoreColor = overallScore >= 80 ? "text-green-600" : overallScore >= 60 ? "text-yellow-600" : "text-red-600";
                   const isExpanded = expandedCandidateId === candidate.id;
