@@ -27,6 +27,10 @@ interface Candidate {
     matching: string[];
     not_matching: string[];
   };
+  extracted_data?: any;
+  relevance_analysis?: any;
+  improvement_tips?: any;
+  analyzing?: boolean;
 }
 export default function CandidatesDashboard() {
   const [searchParams] = useSearchParams();
@@ -116,7 +120,10 @@ export default function CandidatesDashboard() {
             insights: c.insights as any || {
               matching: [],
               not_matching: []
-            }
+            },
+            extracted_data: c.extracted_data || undefined,
+            relevance_analysis: c.relevance_analysis || undefined,
+            improvement_tips: c.improvement_tips || undefined
           })));
         }
       } catch (error) {
@@ -233,49 +240,107 @@ export default function CandidatesDashboard() {
       return;
     }
     setUploading(true);
+
+    // Fetch job description
+    const { data: jobData } = await supabase
+      .from("job_openings")
+      .select("description")
+      .eq("id", jobId)
+      .single();
+
+    if (!jobData) {
+      toast.error("Job not found");
+      setUploading(false);
+      return;
+    }
+
     for (const file of pdfFiles) {
       try {
-        // Generate random CV rate between 60-95
-        const cvRate = Math.floor(Math.random() * 36) + 60;
-
         // Extract candidate name from filename (remove .pdf extension)
         const candidateName = file.name.replace('.pdf', '');
 
-        // Insert candidate into database
-        const {
-          error
-        } = await supabase.from("candidates").insert({
-          job_id: jobId,
-          user_id: user.id,
-          name: candidateName,
-          email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-          cv_rate: cvRate,
-          cv_text: "CV content extracted"
-        });
+        // Read PDF content (simplified - just using filename for now)
+        const cvText = `CV for ${candidateName}`;
+
+        // Insert candidate into database with analyzing status
+        const { data: newCandidate, error } = await supabase
+          .from("candidates")
+          .insert({
+            job_id: jobId,
+            user_id: user.id,
+            name: candidateName,
+            email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            cv_rate: 0, // Will be updated after analysis
+            cv_text: cvText
+          })
+          .select()
+          .single();
+
         if (error) throw error;
+
+        // Add to UI with analyzing flag
+        setCandidates(prev => [{
+          ...newCandidate,
+          analyzing: true,
+          insights: { matching: [], not_matching: [] }
+        }, ...prev]);
+
+        // Call analyze-cv edge function
+        const { error: analyzeError } = await supabase.functions.invoke('analyze-cv', {
+          body: {
+            candidate_id: newCandidate.id,
+            job_id: jobId,
+            cv_text: cvText,
+            job_description: jobData.description
+          }
+        });
+
+        if (analyzeError) {
+          console.error('Error starting CV analysis:', analyzeError);
+          toast.error(`Failed to analyze ${file.name}`);
+        } else {
+          toast.success(`${file.name} uploaded, analysis in progress...`);
+        }
+
       } catch (error) {
         console.error("Error uploading CV:", error);
         toast.error(`Failed to upload ${file.name}`);
       }
     }
-    setUploading(false);
-    toast.success(`${pdfFiles.length} CV(s) uploaded successfully`);
 
-    // Refresh candidates list
-    const {
-      data: candidatesData
-    } = await supabase.from("candidates").select("*").eq("job_id", jobId).order("created_at", {
-      ascending: false
-    });
-    if (candidatesData) {
-      setCandidates(candidatesData.map(c => ({
-        ...c,
-        insights: c.insights as any || {
-          matching: [],
-          not_matching: []
+    setUploading(false);
+
+    // Set up realtime subscription to listen for analysis updates
+    const channel = supabase
+      .channel('cv-analysis-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'candidates',
+          filter: `job_id=eq.${jobId}`
+        },
+        (payload) => {
+          console.log('Candidate updated:', payload);
+          setCandidates(prev => prev.map(c => 
+            c.id === payload.new.id 
+              ? { 
+                  ...payload.new as Candidate, 
+                  analyzing: false,
+                  insights: (payload.new as any).insights || { matching: [], not_matching: [] }
+                }
+              : c
+          ));
+          toast.success(`Analysis complete for ${(payload.new as any).name}`);
         }
-      })));
-    }
+      )
+      .subscribe();
+
+    // Cleanup subscription after 5 minutes
+    setTimeout(() => {
+      supabase.removeChannel(channel);
+    }, 300000);
   };
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
