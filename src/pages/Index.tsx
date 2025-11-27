@@ -311,44 +311,27 @@ const Index = () => {
       id: Date.now().toString() + Math.random(),
       name: file.name.replace(/\.(pdf|docx?)$/i, ""),
       filename: file.name,
-      match: 0, // Will be updated after analysis
+      match: Math.floor(Math.random() * 36) + 60, // Random 60-95
     }));
 
-    // Save candidates to database and trigger CV analysis
+    // Save candidates to database with random cv_rate
     try {
-      const candidatesData = await Promise.all(
-        files.map(async (file, index) => {
-          // Upload CV file to storage
-          const filePath = `${user.id}/${dbJobId}/${Date.now()}_${file.name}`;
-          const { error: uploadError } = await supabase.storage
-            .from('cv-files')
-            .upload(filePath, file);
+      const candidatesData = files.map((file, index) => ({
+        name: newResumes[index].name,
+        email: `${newResumes[index].name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+        job_id: dbJobId,
+        user_id: user.id,
+        cv_rate: Math.floor(Math.random() * 36) + 60, // Random 60-95
+        completed_test: false,
+      }));
 
-          if (uploadError) {
-            console.error('Error uploading CV file:', uploadError);
-            throw uploadError;
-          }
-
-          return {
-            name: newResumes[index].name,
-            email: `${newResumes[index].name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-            job_id: dbJobId,
-            user_id: user.id,
-            cv_rate: 0,
-            completed_test: false,
-            cv_file_path: filePath,
-          };
-        })
-      );
-
-      const { data: insertedCandidates, error } = await supabase
+      const { error } = await supabase
         .from("candidates")
-        .insert(candidatesData)
-        .select();
+        .insert(candidatesData);
 
       if (error) throw error;
 
-      toast.success(`${files.length} candidate(s) added successfully. Analyzing CVs...`);
+      toast.success(`${files.length} candidate(s) added successfully`);
 
       // Update local state
       setJobs(jobs.map((job) =>
@@ -356,51 +339,6 @@ const Index = () => {
           ? { ...job, resumes: [...job.resumes, ...newResumes] }
           : job
       ));
-
-      // Convert PDFs to base64 and trigger analysis for each
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const candidate = insertedCandidates?.[i];
-        
-        if (!candidate) continue;
-
-        try {
-          // Convert PDF to base64
-          const reader = new FileReader();
-          const base64Promise = new Promise<string>((resolve, reject) => {
-            reader.onload = () => {
-              const base64 = reader.result as string;
-              // Remove data:application/pdf;base64, prefix
-              const base64Data = base64.split(',')[1];
-              resolve(base64Data);
-            };
-            reader.onerror = reject;
-          });
-          
-          reader.readAsDataURL(file);
-          const cv_base64 = await base64Promise;
-
-          // Trigger CV analysis with Lovable AI
-          const { error: analysisError } = await supabase.functions.invoke('analyze-cv-with-ai', {
-            body: {
-              candidate_id: candidate.id,
-              job_id: dbJobId,
-              cv_base64,
-              job_description: activeJob?.requirements || '',
-            },
-          });
-
-          if (analysisError) {
-            console.error('Error analyzing CV for candidate:', candidate.name, analysisError);
-            toast.error(`Failed to analyze CV for ${candidate.name}`);
-          }
-        } catch (conversionError) {
-          console.error('Error converting PDF to base64:', conversionError);
-          toast.error(`Failed to process CV for ${file.name}`);
-        }
-      }
-
-      toast.success('CV analysis started. Results will be available shortly.');
     } catch (error) {
       console.error("Error saving candidates:", error);
       toast.error("Failed to save candidates");
