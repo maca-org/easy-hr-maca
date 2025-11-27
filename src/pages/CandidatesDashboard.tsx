@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AuthHeader from "@/components/AuthHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { JobSidebar } from "@/components/JobSidebar";
 import { Job } from "./Index";
@@ -38,6 +38,7 @@ export default function CandidatesDashboard() {
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -393,13 +394,35 @@ export default function CandidatesDashboard() {
             onDragLeave={handleDragLeave}
             className={`transition-colors ${isDragging ? 'border-primary bg-primary/5' : ''}`}
           >
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm text-muted-foreground font-normal">upload cv</CardTitle>
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  multiple
+                  onChange={(e) => handleFileUpload(e.target.files)}
+                  className="hidden"
+                />
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  variant="outline"
+                  size="sm"
+                  disabled={uploading}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {uploading ? "Uploading..." : "Choose Files"}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              {candidates.length === 0 ? <p className="text-center text-muted-foreground py-8">
-                  No candidates yet
-                </p> : <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              {candidates.length === 0 ? <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">No candidates yet</p>
+                  <p className="text-sm text-muted-foreground">
+                    Drag and drop PDF files here or use the button above
+                  </p>
+                </div> : <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {/* Table Header */}
                   <div className="grid grid-cols-[80px_200px_100px_100px_100px_80px_60px] gap-4 px-4 py-2 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground sticky top-0 z-10">
                     <div>Score</div>
