@@ -148,21 +148,46 @@ const Index = () => {
     checkQuestions();
   }, [activeJobId]);
 
-  const handleAddJob = () => {
-    const newJob: Job = {
-      id: Date.now().toString(),
-      date: new Date().toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }),
-      title: "",
-      requirements: "",
-      resumes: [],
-      questions: [],
-    };
-    setJobs([...jobs, newJob]);
-    setActiveJobId(newJob.id);
+  const handleAddJob = async () => {
+    if (!user) {
+      toast.error("You must be logged in to create jobs");
+      return;
+    }
+
+    try {
+      // Create job directly in database to get proper UUID
+      const { data: newJob, error } = await supabase
+        .from('job_openings')
+        .insert({
+          title: "",
+          description: "",
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const jobObj: Job = {
+        id: newJob.id,
+        date: new Date(newJob.created_at).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
+        title: "",
+        requirements: "",
+        resumes: [],
+        questions: [],
+      };
+
+      setJobs([...jobs, jobObj]);
+      setActiveJobId(newJob.id);
+      toast.success("New job created");
+    } catch (error) {
+      console.error("Error creating job:", error);
+      toast.error("Failed to create job");
+    }
   };
 
   const handleUpdateRequirements = (requirements: string) => {
@@ -344,68 +369,19 @@ const Index = () => {
     }
 
     try {
-      // Save to database
-      const { data: existingJob } = await supabase
+      // Job already exists in DB (created by handleAddJob), just update it
+      const { error: updateError } = await supabase
         .from('job_openings')
-        .select('id')
-        .eq('id', activeJobId)
-        .maybeSingle();
+        .update({
+          title: activeJob.title,
+          description: activeJob.requirements,
+        })
+        .eq('id', activeJobId);
 
-      let dbJobId = activeJobId;
-
-      if (existingJob) {
-        // Update existing job
-        const { error: updateError } = await supabase
-          .from('job_openings')
-          .update({
-            title: activeJob.title,
-            description: activeJob.requirements,
-          })
-          .eq('id', activeJobId);
-
-        if (updateError) throw updateError;
-        
-        // Update state with saved data
-        setJobs(jobs.map((job) =>
-          job.id === activeJobId ? { ...job, title: activeJob.title, requirements: activeJob.requirements } : job
-        ));
-      } else {
-        // Insert new job with user_id
-        const { data: newJob, error: insertError } = await supabase
-          .from('job_openings')
-          .insert({
-            title: activeJob.title,
-            description: activeJob.requirements,
-            user_id: user.id,
-          })
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-        dbJobId = newJob.id;
-        
-        // Update state with the database-generated ID and created_at date
-        setJobs(jobs.map((job) =>
-          job.id === activeJobId 
-            ? { 
-                ...job,
-                id: newJob.id,
-                title: newJob.title || "",
-                date: new Date(newJob.created_at).toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })
-              } 
-            : job
-        ));
-        
-        // Update activeJobId to the database-generated ID
-        setActiveJobId(newJob.id);
-      }
-
-      toast.success("Job Description saved!");
-      return dbJobId; // Return the database ID
+      if (updateError) throw updateError;
+      
+      toast.success("Job description saved!");
+      return activeJobId;
     } catch (error) {
       console.error('Error saving job:', error);
       toast.error("Failed to save job description");
