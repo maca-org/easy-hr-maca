@@ -395,7 +395,10 @@ export default function CandidatesDashboard() {
             className={`transition-colors ${isDragging ? 'border-primary bg-primary/5' : ''}`}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm text-muted-foreground font-normal">upload cv</CardTitle>
+              <div className="space-y-1">
+                <CardTitle className="text-xl text-foreground font-semibold">Candidates</CardTitle>
+                <p className="text-sm text-muted-foreground font-normal">upload cv</p>
+              </div>
               <div>
                 <input
                   ref={fileInputRef}
