@@ -494,15 +494,30 @@ const Index = () => {
                 </Card>
               </div>
 
-              {/* Dashboard Button */}
-              <Button
-                onClick={() => navigate(`/candidates-dashboard?id=${activeJob.id}`)}
-                variant="default"
-                size="lg"
-                className="w-full"
-              >
-                View Candidates Dashboard
-              </Button>
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  onClick={() => {
+                    document.querySelector('.lg\\:grid-cols-2')?.scrollIntoView({ 
+                      behavior: 'smooth',
+                      block: 'start'
+                    });
+                  }}
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                >
+                  View Job Description
+                </Button>
+                <Button
+                  onClick={() => navigate(`/candidates-dashboard?id=${activeJob.id}`)}
+                  variant="default"
+                  size="lg"
+                  className="w-full"
+                >
+                  View Candidates Dashboard
+                </Button>
+              </div>
 
               {/* Job Editor */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
