@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { extractTextFromPDF } from "@/utils/pdfExtractor";
 import AuthHeader from "@/components/AuthHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -259,8 +260,10 @@ export default function CandidatesDashboard() {
         // Extract candidate name from filename (remove .pdf extension)
         const candidateName = file.name.replace('.pdf', '');
 
-        // Read PDF content (simplified - just using filename for now)
-        const cvText = `CV for ${candidateName}`;
+        // Extract text from PDF
+        toast.info("Extracting text from PDF...");
+        const cvText = await extractTextFromPDF(file);
+        toast.success("Text extracted successfully");
 
         // Insert candidate into database with analyzing status
         const { data: newCandidate, error } = await supabase
@@ -378,12 +381,17 @@ export default function CandidatesDashboard() {
   const testBelow80 = candidates.filter(c => c.test_result !== null && c.test_result < 80).length;
   const completedTests = candidates.filter(c => c.completed_test).length;
   const pendingTests = candidates.filter(c => !c.completed_test).length;
-  if (loading) {
+  if (loading || uploading) {
     return <div className="min-h-screen flex flex-col bg-background">
         <AuthHeader />
         <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
-            <p className="text-muted-foreground">Loading...</p>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">
+                {uploading ? "Processing PDF files..." : "Loading..."}
+              </p>
+            </div>
           </div>
         </main>
       </div>;
