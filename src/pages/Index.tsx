@@ -8,6 +8,8 @@ import { generateQuestions } from "@/utils/questionGenerator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export interface Resume {
   id: string;
@@ -43,6 +45,14 @@ const Index = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [activeJobId, setActiveJobId] = useState<string>("");
   const [hasQuestions, setHasQuestions] = useState<boolean>(false);
+  const [candidatesStats, setCandidatesStats] = useState({
+    cvAbove80: 0,
+    cvBelow80: 0,
+    testAbove80: 0,
+    testBelow80: 0,
+    completed: 0,
+    pending: 0,
+  });
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
@@ -146,6 +156,46 @@ const Index = () => {
     };
 
     checkQuestions();
+  }, [activeJobId]);
+
+  // Fetch candidates stats for active job
+  useEffect(() => {
+    const fetchCandidatesStats = async () => {
+      if (!activeJobId) {
+        setCandidatesStats({
+          cvAbove80: 0,
+          cvBelow80: 0,
+          testAbove80: 0,
+          testBelow80: 0,
+          completed: 0,
+          pending: 0,
+        });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("candidates")
+        .select("cv_rate, test_result, completed_test")
+        .eq("job_id", activeJobId);
+
+      if (error) {
+        console.error("Error fetching candidates:", error);
+        return;
+      }
+
+      if (data) {
+        setCandidatesStats({
+          cvAbove80: data.filter(c => c.cv_rate >= 80).length,
+          cvBelow80: data.filter(c => c.cv_rate < 80).length,
+          testAbove80: data.filter(c => c.test_result && c.test_result >= 80).length,
+          testBelow80: data.filter(c => c.test_result && c.test_result < 80).length,
+          completed: data.filter(c => c.completed_test).length,
+          pending: data.filter(c => !c.completed_test).length,
+        });
+      }
+    };
+
+    fetchCandidatesStats();
   }, [activeJobId]);
 
   const handleAddJob = async () => {
@@ -447,22 +497,94 @@ const Index = () => {
           onRenameJob={handleRenameJob}
         />
         {activeJob && (
-          <>
-            <JobRequirements
-              title={activeJob.title}
-              requirements={activeJob.requirements}
-              jobId={activeJob.id}
-              hasQuestions={hasQuestions}
-              onUpdateTitle={handleUpdateTitle}
-              onUpdateRequirements={handleUpdateRequirements}
-              onSave={handleSave}
-              onGenerateQuestions={handleGenerateQuestions}
-            />
-            <ResumeUpload
-              resumes={activeJob.resumes}
-              onUploadResumes={handleUploadResumes}
-            />
-          </>
+          <div className="flex-1 overflow-auto">
+            <div className="container mx-auto p-6 space-y-6">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      CV Rating
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>Above 80%:</span>
+                      <span className="font-semibold text-green-600">{candidatesStats.cvAbove80}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Below 80%:</span>
+                      <span className="font-semibold text-yellow-600">{candidatesStats.cvBelow80}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Test Results
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>Above 80%:</span>
+                      <span className="font-semibold text-green-600">{candidatesStats.testAbove80}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Below 80%:</span>
+                      <span className="font-semibold text-yellow-600">{candidatesStats.testBelow80}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      AI Pre-Interview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>Completed:</span>
+                      <span className="font-semibold text-green-600">{candidatesStats.completed}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Pending:</span>
+                      <span className="font-semibold text-yellow-600">{candidatesStats.pending}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Dashboard Button */}
+              <Button
+                onClick={() => navigate(`/candidates-dashboard?id=${activeJob.id}`)}
+                variant="default"
+                size="lg"
+                className="w-full"
+              >
+                View Candidates Dashboard
+              </Button>
+
+              {/* Job Editor */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <JobRequirements
+                  title={activeJob.title}
+                  requirements={activeJob.requirements}
+                  jobId={activeJob.id}
+                  hasQuestions={hasQuestions}
+                  onUpdateTitle={handleUpdateTitle}
+                  onUpdateRequirements={handleUpdateRequirements}
+                  onSave={handleSave}
+                  onGenerateQuestions={handleGenerateQuestions}
+                />
+                <ResumeUpload
+                  resumes={activeJob.resumes}
+                  onUploadResumes={handleUploadResumes}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

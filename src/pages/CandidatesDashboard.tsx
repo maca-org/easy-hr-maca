@@ -43,6 +43,7 @@ export default function CandidatesDashboard() {
   const [user, setUser] = useState<any>(null);
   const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null);
   const [reanalyzingCandidates, setReanalyzingCandidates] = useState<Set<string>>(new Set());
+  const [generatingQuestions, setGeneratingQuestions] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -181,6 +182,59 @@ export default function CandidatesDashboard() {
     } catch (error) {
       console.error("Error renaming job:", error);
       toast.error("Failed to rename job");
+    }
+  };
+
+  const handleMakeAssessment = async () => {
+    if (!jobId) return;
+
+    // Check if questions already exist
+    const { data: jobData } = await supabase
+      .from("job_openings")
+      .select("questions")
+      .eq("id", jobId)
+      .single();
+
+    if (jobData?.questions && Object.keys(jobData.questions).length > 0) {
+      // Questions exist, go directly to review
+      navigate(`/questions-review?id=${jobId}`);
+      return;
+    }
+
+    // No questions, generate them
+    setGeneratingQuestions(true);
+    try {
+      const { data: job } = await supabase
+        .from("job_openings")
+        .select("description")
+        .eq("id", jobId)
+        .single();
+
+      if (!job) {
+        toast.error("Job not found");
+        setGeneratingQuestions(false);
+        return;
+      }
+
+      // Send to n8n for question generation
+      const { error } = await supabase.functions.invoke("send-to-n8n", {
+        body: {
+          job_id: jobId,
+          job_description: job.description,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success("Questions are being generated...");
+      
+      // Navigate to questions review with polling enabled
+      navigate(`/questions-review?id=${jobId}`);
+    } catch (error: any) {
+      console.error("Error generating questions:", error);
+      toast.error("Failed to generate questions");
+    } finally {
+      setGeneratingQuestions(false);
     }
   };
 
@@ -359,7 +413,23 @@ export default function CandidatesDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Test Completion</CardTitle>
+                <CardTitle className="text-lg">AI Pre-Interview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Above 80%:</span>
+                  <span className="text-2xl font-bold text-green-600">{testAbove80}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Below 80%:</span>
+                  <span className="text-2xl font-bold text-red-600">{testBelow80}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">AI Pre-Interview</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -372,6 +442,25 @@ export default function CandidatesDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Make Assessment Button */}
+          <div className="flex justify-center">
+            <Button
+              onClick={handleMakeAssessment}
+              size="lg"
+              className="px-8 py-6 text-lg"
+              disabled={generatingQuestions}
+            >
+              {generatingQuestions ? (
+                <>
+                  <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
+                  Generating Questions...
+                </>
+              ) : (
+                "Make an Assessment for Candidates"
+              )}
+            </Button>
           </div>
 
           {/* Candidates Table */}
