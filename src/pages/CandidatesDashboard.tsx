@@ -36,6 +36,8 @@ export default function CandidatesDashboard() {
   const [user, setUser] = useState<any>(null);
   const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null);
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -208,6 +210,77 @@ export default function CandidatesDashboard() {
       setGeneratingQuestions(false);
     }
   };
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || !jobId || !user) return;
+
+    const pdfFiles = Array.from(files).filter(file => file.type === "application/pdf");
+    
+    if (pdfFiles.length === 0) {
+      toast.error("Please upload PDF files only");
+      return;
+    }
+
+    setUploading(true);
+    
+    for (const file of pdfFiles) {
+      try {
+        // Generate random CV rate between 60-95
+        const cvRate = Math.floor(Math.random() * 36) + 60;
+        
+        // Extract candidate name from filename (remove .pdf extension)
+        const candidateName = file.name.replace('.pdf', '');
+        
+        // Insert candidate into database
+        const { error } = await supabase.from("candidates").insert({
+          job_id: jobId,
+          user_id: user.id,
+          name: candidateName,
+          email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+          cv_rate: cvRate,
+          cv_text: "CV content extracted"
+        });
+
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error uploading CV:", error);
+        toast.error(`Failed to upload ${file.name}`);
+      }
+    }
+
+    setUploading(false);
+    toast.success(`${pdfFiles.length} CV(s) uploaded successfully`);
+    
+    // Refresh candidates list
+    const { data: candidatesData } = await supabase
+      .from("candidates")
+      .select("*")
+      .eq("job_id", jobId)
+      .order("created_at", { ascending: false });
+    
+    if (candidatesData) {
+      setCandidates(candidatesData.map(c => ({
+        ...c,
+        insights: c.insights as any || { matching: [], not_matching: [] }
+      })));
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFileUpload(e.dataTransfer.files);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
   const cvAbove80 = candidates.filter(c => c.cv_rate >= 80).length;
   const cvBelow80 = candidates.filter(c => c.cv_rate < 80).length;
   const testAbove80 = candidates.filter(c => c.test_result !== null && c.test_result >= 80).length;
@@ -314,9 +387,14 @@ export default function CandidatesDashboard() {
           </div>
 
           {/* Candidates Table */}
-          <Card>
+          <Card 
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            className={`transition-colors ${isDragging ? 'border-primary bg-primary/5' : ''}`}
+          >
             <CardHeader>
-              <CardTitle>Candidates</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground font-normal">upload cv</CardTitle>
             </CardHeader>
             <CardContent>
               {candidates.length === 0 ? <p className="text-center text-muted-foreground py-8">
