@@ -439,13 +439,14 @@ const Index = () => {
             <div className="container mx-auto p-6 space-y-6">
               {/* Stats Cards */}
               <div className="grid grid-cols-3 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      CV Rating
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-1">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    CV Rating
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span>Above 80%:</span>
                       <span className="font-semibold text-green-600">{candidatesStats.cvAbove80}</span>
@@ -454,8 +455,22 @@ const Index = () => {
                       <span>Below 80%:</span>
                       <span className="font-semibold text-yellow-600">{candidatesStats.cvBelow80}</span>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      document.querySelector('.lg\\:grid-cols-2')?.scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                      });
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    View Job Description
+                  </Button>
+                </CardContent>
+              </Card>
 
                 <Card>
                   <CardHeader className="pb-2">
@@ -494,30 +509,15 @@ const Index = () => {
                 </Card>
               </div>
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-4">
-                <Button
-                  onClick={() => {
-                    document.querySelector('.lg\\:grid-cols-2')?.scrollIntoView({ 
-                      behavior: 'smooth',
-                      block: 'start'
-                    });
-                  }}
-                  variant="outline"
-                  size="lg"
-                  className="w-full"
-                >
-                  View Job Description
-                </Button>
-                <Button
-                  onClick={() => navigate(`/candidates-dashboard?id=${activeJob.id}`)}
-                  variant="default"
-                  size="lg"
-                  className="w-full"
-                >
-                  View Candidates Dashboard
-                </Button>
-              </div>
+              {/* Dashboard Button */}
+              <Button
+                onClick={() => navigate(`/candidates-dashboard?id=${activeJob.id}`)}
+                variant="default"
+                size="lg"
+                className="w-full"
+              >
+                View Candidates Dashboard
+              </Button>
 
               {/* Job Editor */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
