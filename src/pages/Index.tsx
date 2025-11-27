@@ -506,15 +506,25 @@ const Index = () => {
                       AI Pre-Interview
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Completed:</span>
-                      <span className="font-semibold text-green-600">{candidatesStats.completed}</span>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Completed:</span>
+                        <span className="font-semibold text-green-600">{candidatesStats.completed}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Pending:</span>
+                        <span className="font-semibold text-yellow-600">{candidatesStats.pending}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Pending:</span>
-                      <span className="font-semibold text-yellow-600">{candidatesStats.pending}</span>
-                    </div>
+                    <Button
+                      onClick={() => {}}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      Make Pre-Interviews
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
