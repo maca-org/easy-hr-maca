@@ -198,6 +198,18 @@ const Index = () => {
     fetchCandidatesStats();
   }, [activeJobId]);
 
+  // Scroll to job description if hash is present
+  useEffect(() => {
+    if (window.location.hash === '#job-description') {
+      setTimeout(() => {
+        document.getElementById('job-description')?.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
+    }
+  }, [activeJobId]);
+
   const handleAddJob = async () => {
     if (!user) {
       toast.error("You must be logged in to create jobs");
@@ -540,7 +552,7 @@ const Index = () => {
               </Button>
 
               {/* Job Editor */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div id="job-description" className="grid grid-cols-1 lg:grid-cols-2 gap-6 scroll-mt-6">
                 <JobRequirements
                   title={activeJob.title}
                   requirements={activeJob.requirements}
