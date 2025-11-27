@@ -2,10 +2,12 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { extractTextFromPDF } from "@/utils/pdfExtractor";
+import { useUploadQueue } from "@/hooks/useUploadQueue";
 import AuthHeader from "@/components/AuthHeader";
+import { UploadQueue } from "@/components/UploadQueue";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -49,6 +51,7 @@ export default function CandidatesDashboard() {
   const [sortBy, setSortBy] = useState<"score" | "name" | "date">("score");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadQueue = useUploadQueue();
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -240,9 +243,12 @@ export default function CandidatesDashboard() {
       toast.error("Please upload PDF files only");
       return;
     }
+
+    // Add files to queue
+    const queueItems = uploadQueue.addToQueue(pdfFiles);
     setUploading(true);
 
-    // Fetch job description
+    // Fetch job description once
     const { data: jobData } = await supabase
       .from("job_openings")
       .select("description")
@@ -252,20 +258,35 @@ export default function CandidatesDashboard() {
     if (!jobData) {
       toast.error("Job not found");
       setUploading(false);
+      queueItems.forEach(item => {
+        uploadQueue.updateQueueItem(item.id, { status: 'failed', error: 'Job not found' });
+      });
       return;
     }
 
-    for (const file of pdfFiles) {
+    // Process all files in parallel
+    const uploadPromises = pdfFiles.map(async (file, index) => {
+      const queueItem = queueItems[index];
+      
       try {
-        // Extract candidate name from filename (remove .pdf extension)
+        // Extract candidate name from filename
         const candidateName = file.name.replace('.pdf', '');
 
-        // Extract text from PDF
-        toast.info("Extracting text from PDF...");
-        const cvText = await extractTextFromPDF(file);
-        toast.success("Text extracted successfully");
+        // Update queue: extracting
+        uploadQueue.updateQueueItem(queueItem.id, { 
+          status: 'extracting', 
+          progress: 20 
+        });
 
-        // Insert candidate into database with analyzing status
+        // Extract text from PDF
+        const cvText = await extractTextFromPDF(file);
+
+        // Update queue: extracted
+        uploadQueue.updateQueueItem(queueItem.id, { 
+          progress: 40 
+        });
+
+        // Insert candidate into database
         const { data: newCandidate, error } = await supabase
           .from("candidates")
           .insert({
@@ -273,7 +294,7 @@ export default function CandidatesDashboard() {
             user_id: user.id,
             name: candidateName,
             email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-            cv_rate: 0, // Will be updated after analysis
+            cv_rate: 0,
             cv_text: cvText
           })
           .select()
@@ -288,6 +309,12 @@ export default function CandidatesDashboard() {
           insights: { matching: [], not_matching: [] }
         }, ...prev]);
 
+        // Update queue: analyzing
+        uploadQueue.updateQueueItem(queueItem.id, { 
+          status: 'analyzing', 
+          progress: 60 
+        });
+
         // Call analyze-cv edge function
         const { error: analyzeError } = await supabase.functions.invoke('analyze-cv', {
           body: {
@@ -299,16 +326,42 @@ export default function CandidatesDashboard() {
         });
 
         if (analyzeError) {
-          console.error('Error starting CV analysis:', analyzeError);
-          toast.error(`Failed to analyze ${file.name}`);
-        } else {
-          toast.success(`${file.name} uploaded, analysis in progress...`);
+          throw analyzeError;
         }
+
+        // Update queue: completed
+        uploadQueue.updateQueueItem(queueItem.id, { 
+          status: 'completed', 
+          progress: 100 
+        });
+
+        return { success: true, fileName: file.name };
 
       } catch (error) {
         console.error("Error uploading CV:", error);
-        toast.error(`Failed to upload ${file.name}`);
+        
+        // Update queue: failed
+        uploadQueue.updateQueueItem(queueItem.id, { 
+          status: 'failed', 
+          error: error instanceof Error ? error.message : 'Upload failed' 
+        });
+
+        return { success: false, fileName: file.name, error };
       }
+    });
+
+    // Wait for all uploads to complete
+    const results = await Promise.allSettled(uploadPromises);
+    
+    // Show summary toast
+    const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+    const failCount = results.length - successCount;
+    
+    if (successCount > 0) {
+      toast.success(`${successCount} CV(s) uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ''}`);
+    }
+    if (failCount > 0 && successCount === 0) {
+      toast.error(`Failed to upload ${failCount} CV(s)`);
     }
 
     setUploading(false);
@@ -493,12 +546,26 @@ export default function CandidatesDashboard() {
                   <CardTitle className="text-xl text-foreground font-semibold">Candidates</CardTitle>
                   <p className="text-sm text-muted-foreground font-normal">upload cv</p>
                 </div>
-                <div>
+                <div className="flex gap-2">
                   <input ref={fileInputRef} type="file" accept="application/pdf" multiple onChange={e => handleFileUpload(e.target.files)} className="hidden" />
                   <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" disabled={uploading}>
                     <Upload className="h-4 w-4 mr-2" />
                     {uploading ? "Uploading..." : "Choose Files"}
                   </Button>
+                  {uploadQueue.queue.length > 0 && (
+                    <Button 
+                      onClick={() => uploadQueue.setIsQueueOpen(true)} 
+                      variant="outline" 
+                      size="sm"
+                      className="relative"
+                    >
+                      <ListOrdered className="h-4 w-4 mr-2" />
+                      Queue ({uploadQueue.queue.length})
+                      {uploadQueue.queue.some(item => item.status === 'analyzing' || item.status === 'extracting') && (
+                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-blue-500 animate-pulse" />
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
               
@@ -639,5 +706,14 @@ export default function CandidatesDashboard() {
           <ArrowUp className="h-5 w-5" />
         </Button>
       )}
+
+      {/* Upload Queue */}
+      <UploadQueue
+        queue={uploadQueue.queue}
+        isOpen={uploadQueue.isQueueOpen}
+        onClose={() => uploadQueue.setIsQueueOpen(false)}
+        onClearCompleted={uploadQueue.clearCompleted}
+        onClearAll={uploadQueue.clearAll}
+      />
     </div>;
 }
