@@ -383,8 +383,13 @@ export default function CandidatesDashboard() {
                     <span className="text-2xl font-bold text-red-600">{pendingTests}</span>
                   </div>
                 </div>
-                <Button onClick={() => {}} variant="outline" size="sm" className="w-full">
-                  Make Pre-Interviews
+                <Button 
+                  onClick={() => document.getElementById('candidates-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                >
+                  View Candidates
                 </Button>
               </CardContent>
             </Card>
@@ -403,7 +408,7 @@ export default function CandidatesDashboard() {
           </div>
 
           {/* Candidates Table */}
-          <Card onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave} className={`transition-colors ${isDragging ? 'border-primary bg-primary/5' : ''}`}>
+          <Card id="candidates-table" onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave} className={`transition-colors scroll-mt-6 ${isDragging ? 'border-primary bg-primary/5' : ''}`}>
             <CardHeader className="space-y-4 pb-4">
               <div className="flex flex-row items-center justify-between">
                 <div className="space-y-1">
