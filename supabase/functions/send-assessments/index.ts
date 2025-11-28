@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@4.0.0";
+import { renderAsync } from "https://esm.sh/@react-email/components@0.0.22";
+import React from "https://esm.sh/react@18.3.1";
+import { AssessmentInviteEmail } from "./_templates/assessment-invite.tsx";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,55 +27,138 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const resend = new Resend(resendApiKey);
 
-    // Generate unique assessment links and update candidates
-    const updates = candidateIds.map((candidateId: string) => {
-      const assessmentLink = `${supabaseUrl.replace('https://', 'https://app.')}/assessment/${candidateId}`;
-      
-      return supabase
-        .from("candidates")
-        .update({
-          assessment_sent: true,
-          assessment_sent_at: new Date().toISOString(),
-          assessment_due_date: dueDate,
-          assessment_link: assessmentLink,
-        })
-        .eq("id", candidateId);
-    });
+    // Get app URL from request origin or environment
+    const origin = req.headers.get("origin") || req.headers.get("referer") || "http://localhost:8080";
+    const appUrl = new URL(origin).origin;
 
-    const results = await Promise.all(updates);
+    // Fetch job details and user profile
+    const { data: job, error: jobError } = await supabase
+      .from("job_openings")
+      .select("title, user_id")
+      .eq("id", jobId)
+      .single();
 
-    // Check for errors
-    const errors = results.filter(r => r.error);
-    if (errors.length > 0) {
-      console.error("Errors updating candidates:", errors);
+    if (jobError || !job) {
+      console.error("Error fetching job:", jobError);
       return new Response(
-        JSON.stringify({ 
-          error: "Failed to update some candidates",
-          details: errors 
-        }),
+        JSON.stringify({ error: "Job not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_name")
+      .eq("id", job.user_id)
+      .single();
+
+    const companyName = profile?.company_name || "Our Company";
+
+    // Fetch candidate details
+    const { data: candidates, error: candidatesError } = await supabase
+      .from("candidates")
+      .select("id, name, email")
+      .in("id", candidateIds);
+
+    if (candidatesError || !candidates) {
+      console.error("Error fetching candidates:", candidatesError);
+      return new Response(
+        JSON.stringify({ error: "Failed to fetch candidates" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Fetch candidate details for email (mock for now)
-    const { data: candidates } = await supabase
-      .from("candidates")
-      .select("name, email")
-      .in("id", candidateIds);
+    // Format due date
+    const formattedDueDate = new Date(dueDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
 
-    console.log("Assessments sent to:", candidates);
-    console.log("Due date:", dueDate);
-    
-    // TODO: Implement actual email sending using Resend
-    // For now, we just log and mark as sent
+    // Send emails and update candidates
+    const emailResults = await Promise.allSettled(
+      candidates.map(async (candidate) => {
+        const assessmentLink = `${appUrl}/assessment/${candidate.id}`;
+
+        // Render email template
+        const html = await renderAsync(
+          React.createElement(AssessmentInviteEmail, {
+            candidateName: candidate.name,
+            jobTitle: job.title,
+            assessmentLink,
+            dueDate: formattedDueDate,
+            companyName,
+          })
+        );
+
+        // Send email
+        const { error: emailError } = await resend.emails.send({
+          from: "Assessments <onboarding@resend.dev>",
+          to: [candidate.email],
+          subject: `Complete Your Assessment for ${job.title}`,
+          html,
+        });
+
+        if (emailError) {
+          console.error(`Failed to send email to ${candidate.email}:`, emailError);
+          throw emailError;
+        }
+
+        // Update candidate record
+        const { error: updateError } = await supabase
+          .from("candidates")
+          .update({
+            assessment_sent: true,
+            assessment_sent_at: new Date().toISOString(),
+            assessment_due_date: dueDate,
+            assessment_link: assessmentLink,
+          })
+          .eq("id", candidate.id);
+
+        if (updateError) {
+          console.error(`Failed to update candidate ${candidate.id}:`, updateError);
+          throw updateError;
+        }
+
+        return { candidateId: candidate.id, email: candidate.email, success: true };
+      })
+    );
+
+    // Count successes and failures
+    const successful = emailResults.filter((r) => r.status === "fulfilled").length;
+    const failed = emailResults.filter((r) => r.status === "rejected").length;
+
+    console.log(`Sent ${successful} assessments, ${failed} failed`);
+
+    if (failed > 0) {
+      const errors = emailResults
+        .filter((r) => r.status === "rejected")
+        .map((r) => (r as PromiseRejectedResult).reason);
+      
+      console.error("Email sending errors:", errors);
+      
+      return new Response(
+        JSON.stringify({
+          success: successful > 0,
+          sentCount: successful,
+          failedCount: failed,
+          message: `Sent ${successful} assessment(s), ${failed} failed`,
+        }),
+        { status: 207, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        sentCount: candidateIds.length,
-        message: `Assessment sent to ${candidateIds.length} candidate(s)` 
+      JSON.stringify({
+        success: true,
+        sentCount: successful,
+        message: `Assessment sent to ${successful} candidate(s)`,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
