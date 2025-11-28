@@ -7,7 +7,7 @@ import AuthHeader from "@/components/AuthHeader";
 import { UploadQueue } from "@/components/UploadQueue";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -15,6 +15,8 @@ import { JobSidebar } from "@/components/JobSidebar";
 import { Job } from "./Index";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 interface Candidate {
   id: string;
   name: string;
@@ -52,6 +54,9 @@ export default function CandidatesDashboard() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadQueue = useUploadQueue();
+  const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingCandidates, setDeletingCandidates] = useState<string[]>([]);
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -413,6 +418,52 @@ export default function CandidatesDashboard() {
     setIsDragging(false);
   };
 
+  const handleSelectCandidate = (id: string) => {
+    setSelectedCandidates(prev => 
+      prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedCandidates.length === candidates.length) {
+      setSelectedCandidates([]);
+    } else {
+      setSelectedCandidates(candidates.map(c => c.id));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedCandidates.length === 0) return;
+    setDeletingCandidates(selectedCandidates);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteSingle = (id: string) => {
+    setDeletingCandidates([id]);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from("candidates")
+        .delete()
+        .in("id", deletingCandidates);
+
+      if (error) throw error;
+
+      setCandidates(prev => prev.filter(c => !deletingCandidates.includes(c.id)));
+      setSelectedCandidates([]);
+      toast.success(`${deletingCandidates.length} candidate(s) deleted successfully`);
+    } catch (error) {
+      console.error("Error deleting candidates:", error);
+      toast.error("Failed to delete candidate(s)");
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeletingCandidates([]);
+    }
+  };
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -548,6 +599,16 @@ export default function CandidatesDashboard() {
                   <p className="text-sm text-muted-foreground font-normal">upload cv</p>
                 </div>
                 <div className="flex gap-2">
+                  {selectedCandidates.length > 0 && (
+                    <Button 
+                      onClick={handleDeleteSelected} 
+                      variant="destructive" 
+                      size="sm"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Selected ({selectedCandidates.length})
+                    </Button>
+                  )}
                   <input ref={fileInputRef} type="file" accept="application/pdf" multiple onChange={e => handleFileUpload(e.target.files)} className="hidden" />
                   <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" disabled={uploading}>
                     <Upload className="h-4 w-4 mr-2" />
@@ -592,14 +653,20 @@ export default function CandidatesDashboard() {
                   </p>
                 </div> : <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {/* Table Header */}
-                  <div className="grid grid-cols-[80px_200px_100px_100px_100px_80px_60px] gap-4 px-4 py-2 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground sticky top-0 z-10">
+                  <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_80px_80px] gap-4 px-4 py-2 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground sticky top-0 z-10">
+                    <div className="flex items-center justify-center">
+                      <Checkbox 
+                        checked={selectedCandidates.length === candidates.length && candidates.length > 0}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </div>
                     <div>Score</div>
                     <div>Candidate</div>
                     <div>CV Rate</div>
                     <div>Test Result</div>
                     <div>AI Interview</div>
                     <div className="text-center">Contact</div>
-                    <div className="text-right">Details</div>
+                    <div className="text-center">Actions</div>
                   </div>
 
                   {/* Table Rows */}
@@ -608,7 +675,15 @@ export default function CandidatesDashboard() {
                   const scoreColor = overallScore >= 80 ? "text-green-600" : overallScore >= 60 ? "text-yellow-600" : "text-red-600";
                   const isExpanded = expandedCandidateId === candidate.id;
                   return <div key={candidate.id} className="border rounded-lg overflow-hidden">
-                        <div className="grid grid-cols-[80px_200px_100px_100px_100px_80px_60px] gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center">
+                        <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_80px_80px] gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center">
+                        {/* Checkbox */}
+                        <div className="flex items-center justify-center">
+                          <Checkbox 
+                            checked={selectedCandidates.includes(candidate.id)}
+                            onCheckedChange={() => handleSelectCandidate(candidate.id)}
+                          />
+                        </div>
+
                         {/* Overall Score */}
                         <div className={`text-2xl font-bold ${scoreColor}`}>
                           {overallScore}%
@@ -659,9 +734,22 @@ export default function CandidatesDashboard() {
                             </TooltipProvider>}
                         </div>
 
-                        {/* Expand Button */}
-                        <div className="flex justify-end">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setExpandedCandidateId(isExpanded ? null : candidate.id)}>
+                        {/* Actions */}
+                        <div className="flex items-center justify-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" 
+                            onClick={() => handleDeleteSingle(candidate.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8" 
+                            onClick={() => setExpandedCandidateId(isExpanded ? null : candidate.id)}
+                          >
                             <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                           </Button>
                         </div>
@@ -716,5 +804,24 @@ export default function CandidatesDashboard() {
         onClearCompleted={uploadQueue.clearCompleted}
         onClearAll={uploadQueue.clearAll}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Candidate{deletingCandidates.length > 1 ? 's' : ''}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {deletingCandidates.length} candidate{deletingCandidates.length > 1 ? 's' : ''}? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>;
 }

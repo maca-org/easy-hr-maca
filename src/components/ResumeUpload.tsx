@@ -1,21 +1,41 @@
-import { Upload, FileText } from "lucide-react";
+import { Upload, FileText, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Resume } from "@/pages/Index";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+
 interface ResumeUploadProps {
   resumes: Resume[];
   onUploadResumes: (files: File[]) => void;
+  onDeleteResume?: (id: string) => void;
 }
 export const ResumeUpload = ({
   resumes,
-  onUploadResumes
+  onUploadResumes,
+  onDeleteResume
 }: ResumeUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingResumeId, setDeletingResumeId] = useState<string | null>(null);
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
     const fileArray = Array.from(files).filter(file => file.type === "application/pdf");
     if (fileArray.length > 0) {
       onUploadResumes(fileArray);
     }
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeletingResumeId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deletingResumeId && onDeleteResume) {
+      onDeleteResume(deletingResumeId);
+    }
+    setDeleteDialogOpen(false);
+    setDeletingResumeId(null);
   };
   return <div className="w-96 bg-background border-l border-border flex flex-col">
       <div className="p-6 space-y-6 flex-1 overflow-y-auto">
@@ -65,7 +85,7 @@ export const ResumeUpload = ({
           </>}
 
         <div className="space-y-2">
-          {[...resumes].sort((a, b) => b.match - a.match).map((resume, index) => <div key={resume.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+          {[...resumes].sort((a, b) => b.match - a.match).map((resume, index) => <div key={resume.id} className="group flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <span className="text-sm font-medium text-muted-foreground">
                   {index + 1}.
@@ -79,11 +99,41 @@ export const ResumeUpload = ({
                     </p>}
                 </div>
               </div>
-              <div className="text-success font-semibold text-sm">
-                {resume.match}%
+              <div className="flex items-center gap-2">
+                <div className="text-success font-semibold text-sm">
+                  {resume.match}%
+                </div>
+                {onDeleteResume && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => handleDeleteClick(resume.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </div>
             </div>)}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Resume</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this resume? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>;
 };

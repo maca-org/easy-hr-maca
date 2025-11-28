@@ -311,6 +311,29 @@ const Index = () => {
     toast.success("Job renamed successfully");
   };
 
+  const handleDeleteResume = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("candidates")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      // Update local state
+      setJobs(jobs.map((job) =>
+        job.id === activeJobId
+          ? { ...job, resumes: job.resumes.filter((r) => r.id !== id) }
+          : job
+      ));
+
+      toast.success("Resume deleted successfully");
+    } catch (error) {
+      console.error("Error deleting resume:", error);
+      toast.error("Failed to delete resume");
+    }
+  };
+
   const handleUploadResumes = async (files: File[]) => {
     if (!user || !activeJobId) {
       toast.error("Please select a job and ensure you're logged in");
@@ -669,6 +692,7 @@ const Index = () => {
                 <ResumeUpload
                   resumes={activeJob.resumes}
                   onUploadResumes={handleUploadResumes}
+                  onDeleteResume={handleDeleteResume}
                 />
               </div>
             </div>
