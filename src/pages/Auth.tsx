@@ -10,6 +10,7 @@ import { toast } from "sonner";
 export default function Auth() {
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
+  const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -60,6 +61,11 @@ export default function Auth() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!companyName.trim()) {
+      toast.error("Please enter your company name");
+      return;
+    }
+
     if (!validateEmail(email)) {
       toast.error("Please enter a valid email address");
       return;
@@ -82,6 +88,9 @@ export default function Auth() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/jobs`,
+        data: {
+          company_name: companyName,
+        },
       },
     });
 
@@ -119,6 +128,20 @@ export default function Auth() {
         </CardHeader>
         <CardContent>
           <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Company Name</Label>
+                <Input
+                  id="companyName"
+                  type="text"
+                  placeholder="Your Company"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

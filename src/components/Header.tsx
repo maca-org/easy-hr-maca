@@ -13,20 +13,43 @@ export const Header = () => {
   const navigate = useNavigate();
   const [balance, setBalance] = useState(5.00);
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [companyName, setCompanyName] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     // Get current user
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        setTimeout(() => {
+          fetchProfile(session.user.id);
+        }, 0);
+      } else {
+        setCompanyName(null);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('company_name')
+      .eq('id', userId)
+      .single();
+    
+    if (data) {
+      setCompanyName(data.company_name);
+    }
+  };
 
   const handleSignOut = async () => {
     setIsLoggingOut(true);
@@ -53,9 +76,14 @@ export const Header = () => {
           <div className="flex items-center justify-center w-10 h-10 bg-primary rounded-lg">
             <Sparkles className="w-6 h-6 text-primary-foreground" />
           </div>
-          <h1 className="text-xl font-bold text-foreground">
-            <span className="text-primary">AI</span> Resume Screening
-          </h1>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold text-foreground">
+              <span className="text-primary">AI</span> Resume Screening
+            </h1>
+            {companyName && (
+              <span className="text-sm text-muted-foreground">{companyName}</span>
+            )}
+          </div>
         </div>
         
         <nav className="flex items-center gap-6">
