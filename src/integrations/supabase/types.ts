@@ -37,6 +37,7 @@ export type Database = {
           phone: string | null
           relevance_analysis: Json | null
           test_completed_at: string | null
+          test_detailed_scores: Json | null
           test_result: number | null
           title: string | null
           updated_at: string
@@ -64,6 +65,7 @@ export type Database = {
           phone?: string | null
           relevance_analysis?: Json | null
           test_completed_at?: string | null
+          test_detailed_scores?: Json | null
           test_result?: number | null
           title?: string | null
           updated_at?: string
@@ -91,6 +93,7 @@ export type Database = {
           phone?: string | null
           relevance_analysis?: Json | null
           test_completed_at?: string | null
+          test_detailed_scores?: Json | null
           test_result?: number | null
           title?: string | null
           updated_at?: string
