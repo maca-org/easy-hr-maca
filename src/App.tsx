@@ -12,6 +12,7 @@ import CandidatesDashboard from "./pages/CandidatesDashboard";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AssessmentSettings from "./pages/AssessmentSettings";
+import Assessment from "./pages/Assessment";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/questions-review" element={<QuestionsReview />} />
           <Route path="/candidates-dashboard" element={<CandidatesDashboard />} />
           <Route path="/assessment-settings" element={<AssessmentSettings />} />
+          <Route path="/assessment/:candidateId" element={<Assessment />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

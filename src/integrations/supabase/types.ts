@@ -17,6 +17,7 @@ export type Database = {
       candidates: {
         Row: {
           ai_interview_score: number | null
+          assessment_answers: Json | null
           assessment_due_date: string | null
           assessment_link: string | null
           assessment_sent: boolean
@@ -35,6 +36,7 @@ export type Database = {
           name: string
           phone: string | null
           relevance_analysis: Json | null
+          test_completed_at: string | null
           test_result: number | null
           title: string | null
           updated_at: string
@@ -42,6 +44,7 @@ export type Database = {
         }
         Insert: {
           ai_interview_score?: number | null
+          assessment_answers?: Json | null
           assessment_due_date?: string | null
           assessment_link?: string | null
           assessment_sent?: boolean
@@ -60,6 +63,7 @@ export type Database = {
           name: string
           phone?: string | null
           relevance_analysis?: Json | null
+          test_completed_at?: string | null
           test_result?: number | null
           title?: string | null
           updated_at?: string
@@ -67,6 +71,7 @@ export type Database = {
         }
         Update: {
           ai_interview_score?: number | null
+          assessment_answers?: Json | null
           assessment_due_date?: string | null
           assessment_link?: string | null
           assessment_sent?: boolean
@@ -85,6 +90,7 @@ export type Database = {
           name?: string
           phone?: string | null
           relevance_analysis?: Json | null
+          test_completed_at?: string | null
           test_result?: number | null
           title?: string | null
           updated_at?: string
