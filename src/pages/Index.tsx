@@ -515,6 +515,83 @@ const Index = () => {
     }
   };
 
+  const startQuestionPolling = async (jobId: string, toastId: string, jobTitle: string) => {
+    let pollCount = 0;
+    const maxPolls = 60; // 3 minutes max (60 * 3 seconds)
+    
+    const poll = async () => {
+      pollCount++;
+      
+      try {
+        const { data, error } = await supabase
+          .from("job_openings")
+          .select("questions")
+          .eq("id", jobId)
+          .maybeSingle();
+        
+        if (error) throw error;
+        
+        const hasQuestions = data?.questions && Array.isArray(data.questions) && data.questions.length > 0;
+        
+        if (hasQuestions) {
+          // Questions are ready - update toast to success with action button
+          toast.success("Questions Generated!", {
+            id: toastId,
+            description: jobTitle,
+            action: {
+              label: "Review Questions →",
+              onClick: () => navigate(`/questions-review?id=${jobId}`),
+            },
+            duration: 10000, // Show for 10 seconds
+          });
+          
+          // Update local state
+          setHasQuestions(true);
+          
+          // Refresh jobs to get the latest questions
+          const { data: jobData } = await supabase
+            .from("job_openings")
+            .select("*")
+            .eq("id", jobId)
+            .maybeSingle();
+          
+          if (jobData) {
+            setJobs(prevJobs => prevJobs.map(job => 
+              job.id === jobId 
+                ? { ...job, questions: (jobData.questions as unknown as Question[]) || [] }
+                : job
+            ));
+          }
+          
+          return; // Stop polling
+        }
+        
+        if (pollCount >= maxPolls) {
+          // Timeout reached
+          toast.error("Generation timed out", {
+            id: toastId,
+            description: "Please try again or check manually",
+            duration: 5000,
+          });
+          return;
+        }
+        
+        // Continue polling after 3 seconds
+        setTimeout(poll, 3000);
+        
+      } catch (error) {
+        console.error("Error polling questions:", error);
+        toast.error("Failed to check question status", {
+          id: toastId,
+          description: "Please refresh the page",
+        });
+      }
+    };
+    
+    // Start polling
+    poll();
+  };
+
   const handleGenerateQuestions = async () => {
     if (!activeJob?.requirements.trim()) {
       toast.error("Please enter a job description first");
@@ -541,9 +618,18 @@ const Index = () => {
 
       if (error) throw error;
 
-      toast.success("Job sent to n8n successfully");
+      // Show persistent loading toast
+      const toastId = `generate-${dbJobId}`;
+      toast.loading("Generating Questions...", {
+        id: toastId,
+        description: `${activeJob.title || "Your job"} • This usually takes 20-60 seconds`,
+        duration: Infinity, // Persistent until updated
+      });
       
-      // Generate questions locally as well
+      // Start background polling
+      startQuestionPolling(dbJobId, toastId, activeJob.title || "Your job");
+      
+      // Generate questions locally as well (for immediate fallback)
       const questions = generateQuestions(activeJob.requirements);
       
       setJobs(jobs.map((job) =>
@@ -552,11 +638,10 @@ const Index = () => {
           : job
       ));
 
-      // Navigate with the correct database ID
-      navigate(`/questions-review?id=${dbJobId}`);
+      // Stay on current page - no navigation
     } catch (error) {
       console.error('Error sending to n8n:', error);
-      toast.error("Failed to send to n8n");
+      toast.error("Failed to start question generation");
     }
   };
 
