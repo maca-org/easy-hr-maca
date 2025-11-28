@@ -143,6 +143,12 @@ const Index = () => {
         const jobIdFromUrl = searchParams.get("id");
         if (jobIdFromUrl && mappedJobs.some(job => job.id === jobIdFromUrl)) {
           setActiveJobId(jobIdFromUrl);
+        } else if (!jobIdFromUrl && mappedJobs.length > 0) {
+          // Auto-select first job if no URL parameter
+          setActiveJobId(mappedJobs[0].id);
+        } else if (mappedJobs.length === 0) {
+          // No jobs exist - auto-create one
+          handleAddJob();
         }
       }
     };
@@ -187,6 +193,18 @@ const Index = () => {
 
     checkQuestions();
   }, [activeJobId]);
+
+  // Navigate to candidates dashboard if job is filled
+  useEffect(() => {
+    if (!activeJob) return;
+    
+    const hasTitle = activeJob.title && activeJob.title.trim() !== "";
+    const hasDescription = activeJob.requirements && activeJob.requirements.trim() !== "";
+    
+    if (hasTitle && hasDescription) {
+      navigate(`/candidates-dashboard?id=${activeJob.id}`);
+    }
+  }, [activeJob?.id, activeJob?.title, activeJob?.requirements, navigate]);
 
   // Fetch candidates stats for active job
   useEffect(() => {
