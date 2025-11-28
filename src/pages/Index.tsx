@@ -3,7 +3,7 @@ import { JobSidebar } from "@/components/JobSidebar";
 import { JobRequirements } from "@/components/JobRequirements";
 import { ResumeUpload } from "@/components/ResumeUpload";
 import { UploadQueue } from "@/components/UploadQueue";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { generateQuestions } from "@/utils/questionGenerator";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { extractTextFromPDF } from "@/utils/pdfExtractor";
 import { useUploadQueue } from "@/hooks/useUploadQueue";
+import { debounce } from "@/lib/utils";
 
 export interface Resume {
   id: string;
@@ -60,6 +61,30 @@ const Index = () => {
   });
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
+
+  // Debounced auto-save function
+  const debouncedSaveJob = useCallback(
+    debounce(async (jobId: string, title: string, requirements: string) => {
+      if (!jobId || !user) return;
+      
+      // UUID validation
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(jobId)) return;
+      
+      try {
+        const { error } = await supabase
+          .from("job_openings")
+          .update({ title, description: requirements })
+          .eq("id", jobId);
+        
+        if (error) throw error;
+        // Silent save - no toast to avoid noise
+      } catch (error) {
+        console.error("Auto-save failed:", error);
+      }
+    }, 1500),
+    [user]
+  );
 
   // Check authentication
   useEffect(() => {
@@ -261,12 +286,24 @@ const Index = () => {
     setJobs(jobs.map((job) =>
       job.id === activeJobId ? { ...job, requirements } : job
     ));
+    
+    // Auto-save after 1.5 seconds of inactivity
+    const currentJob = jobs.find(j => j.id === activeJobId);
+    if (currentJob && activeJobId) {
+      debouncedSaveJob(activeJobId, currentJob.title, requirements);
+    }
   };
 
   const handleUpdateTitle = (title: string) => {
     setJobs(jobs.map((job) =>
       job.id === activeJobId ? { ...job, title } : job
     ));
+    
+    // Auto-save after 1.5 seconds of inactivity
+    const currentJob = jobs.find(j => j.id === activeJobId);
+    if (currentJob && activeJobId) {
+      debouncedSaveJob(activeJobId, title, currentJob.requirements);
+    }
   };
 
 
