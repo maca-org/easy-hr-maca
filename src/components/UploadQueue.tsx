@@ -1,9 +1,21 @@
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useState } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, Loader2, X, Trash2 } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Trash2, FileX } from "lucide-react";
 import { QueueItem, UploadStatus } from "@/hooks/useUploadQueue";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface UploadQueueProps {
   queue: QueueItem[];
@@ -48,91 +60,139 @@ export function UploadQueue({
   onClearCompleted,
   onClearAll,
 }: UploadQueueProps) {
+  const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
+  
   const completedCount = queue.filter((item) => item.status === "completed").length;
   const failedCount = queue.filter((item) => item.status === "failed").length;
   const inProgressCount = queue.filter(
     (item) => item.status === "extracting" || item.status === "analyzing" || item.status === "pending"
   ).length;
 
+  const handleClearAllClick = () => {
+    setClearAllDialogOpen(true);
+  };
+
+  const confirmClearAll = () => {
+    onClearAll();
+    setClearAllDialogOpen(false);
+  };
+
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle className="flex items-center justify-between">
-            <span>Upload Queue</span>
-            <div className="flex gap-2">
-              {completedCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onClearCompleted}
-                  className="h-8 px-2 text-xs"
-                >
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Clear Completed
-                </Button>
-              )}
-              {queue.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onClearAll}
-                  className="h-8 px-2 text-xs text-destructive hover:text-destructive"
-                >
-                  <X className="h-3 w-3 mr-1" />
-                  Clear All
-                </Button>
-              )}
-            </div>
-          </SheetTitle>
-        </SheetHeader>
+    <>
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent className="w-full sm:max-w-md">
+          <SheetHeader className="space-y-1">
+            <SheetTitle>Upload Queue</SheetTitle>
+            <SheetDescription>
+              Track the status of your CV uploads and analysis
+            </SheetDescription>
+          </SheetHeader>
 
-        <div className="mt-4 space-y-4">
-          {/* Summary */}
-          <div className="flex gap-4 text-sm">
-            {inProgressCount > 0 && (
-              <div className="flex items-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
-                <span className="text-muted-foreground">
-                  {inProgressCount} in progress
-                </span>
-              </div>
-            )}
-            {completedCount > 0 && (
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3 text-green-500" />
-                <span className="text-muted-foreground">
-                  {completedCount} completed
-                </span>
-              </div>
-            )}
-            {failedCount > 0 && (
-              <div className="flex items-center gap-1">
-                <XCircle className="h-3 w-3 text-destructive" />
-                <span className="text-muted-foreground">
-                  {failedCount} failed
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Queue Items */}
-          <ScrollArea className="h-[calc(100vh-200px)]">
-            <div className="space-y-3 pr-4">
-              {queue.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  No uploads in queue
+          <div className="mt-6 space-y-4">
+            {/* Summary */}
+            <div className="flex gap-4 text-sm">
+              {inProgressCount > 0 && (
+                <div className="flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
+                  <span className="text-muted-foreground">
+                    {inProgressCount} in progress
+                  </span>
                 </div>
-              ) : (
-                queue.map((item) => (
-                  <QueueItemCard key={item.id} item={item} />
-                ))
+              )}
+              {completedCount > 0 && (
+                <div className="flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3 text-green-500" />
+                  <span className="text-muted-foreground">
+                    {completedCount} completed
+                  </span>
+                </div>
+              )}
+              {failedCount > 0 && (
+                <div className="flex items-center gap-1">
+                  <XCircle className="h-3 w-3 text-destructive" />
+                  <span className="text-muted-foreground">
+                    {failedCount} failed
+                  </span>
+                </div>
               )}
             </div>
-          </ScrollArea>
-        </div>
-      </SheetContent>
-    </Sheet>
+
+            {/* Action Buttons - Separated from close button with proper spacing */}
+            {queue.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-2 border-t">
+                {completedCount > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onClearCompleted}
+                    className="h-8 px-3 text-xs"
+                  >
+                    <CheckCircle2 className="h-3 w-3 mr-1.5" />
+                    Clear Completed
+                  </Button>
+                )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleClearAllClick}
+                        className="h-8 px-3 text-xs border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        <FileX className="h-3 w-3 mr-1.5" />
+                        Clear All
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Remove all items from queue</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
+
+            {/* Queue Items */}
+            <ScrollArea className="h-[calc(100vh-280px)]">
+              <div className="space-y-3 pr-4">
+                {queue.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No uploads in queue
+                  </div>
+                ) : (
+                  queue.map((item) => (
+                    <QueueItemCard key={item.id} item={item} />
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Clear All Confirmation Dialog */}
+      <AlertDialog open={clearAllDialogOpen} onOpenChange={setClearAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear All Uploads</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove all {queue.length} item{queue.length !== 1 ? 's' : ''} from the upload queue? 
+              This will not delete any candidates already saved to the database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmClearAll} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
