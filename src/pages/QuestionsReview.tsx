@@ -320,7 +320,7 @@ export const QuestionsReview = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(`/?id=${jobId}`)}
+            onClick={() => navigate(`/candidates-dashboard?id=${jobId}`)}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
