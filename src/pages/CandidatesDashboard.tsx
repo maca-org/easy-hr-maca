@@ -7,7 +7,7 @@ import AuthHeader from "@/components/AuthHeader";
 import { UploadQueue } from "@/components/UploadQueue";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2 } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -697,9 +697,18 @@ export default function CandidatesDashboard() {
 
                         {/* CV Rate */}
                         <div className="text-center">
-                          <span className={`font-semibold ${candidate.cv_rate >= 80 ? "text-green-600" : "text-red-600"}`}>
-                            {candidate.cv_rate}%
-                          </span>
+                          {candidate.analyzing ? (
+                            <span className="text-xs text-purple-500 flex items-center justify-center gap-1">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Analyzing...
+                            </span>
+                          ) : candidate.cv_rate === 0 && !candidate.relevance_analysis ? (
+                            <span className="text-xs text-muted-foreground">Queued</span>
+                          ) : (
+                            <span className={`font-semibold ${candidate.cv_rate >= 80 ? "text-green-600" : "text-red-600"}`}>
+                              {candidate.cv_rate}%
+                            </span>
+                          )}
                         </div>
 
                         {/* Test Result */}
