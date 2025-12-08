@@ -124,6 +124,7 @@ export default function CandidatesDashboard() {
           ascending: false
         });
         if (candidatesData) {
+          console.log('Fetched candidates:', candidatesData.map(c => ({ name: c.name, cv_rate: c.cv_rate })));
           setCandidates(candidatesData.map(c => ({
             ...c,
             insights: c.insights as any || {
@@ -142,6 +143,39 @@ export default function CandidatesDashboard() {
       }
     };
     fetchData();
+
+    // Set up realtime subscription to listen for analysis updates
+    const channel = supabase
+      .channel(`cv-analysis-updates-${jobId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'candidates',
+          filter: `job_id=eq.${jobId}`
+        },
+        (payload) => {
+          console.log('Realtime candidate update:', payload.new);
+          setCandidates(prev => prev.map(c => 
+            c.id === (payload.new as any).id 
+              ? { 
+                  ...(payload.new as Candidate), 
+                  analyzing: false,
+                  insights: (payload.new as any).insights || { matching: [], not_matching: [] }
+                }
+              : c
+          ));
+          if ((payload.new as any).cv_rate > 0) {
+            toast.success(`Analysis complete for ${(payload.new as any).name}: ${(payload.new as any).cv_rate}%`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [jobId]);
   const calculateOverallScore = (candidate: Candidate) => {
     const scores = [candidate.cv_rate];
@@ -371,38 +405,6 @@ export default function CandidatesDashboard() {
     }
 
     setUploading(false);
-
-    // Set up realtime subscription to listen for analysis updates
-    const channel = supabase
-      .channel('cv-analysis-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'candidates',
-          filter: `job_id=eq.${jobId}`
-        },
-        (payload) => {
-          console.log('Candidate updated:', payload);
-          setCandidates(prev => prev.map(c => 
-            c.id === payload.new.id 
-              ? { 
-                  ...payload.new as Candidate, 
-                  analyzing: false,
-                  insights: (payload.new as any).insights || { matching: [], not_matching: [] }
-                }
-              : c
-          ));
-          toast.success(`Analysis complete for ${(payload.new as any).name}`);
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscription after 5 minutes
-    setTimeout(() => {
-      supabase.removeChannel(channel);
-    }, 300000);
   };
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
