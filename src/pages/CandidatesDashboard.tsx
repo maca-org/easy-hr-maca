@@ -5,6 +5,7 @@ import { extractTextFromPDF } from "@/utils/pdfExtractor";
 import { useUploadQueue } from "@/hooks/useUploadQueue";
 import AuthHeader from "@/components/AuthHeader";
 import { UploadQueue } from "@/components/UploadQueue";
+import { ViewAnswersModal } from "@/components/ViewAnswersModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2 } from "lucide-react";
@@ -36,6 +37,8 @@ interface Candidate {
   relevance_analysis?: any;
   improvement_tips?: any;
   analyzing?: boolean;
+  assessment_answers?: any;
+  test_detailed_scores?: any;
 }
 export default function CandidatesDashboard() {
   const [searchParams] = useSearchParams();
@@ -655,7 +658,7 @@ export default function CandidatesDashboard() {
                   </p>
                 </div> : <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {/* Table Header */}
-                  <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_80px_80px] gap-4 px-4 py-2 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground sticky top-0 z-10">
+                  <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_100px_80px_80px] gap-4 px-4 py-2 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground sticky top-0 z-10">
                     <div className="flex items-center justify-center">
                       <Checkbox 
                         checked={selectedCandidates.length === candidates.length && candidates.length > 0}
@@ -667,6 +670,7 @@ export default function CandidatesDashboard() {
                     <div>CV Rate</div>
                     <div>Test Result</div>
                     <div>AI Interview</div>
+                    <div className="text-center">Answers</div>
                     <div className="text-center">Contact</div>
                     <div className="text-center">Actions</div>
                   </div>
@@ -677,7 +681,7 @@ export default function CandidatesDashboard() {
                   const scoreColor = overallScore >= 80 ? "text-green-600" : overallScore >= 60 ? "text-yellow-600" : "text-red-600";
                   const isExpanded = expandedCandidateId === candidate.id;
                   return <div key={candidate.id} className="border rounded-lg overflow-hidden">
-                        <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_80px_80px] gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center">
+                        <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_100px_80px_80px] gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center">
                         {/* Checkbox */}
                         <div className="flex items-center justify-center">
                           <Checkbox 
@@ -723,6 +727,20 @@ export default function CandidatesDashboard() {
                         {/* AI Interview */}
                         <div className="text-center">
                           {candidate.ai_interview_score !== null ? <span className="font-semibold">{candidate.ai_interview_score}%</span> : <span className="text-muted-foreground text-sm">Coming Soon</span>}
+                        </div>
+
+                        {/* View Answers */}
+                        <div className="flex items-center justify-center">
+                          {candidate.completed_test && candidate.assessment_answers ? (
+                            <ViewAnswersModal
+                              candidateName={candidate.name}
+                              testResult={candidate.test_result}
+                              assessmentAnswers={Array.isArray(candidate.assessment_answers) ? candidate.assessment_answers : null}
+                              detailedScores={Array.isArray(candidate.test_detailed_scores) ? candidate.test_detailed_scores : null}
+                            />
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
                         </div>
 
                         {/* Contact Actions */}

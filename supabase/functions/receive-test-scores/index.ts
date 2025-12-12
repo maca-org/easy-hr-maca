@@ -11,6 +11,7 @@ interface ScorePayload {
   detailed_scores?: {
     question_id: string;
     score: number;
+    is_correct?: boolean;
     feedback?: string;
   }[];
 }

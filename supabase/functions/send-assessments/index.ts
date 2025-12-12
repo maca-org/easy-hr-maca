@@ -1,9 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@4.0.0";
-import { renderAsync } from "https://esm.sh/@react-email/components@0.0.22";
-import React from "https://esm.sh/react@18.3.1";
-import { AssessmentInviteEmail } from "./_templates/assessment-invite.tsx";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,10 +23,17 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
+    const n8nEmailWebhookUrl = Deno.env.get("N8N_EMAIL_WEBHOOK_URL");
+    
+    if (!n8nEmailWebhookUrl) {
+      console.error("N8N_EMAIL_WEBHOOK_URL is not configured");
+      return new Response(
+        JSON.stringify({ error: "Email webhook URL not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const resend = new Resend(resendApiKey);
 
     // Get app URL from request origin or environment
     const origin = req.headers.get("origin") || req.headers.get("referer") || "http://localhost:8080";
@@ -81,34 +84,36 @@ serve(async (req) => {
       day: 'numeric'
     });
 
-    // Send emails and update candidates
+    // Send to n8n and update candidates
     const emailResults = await Promise.allSettled(
       candidates.map(async (candidate) => {
         const assessmentLink = `${appUrl}/assessment/${candidate.id}`;
 
-        // Render email template
-        const html = await renderAsync(
-          React.createElement(AssessmentInviteEmail, {
-            candidateName: candidate.name,
-            jobTitle: job.title,
-            assessmentLink,
-            dueDate: formattedDueDate,
-            companyName,
-          })
-        );
-
-        // Send email
-        const { error: emailError } = await resend.emails.send({
-          from: "Assessments <onboarding@resend.dev>",
-          to: [candidate.email],
-          subject: `Complete Your Assessment for ${job.title}`,
-          html,
+        // Send to n8n webhook for email
+        console.log(`Sending email request to n8n for candidate: ${candidate.email}`);
+        
+        const n8nResponse = await fetch(n8nEmailWebhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            candidate_id: candidate.id,
+            candidate_name: candidate.name,
+            candidate_email: candidate.email,
+            job_title: job.title,
+            assessment_link: assessmentLink,
+            due_date: formattedDueDate,
+            due_date_raw: dueDate,
+            company_name: companyName,
+          }),
         });
 
-        if (emailError) {
-          console.error(`Failed to send email to ${candidate.email}:`, emailError);
-          throw emailError;
+        if (!n8nResponse.ok) {
+          const errorText = await n8nResponse.text();
+          console.error(`n8n webhook error for ${candidate.email}:`, errorText);
+          throw new Error(`n8n webhook failed: ${n8nResponse.status}`);
         }
+
+        console.log(`n8n webhook success for ${candidate.email}`);
 
         // Update candidate record
         const { error: updateError } = await supabase
@@ -134,7 +139,7 @@ serve(async (req) => {
     const successful = emailResults.filter((r) => r.status === "fulfilled").length;
     const failed = emailResults.filter((r) => r.status === "rejected").length;
 
-    console.log(`Sent ${successful} assessments, ${failed} failed`);
+    console.log(`Sent ${successful} assessments to n8n, ${failed} failed`);
 
     if (failed > 0) {
       const errors = emailResults
