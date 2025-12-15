@@ -54,17 +54,27 @@ const Assessment = () => {
     }
 
     try {
-      // Fetch candidate info
-      const { data: candidateData, error: candidateError } = await supabase
-        .from("candidates")
-        .select("*, job_id")
-        .eq("id", candidateId)
-        .single();
+      // Use edge function to fetch assessment data (bypasses RLS)
+      const { data, error } = await supabase.functions.invoke("get-assessment", {
+        body: { candidateId },
+      });
 
-      if (candidateError || !candidateData) {
+      if (error) {
+        console.error("Edge function error:", error);
         toast({
           title: "Error",
-          description: "Assessment not found",
+          description: "Failed to load assessment",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Handle error responses from edge function
+      if (data.error) {
+        toast({
+          title: "Error",
+          description: data.error,
           variant: "destructive",
         });
         setLoading(false);
@@ -72,47 +82,17 @@ const Assessment = () => {
       }
 
       // Check if already completed
-      if (candidateData.completed_test) {
+      if (data.completed) {
+        setCandidate(data.candidate);
         setCompleted(true);
         setLoading(false);
         return;
       }
 
-      // Check if assessment is expired
-      if (candidateData.assessment_due_date) {
-        const dueDate = new Date(candidateData.assessment_due_date);
-        if (dueDate < new Date()) {
-          toast({
-            title: "Assessment Expired",
-            description: "This assessment has passed its due date",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-      }
+      setCandidate(data.candidate);
 
-      setCandidate(candidateData);
-
-      // Fetch job questions
-      const { data: jobData, error: jobError } = await supabase
-        .from("job_openings")
-        .select("questions")
-        .eq("id", candidateData.job_id)
-        .single();
-
-      if (jobError || !jobData || !jobData.questions) {
-        toast({
-          title: "Error",
-          description: "No questions found for this assessment",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      const questionsArray = Array.isArray(jobData.questions) 
-        ? (jobData.questions as unknown as Question[])
+      const questionsArray = Array.isArray(data.questions) 
+        ? (data.questions as Question[])
         : [];
       
       setQuestions(questionsArray);
