@@ -250,7 +250,7 @@ export default function CandidatesDashboard() {
     try {
       const {
         data: job
-      } = await supabase.from("job_openings").select("description").eq("id", jobId).single();
+      } = await supabase.from("job_openings").select("title, description").eq("id", jobId).single();
       if (!job) {
         toast.error("Job not found");
         setGeneratingQuestions(false);
@@ -263,7 +263,8 @@ export default function CandidatesDashboard() {
       } = await supabase.functions.invoke("send-to-n8n", {
         body: {
           job_id: jobId,
-          job_description: job.description
+          title: job.title,
+          description: job.description
         }
       });
       if (error) throw error;
