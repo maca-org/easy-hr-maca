@@ -13,8 +13,11 @@ import { Loader2, CheckCircle2 } from "lucide-react";
 interface Question {
   id: string;
   question: string;
-  type: "multiple_choice" | "text";
+  type: "multiple_choice" | "text" | "mcq" | "open";
   options?: string[];
+  correct_answer?: string;
+  skill?: string;
+  difficulty?: string;
 }
 
 interface Answer {
@@ -277,7 +280,7 @@ const Assessment = () => {
           <CardContent className="space-y-6">
             <p className="text-lg">{currentQuestion.question}</p>
 
-            {currentQuestion.type === "multiple_choice" && currentQuestion.options && (
+            {(currentQuestion.type === "multiple_choice" || currentQuestion.type === "mcq") && currentQuestion.options && (
               <RadioGroup
                 value={answers[currentQuestion.id] || ""}
                 onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
@@ -295,7 +298,7 @@ const Assessment = () => {
               </RadioGroup>
             )}
 
-            {currentQuestion.type === "text" && (
+            {(currentQuestion.type === "text" || currentQuestion.type === "open") && (
               <Textarea
                 placeholder="Type your answer here..."
                 value={answers[currentQuestion.id] || ""}
