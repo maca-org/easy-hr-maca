@@ -31,6 +31,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Email validation regex
+    const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
     // Prepare update object
     const updateData: any = {
       extracted_data,
@@ -51,11 +54,16 @@ serve(async (req) => {
       };
     }
 
-    // Update name, email, phone, title from extracted_data if available
+    // Update name, phone, title from extracted_data if available
     if (extracted_data?.name) updateData.name = extracted_data.name;
-    if (extracted_data?.email) updateData.email = extracted_data.email;
     if (extracted_data?.phone) updateData.phone = extracted_data.phone;
     if (extracted_data?.current_title) updateData.title = extracted_data.current_title;
+    
+    // Only update email if extracted email is valid (not auto-generated from filename)
+    if (extracted_data?.email && isValidEmail(extracted_data.email) && !extracted_data.email.includes('@example.com')) {
+      updateData.email = extracted_data.email;
+      console.log('Updating candidate email to:', extracted_data.email);
+    }
 
     console.log('Updating candidate with data:', updateData);
 
