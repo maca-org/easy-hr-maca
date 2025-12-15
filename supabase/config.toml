@@ -24,3 +24,6 @@ verify_jwt = false
 
 [functions.receive-cv-analysis]
 verify_jwt = false
+
+[functions.get-assessment]
+verify_jwt = false
