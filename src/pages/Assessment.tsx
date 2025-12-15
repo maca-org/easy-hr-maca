@@ -22,6 +22,7 @@ interface Question {
 
 interface Answer {
   question_id: string;
+  question_text: string;
   question_type: string;
   answer: string;
   time_spent_seconds: number;
@@ -155,9 +156,10 @@ const Assessment = () => {
     setSubmitting(true);
 
     try {
-      // Calculate time spent on each question
+      // Calculate time spent on each question and include question text
       const answersWithTime: Answer[] = questions.map(q => ({
         question_id: q.id,
+        question_text: q.question,
         question_type: q.type,
         answer: answers[q.id] || "",
         time_spent_seconds: Math.floor((Date.now() - questionStartTimes[q.id]) / 1000)
