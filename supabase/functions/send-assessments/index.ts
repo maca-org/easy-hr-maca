@@ -1,10 +1,13 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -23,15 +26,6 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const n8nEmailWebhookUrl = Deno.env.get("N8N_EMAIL_WEBHOOK_URL");
-    
-    if (!n8nEmailWebhookUrl) {
-      console.error("N8N_EMAIL_WEBHOOK_URL is not configured");
-      return new Response(
-        JSON.stringify({ error: "Email webhook URL not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -84,36 +78,58 @@ serve(async (req) => {
       day: 'numeric'
     });
 
-    // Send to n8n and update candidates
+    // Send emails via Resend and update candidates
     const emailResults = await Promise.allSettled(
       candidates.map(async (candidate) => {
         const assessmentLink = `${appUrl}/assessment/${candidate.id}`;
 
-        // Send to n8n webhook for email
-        console.log(`Sending email request to n8n for candidate: ${candidate.email}`);
+        // Send email via Resend
+        console.log(`Sending assessment email to: ${candidate.email}`);
         
-        const n8nResponse = await fetch(n8nEmailWebhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            candidate_id: candidate.id,
-            candidate_name: candidate.name,
-            candidate_email: candidate.email,
-            job_title: job.title,
-            assessment_link: assessmentLink,
-            due_date: formattedDueDate,
-            due_date_raw: dueDate,
-            company_name: companyName,
-          }),
+        const emailResponse = await resend.emails.send({
+          from: `${companyName} <onboarding@resend.dev>`,
+          to: [candidate.email],
+          subject: `Assessment Invitation - ${job.title}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h1 style="color: #333; margin-bottom: 20px;">Hello ${candidate.name}!</h1>
+              
+              <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                You have been invited to complete an assessment for the <strong>${job.title}</strong> position at <strong>${companyName}</strong>.
+              </p>
+              
+              <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                <strong>Due Date:</strong> ${formattedDueDate}
+              </p>
+              
+              <div style="margin: 30px 0; text-align: center;">
+                <a href="${assessmentLink}" 
+                   style="background-color: #4F46E5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                  Start Assessment
+                </a>
+              </div>
+              
+              <p style="color: #777; font-size: 14px; margin-top: 30px;">
+                If the button doesn't work, copy and paste this link into your browser:<br>
+                <a href="${assessmentLink}" style="color: #4F46E5;">${assessmentLink}</a>
+              </p>
+              
+              <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+              
+              <p style="color: #999; font-size: 12px;">
+                Best regards,<br>
+                ${companyName} HR Team
+              </p>
+            </div>
+          `,
         });
 
-        if (!n8nResponse.ok) {
-          const errorText = await n8nResponse.text();
-          console.error(`n8n webhook error for ${candidate.email}:`, errorText);
-          throw new Error(`n8n webhook failed: ${n8nResponse.status}`);
+        if (emailResponse.error) {
+          console.error(`Resend error for ${candidate.email}:`, emailResponse.error);
+          throw new Error(`Email failed: ${emailResponse.error.message}`);
         }
 
-        console.log(`n8n webhook success for ${candidate.email}`);
+        console.log(`Email sent successfully to ${candidate.email}`);
 
         // Update candidate record
         const { error: updateError } = await supabase
@@ -139,7 +155,7 @@ serve(async (req) => {
     const successful = emailResults.filter((r) => r.status === "fulfilled").length;
     const failed = emailResults.filter((r) => r.status === "rejected").length;
 
-    console.log(`Sent ${successful} assessments to n8n, ${failed} failed`);
+    console.log(`Sent ${successful} assessments via Resend, ${failed} failed`);
 
     if (failed > 0) {
       const errors = emailResults
