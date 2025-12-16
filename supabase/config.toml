@@ -27,6 +27,3 @@ verify_jwt = false
 
 [functions.get-assessment]
 verify_jwt = false
-
-[functions.get-public-job]
-verify_jwt = false
