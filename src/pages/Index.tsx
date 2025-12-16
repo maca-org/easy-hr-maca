@@ -276,6 +276,9 @@ const Index = () => {
       setJobs([...jobs, jobObj]);
       setActiveJobId(newJob.id);
       toast.success("New job created");
+      
+      // Navigate to /jobs page with new job ID
+      navigate(`/jobs?id=${newJob.id}`);
     } catch (error) {
       console.error("Error creating job:", error);
       toast.error("Failed to create job");
