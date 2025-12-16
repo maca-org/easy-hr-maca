@@ -13,6 +13,9 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AssessmentSettings from "./pages/AssessmentSettings";
 import Assessment from "./pages/Assessment";
+import ApplyJob from "./pages/ApplyJob";
+import CandidateAuth from "./pages/CandidateAuth";
+import CandidatePortal from "./pages/CandidatePortal";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +34,9 @@ const App = () => (
           <Route path="/candidates-dashboard" element={<CandidatesDashboard />} />
           <Route path="/assessment-settings" element={<AssessmentSettings />} />
           <Route path="/assessment/:candidateId" element={<Assessment />} />
+          <Route path="/apply/:jobId" element={<ApplyJob />} />
+          <Route path="/candidate-auth" element={<CandidateAuth />} />
+          <Route path="/candidate-portal" element={<CandidatePortal />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
