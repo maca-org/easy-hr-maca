@@ -10,7 +10,6 @@ import NotFound from "./pages/NotFound";
 import { QuestionsReview } from "./pages/QuestionsReview";
 import CandidatesDashboard from "./pages/CandidatesDashboard";
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
 import AssessmentSettings from "./pages/AssessmentSettings";
 import Assessment from "./pages/Assessment";
 
@@ -26,7 +25,6 @@ const App = () => (
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/jobs" element={<Index />} />
-          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/questions-review" element={<QuestionsReview />} />
           <Route path="/candidates-dashboard" element={<CandidatesDashboard />} />
           <Route path="/assessment-settings" element={<AssessmentSettings />} />
