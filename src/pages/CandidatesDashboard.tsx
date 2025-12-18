@@ -510,14 +510,14 @@ export default function CandidatesDashboard() {
       <AuthHeader />
       <main className="flex-1 p-4 overflow-auto">
         <div className="max-w-7xl mx-auto space-y-4">
-          {/* Back Button */}
-          <Button variant="ghost" onClick={() => navigate("/jobs")} className="mb-2">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Jobs
-          </Button>
-          
-          {/* Job Title */}
-          <h1 className="text-2xl font-bold">{jobTitle}</h1>
+          {/* Header with Back Button and Job Title */}
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate("/jobs")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Jobs
+            </Button>
+            <h1 className="text-2xl font-bold">{jobTitle}</h1>
+          </div>
           
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
