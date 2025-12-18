@@ -138,7 +138,7 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
                       {/* Green candidate count */}
                       <div className="flex items-center gap-2 text-green-600 font-medium">
                         <Users className="w-4 h-4" />
-                        <span>{job.resumes.length} candidate{job.resumes.length !== 1 ? 's' : ''}</span>
+                        <span>{job.candidateCount} candidate{job.candidateCount !== 1 ? 's' : ''}</span>
                       </div>
                       
                       {/* Go to Dashboard button */}
