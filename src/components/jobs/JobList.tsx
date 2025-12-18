@@ -1,6 +1,6 @@
-import { Plus, Briefcase, Calendar, FileText, Trash2 } from "lucide-react";
+import { Plus, Briefcase, Calendar, FileText, Trash2, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Job } from "@/pages/Index";
 import {
   AlertDialog,
@@ -12,7 +12,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState, useMemo } from "react";
 
 interface JobListProps {
   jobs: Job[];
@@ -21,9 +28,12 @@ interface JobListProps {
   onDeleteJob: (id: string) => void;
 }
 
+type SortOption = 'newest' | 'oldest' | 'a-z' | 'z-a';
+
 export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobListProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
 
   const handleDeleteClick = (jobId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -39,6 +49,23 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
     setJobToDelete(null);
   };
 
+  const sortedJobs = useMemo(() => {
+    return [...jobs].sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        case 'newest':
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case 'a-z':
+          return (a.title || '').localeCompare(b.title || '');
+        case 'z-a':
+          return (b.title || '').localeCompare(a.title || '');
+        default:
+          return 0;
+      }
+    });
+  }, [jobs, sortBy]);
+
   return (
     <div className="container mx-auto p-6 space-y-8">
       {/* Create New Job Button */}
@@ -53,47 +80,65 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
         </Button>
       </div>
 
-      {/* Existing Jobs Grid */}
+      {/* Existing Jobs List */}
       {jobs.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">Your Open Positions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {jobs.map((job) => (
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-foreground">Your Open Positions</h2>
+            <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
+              <SelectTrigger className="w-44">
+                <ArrowUpDown className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="a-z">A-Z</SelectItem>
+                <SelectItem value="z-a">Z-A</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex flex-col gap-4">
+            {sortedJobs.map((job) => (
               <Card
                 key={job.id}
                 onClick={() => onSelectJob(job.id)}
-                className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 group relative"
+                className="w-full cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 group"
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Briefcase className="w-5 h-5 text-primary" />
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    {/* Left: Icon + Title */}
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="p-3 rounded-lg bg-primary/10 shrink-0">
+                        <Briefcase className="w-6 h-6 text-primary" />
                       </div>
-                      <CardTitle className="text-base font-medium line-clamp-2">
+                      <h3 className="text-lg font-medium truncate">
                         {job.title || "Untitled Job"}
-                      </CardTitle>
+                      </h3>
                     </div>
+                    
+                    {/* Center: Date + Resume count */}
+                    <div className="flex items-center gap-6 text-sm text-muted-foreground shrink-0">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{job.date}</span>
+                      </div>
+                      {job.resumes.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          <span>{job.resumes.length} resume{job.resumes.length !== 1 ? 's' : ''}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Right: Delete button */}
                     <button
                       onClick={(e) => handleDeleteClick(job.id, e)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-destructive/10 rounded-lg"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-destructive/10 rounded-lg shrink-0"
                     >
-                      <Trash2 className="w-4 h-4 text-destructive" />
+                      <Trash2 className="w-5 h-5 text-destructive" />
                     </button>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-4 h-4" />
-                      <span>{job.date}</span>
-                    </div>
-                    {job.resumes.length > 0 && (
-                      <div className="flex items-center gap-1.5">
-                        <FileText className="w-4 h-4" />
-                        <span>{job.resumes.length} resume{job.resumes.length !== 1 ? 's' : ''}</span>
-                      </div>
-                    )}
                   </div>
                 </CardContent>
               </Card>
