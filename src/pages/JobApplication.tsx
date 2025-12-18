@@ -28,15 +28,27 @@ const JobApplication = () => {
     const fetchJob = async () => {
       if (!jobId) return;
 
-      const { data, error } = await supabase
+      // Check if jobId is a UUID or a slug
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isUUID = uuidRegex.test(jobId);
+
+      let query = supabase
         .from("job_openings")
-        .select("id, title, description")
-        .eq("id", jobId)
-        .single();
+        .select("id, title, description");
+
+      if (isUUID) {
+        query = query.eq("id", jobId);
+      } else {
+        query = query.eq("slug", jobId);
+      }
+
+      const { data, error } = await query.maybeSingle();
 
       if (error) {
         console.error("Error fetching job:", error);
         toast.error("Job opening not found");
+      } else if (!data) {
+        console.error("Job not found for:", jobId);
       } else {
         setJob(data);
       }

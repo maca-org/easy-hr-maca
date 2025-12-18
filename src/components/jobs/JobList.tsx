@@ -1,5 +1,4 @@
 import { Plus, Briefcase, Calendar, Users, Trash2, ArrowUpDown, LayoutDashboard, Link as LinkIcon } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,9 +21,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState, useMemo } from "react";
+import { ShareLinkModal } from "./ShareLinkModal";
+
+interface JobWithSlug extends Job {
+  slug?: string | null;
+}
 
 interface JobListProps {
-  jobs: Job[];
+  jobs: JobWithSlug[];
   onSelectJob: (id: string) => void;
   onCreateJob: () => void;
   onDeleteJob: (id: string) => void;
@@ -37,6 +41,8 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [shareLinkModalOpen, setShareLinkModalOpen] = useState(false);
+  const [selectedJobForShare, setSelectedJobForShare] = useState<JobWithSlug | null>(null);
 
   const handleDeleteClick = (jobId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -50,6 +56,12 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
     }
     setDeleteDialogOpen(false);
     setJobToDelete(null);
+  };
+
+  const handleShareClick = (job: JobWithSlug, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedJobForShare(job);
+    setShareLinkModalOpen(true);
   };
 
   const sortedJobs = useMemo(() => {
@@ -147,25 +159,7 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          const link = `${window.location.origin}/apply/${job.id}`;
-                          try {
-                            await navigator.clipboard.writeText(link);
-                            toast.success("Application link copied!");
-                          } catch {
-                            // Fallback for older browsers
-                            const textArea = document.createElement("textarea");
-                            textArea.value = link;
-                            textArea.style.position = "fixed";
-                            textArea.style.left = "-9999px";
-                            document.body.appendChild(textArea);
-                            textArea.select();
-                            document.execCommand("copy");
-                            document.body.removeChild(textArea);
-                            toast.success("Application link copied!");
-                          }
-                        }}
+                        onClick={(e) => handleShareClick(job, e)}
                         className="h-7 text-xs"
                       >
                         <LinkIcon className="w-3 h-3 mr-1" />
@@ -221,6 +215,17 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Share Link Modal */}
+      {selectedJobForShare && (
+        <ShareLinkModal
+          open={shareLinkModalOpen}
+          onOpenChange={setShareLinkModalOpen}
+          jobId={selectedJobForShare.id}
+          jobTitle={selectedJobForShare.title}
+          slug={selectedJobForShare.slug}
+        />
+      )}
     </div>
   );
 };

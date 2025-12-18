@@ -7,9 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { ResumeUpload } from "@/components/ResumeUpload";
 import { Job, Resume } from "@/pages/Index";
 import { toast } from "sonner";
+import { ShareLinkModal } from "./ShareLinkModal";
 
 interface JobDetailViewProps {
-  job: Job;
+  job: Job & { slug?: string | null };
   onBack: () => void;
   onSave: (title: string, description: string) => void;
   onUploadResumes: (files: File[]) => void;
@@ -34,6 +35,7 @@ export const JobDetailView = ({
   );
   const [editTitle, setEditTitle] = useState(job.title || "");
   const [editDescription, setEditDescription] = useState(job.requirements || "");
+  const [shareLinkModalOpen, setShareLinkModalOpen] = useState(false);
 
   // Sync state when job changes
   useEffect(() => {
@@ -51,24 +53,8 @@ export const JobDetailView = ({
     setIsEditing(false);
   };
 
-  const handleCopyLink = async () => {
-    const link = `${window.location.origin}/apply/${job.id}`;
-
-    try {
-      await navigator.clipboard.writeText(link);
-      toast.success("Application link copied!");
-    } catch {
-      // Fallback for older browsers
-      const textArea = document.createElement("textarea");
-      textArea.value = link;
-      textArea.style.position = "fixed";
-      textArea.style.left = "-9999px";
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
-      toast.success("Application link copied!");
-    }
+  const handleOpenShareModal = () => {
+    setShareLinkModalOpen(true);
   };
 
   const handlePublish = () => {
@@ -148,11 +134,21 @@ export const JobDetailView = ({
       </Card>
 
       {/* Action Buttons */}
+      {/* Share Link Modal */}
+      <ShareLinkModal
+        open={shareLinkModalOpen}
+        onOpenChange={setShareLinkModalOpen}
+        jobId={job.id}
+        jobTitle={job.title}
+        slug={job.slug}
+      />
+
+      {/* Action Buttons */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Button
           variant="outline"
           size="lg"
-          onClick={handleCopyLink}
+          onClick={handleOpenShareModal}
           className="h-14"
         >
           <Link2 className="w-5 h-5 mr-2" />

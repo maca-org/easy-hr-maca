@@ -37,6 +37,7 @@ export interface Job {
   requirements: string;
   resumes: Resume[];
   questions: Question[];
+  slug?: string | null;
 }
 
 type ViewState = "list" | "create" | "detail";
@@ -127,6 +128,7 @@ const Index = () => {
           requirements: row.description,
           resumes: [],
           questions: [],
+          slug: (row as any).slug || null,
         }));
         setJobs(mappedJobs);
         
@@ -209,6 +211,7 @@ const Index = () => {
         requirements: "",
         resumes: [],
         questions: [],
+        slug: (newJob as any).slug || null,
       };
 
       setJobs([jobObj, ...jobs]);
@@ -250,18 +253,47 @@ const Index = () => {
     if (!activeJobId || !user) return;
 
     try {
+      // Generate slug from title
+      const generateSlug = (text: string): string => {
+        return text
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+          || activeJobId;
+      };
+
+      const baseSlug = generateSlug(title);
+      
+      // Check if slug already exists for other jobs
+      const { data: existingSlugs } = await supabase
+        .from('job_openings')
+        .select('slug')
+        .neq('id', activeJobId)
+        .like('slug', `${baseSlug}%`);
+
+      let finalSlug = baseSlug;
+      if (existingSlugs && existingSlugs.length > 0) {
+        const slugSet = new Set(existingSlugs.map(s => s.slug));
+        let counter = 2;
+        while (slugSet.has(finalSlug)) {
+          finalSlug = `${baseSlug}-${counter}`;
+          counter++;
+        }
+      }
+
       const { error } = await supabase
         .from('job_openings')
         .update({
           title,
           description,
+          slug: finalSlug,
         })
         .eq('id', activeJobId);
 
       if (error) throw error;
       
       setJobs(jobs.map((job) =>
-        job.id === activeJobId ? { ...job, title, requirements: description } : job
+        job.id === activeJobId ? { ...job, title, requirements: description, slug: finalSlug } : job
       ));
       
       toast.success("Job saved successfully!");
