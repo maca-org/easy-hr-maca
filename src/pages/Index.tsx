@@ -573,7 +573,7 @@ const Index = () => {
           <JobDetailView
             job={activeJob}
             onBack={handleBackToList}
-            onEdit={handleEditJob}
+            onSave={handleSaveJob}
             onUploadResumes={handleUploadResumes}
             onDeleteResume={handleDeleteResume}
             onGenerateQuestions={handleGenerateQuestions}

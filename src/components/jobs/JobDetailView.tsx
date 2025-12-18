@@ -1,6 +1,9 @@
-import { ArrowLeft, Link2, Send, LayoutDashboard, Edit2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Link2, Send, LayoutDashboard, Edit2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ResumeUpload } from "@/components/ResumeUpload";
 import { Job, Resume } from "@/pages/Index";
 import { toast } from "sonner";
@@ -8,7 +11,7 @@ import { toast } from "sonner";
 interface JobDetailViewProps {
   job: Job;
   onBack: () => void;
-  onEdit: () => void;
+  onSave: (title: string, description: string) => void;
   onUploadResumes: (files: File[]) => void;
   onDeleteResume: (id: string) => void;
   onGenerateQuestions: () => void;
@@ -19,13 +22,35 @@ interface JobDetailViewProps {
 export const JobDetailView = ({
   job,
   onBack,
-  onEdit,
+  onSave,
   onUploadResumes,
   onDeleteResume,
   onGenerateQuestions,
   onGoToDashboard,
   hasQuestions,
 }: JobDetailViewProps) => {
+  const [isEditing, setIsEditing] = useState(
+    !job.title || job.title === "Untitled Job" || !job.requirements
+  );
+  const [editTitle, setEditTitle] = useState(job.title || "");
+  const [editDescription, setEditDescription] = useState(job.requirements || "");
+
+  // Sync state when job changes
+  useEffect(() => {
+    setEditTitle(job.title || "");
+    setEditDescription(job.requirements || "");
+    setIsEditing(!job.title || job.title === "Untitled Job" || !job.requirements);
+  }, [job.id, job.title, job.requirements]);
+
+  const handleSave = () => {
+    if (!editTitle.trim()) {
+      toast.error("Please enter a job title");
+      return;
+    }
+    onSave(editTitle.trim(), editDescription.trim());
+    setIsEditing(false);
+  };
+
   const handleCopyLink = () => {
     const link = `${window.location.origin}/assessment?job=${job.id}`;
     navigator.clipboard.writeText(link);
@@ -50,26 +75,45 @@ export const JobDetailView = ({
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to jobs
         </Button>
-        <Button
-          variant="outline"
-          onClick={onEdit}
-        >
-          <Edit2 className="w-4 h-4 mr-2" />
-          Edit Job
-        </Button>
       </div>
 
       {/* Job Summary Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">{job.title || "Untitled Job"}</CardTitle>
-          <p className="text-sm text-muted-foreground">Created on {job.date}</p>
+          {isEditing ? (
+            <div className="space-y-4">
+              <Input
+                placeholder="Job Title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="text-xl font-semibold"
+              />
+              <Textarea
+                placeholder="Job Description / Requirements"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                rows={6}
+              />
+              <Button onClick={handleSave}>
+                <Save className="w-4 h-4 mr-2" />
+                Save
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <CardTitle className="text-2xl">{job.title}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">Created on {job.date}</p>
+                <p className="text-muted-foreground mt-3 whitespace-pre-wrap">
+                  {job.requirements}
+                </p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
+                <Edit2 className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground line-clamp-3">
-            {job.requirements || "No description provided"}
-          </p>
-        </CardContent>
       </Card>
 
       {/* CV Upload Section */}
