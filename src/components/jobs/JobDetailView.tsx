@@ -51,10 +51,24 @@ export const JobDetailView = ({
     setIsEditing(false);
   };
 
-  const handleCopyLink = () => {
-    const link = `${window.location.origin}/assessment?job=${job.id}`;
-    navigator.clipboard.writeText(link);
-    toast.success("Job opening link copied to clipboard!");
+  const handleCopyLink = async () => {
+    const link = `${window.location.origin}/apply/${job.id}`;
+
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Application link copied!");
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = link;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      toast.success("Application link copied!");
+    }
   };
 
   const handlePublish = () => {
@@ -142,7 +156,7 @@ export const JobDetailView = ({
           className="h-14"
         >
           <Link2 className="w-5 h-5 mr-2" />
-          Get Job Opening Link
+          Get Application Link
         </Button>
         <Button
           variant={hasQuestions ? "outline" : "default"}
