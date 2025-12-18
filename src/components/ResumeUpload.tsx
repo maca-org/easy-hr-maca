@@ -34,8 +34,8 @@ export const ResumeUpload = ({
     setDeleteDialogOpen(false);
     setDeletingResumeId(null);
   };
-  return <div className="w-96 bg-background border-l border-border flex flex-col">
-      <div className="p-6 space-y-6 flex-1 overflow-y-auto flex flex-col items-center justify-center">
+  return <div className="w-full bg-background flex flex-col items-center">
+      <div className="p-6 space-y-6 flex-1 overflow-y-auto flex flex-col items-center justify-center w-full max-w-md mx-auto">
         <div className={`border-2 border-dashed rounded-lg text-center transition-all cursor-pointer ${resumes.length > 0 ? "p-4" : "p-8"} ${isDragging ? "border-primary bg-primary/5" : "border-border bg-muted/30"}`} onDragOver={e => {
         e.preventDefault();
         setIsDragging(true);
