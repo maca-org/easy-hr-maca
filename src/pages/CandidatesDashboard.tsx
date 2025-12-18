@@ -11,8 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { JobSidebar } from "@/components/JobSidebar";
 import { Job } from "./Index";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -509,10 +507,17 @@ export default function CandidatesDashboard() {
   }
   return <div className="min-h-screen flex flex-col bg-background">
       <AuthHeader />
-      <div className="flex flex-1">
-        <JobSidebar jobs={jobs} activeJobId={jobId || ""} onSelectJob={handleSelectJob} onAddJob={handleAddJob} onDeleteJob={handleDeleteJob} onRenameJob={handleRenameJob} />
-        <main className="flex-1 p-4 overflow-auto">
-          <div className="max-w-7xl mx-auto space-y-4">
+      <main className="flex-1 p-4 overflow-auto">
+        <div className="max-w-7xl mx-auto space-y-4">
+          {/* Back Button */}
+          <Button variant="ghost" onClick={() => navigate("/jobs")} className="mb-2">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Jobs
+          </Button>
+          
+          {/* Job Title */}
+          <h1 className="text-2xl font-bold">{jobTitle}</h1>
+          
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
@@ -813,7 +818,6 @@ export default function CandidatesDashboard() {
           </Card>
           </div>
         </main>
-      </div>
 
       {/* Floating Scroll to Top Button */}
       {showScrollTop && (

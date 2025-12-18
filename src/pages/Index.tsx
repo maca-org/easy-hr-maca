@@ -1,7 +1,7 @@
 import { Header } from "@/components/Header";
-import { JobSidebar } from "@/components/JobSidebar";
-import { JobRequirements } from "@/components/JobRequirements";
-import { ResumeUpload } from "@/components/ResumeUpload";
+import { JobList } from "@/components/jobs/JobList";
+import { JobCreateForm } from "@/components/jobs/JobCreateForm";
+import { JobDetailView } from "@/components/jobs/JobDetailView";
 import { UploadQueue } from "@/components/UploadQueue";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -9,8 +9,6 @@ import { generateQuestions } from "@/utils/questionGenerator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { extractTextFromPDF } from "@/utils/pdfExtractor";
 import { useUploadQueue } from "@/hooks/useUploadQueue";
 import { debounce } from "@/lib/utils";
@@ -41,24 +39,18 @@ export interface Job {
   questions: Question[];
 }
 
+type ViewState = "list" | "create" | "detail";
+
 const Index = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   const [user, setUser] = useState<User | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [activeJobId, setActiveJobId] = useState<string>("");
+  const [currentView, setCurrentView] = useState<ViewState>("list");
   const [hasQuestions, setHasQuestions] = useState<boolean>(false);
-  const [uploading, setUploading] = useState(false);
   const uploadQueue = useUploadQueue();
-  const [candidatesStats, setCandidatesStats] = useState({
-    cvAbove80: 0,
-    cvBelow80: 0,
-    testAbove80: 0,
-    testBelow80: 0,
-    completed: 0,
-    pending: 0,
-  });
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
@@ -78,7 +70,6 @@ const Index = () => {
           .eq("id", jobId);
         
         if (error) throw error;
-        // Silent save - no toast to avoid noise
       } catch (error) {
         console.error("Auto-save failed:", error);
       }
@@ -143,6 +134,7 @@ const Index = () => {
         const jobIdFromUrl = searchParams.get("id");
         if (jobIdFromUrl && mappedJobs.some(job => job.id === jobIdFromUrl)) {
           setActiveJobId(jobIdFromUrl);
+          setCurrentView("detail");
         }
       }
     };
@@ -158,7 +150,6 @@ const Index = () => {
         return;
       }
 
-      // Only query database with valid UUIDs (not timestamp IDs)
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(activeJobId)) {
         setHasQuestions(false);
@@ -188,66 +179,13 @@ const Index = () => {
     checkQuestions();
   }, [activeJobId]);
 
-  // Fetch candidates stats for active job
-  useEffect(() => {
-    const fetchCandidatesStats = async () => {
-      if (!activeJobId) {
-        setCandidatesStats({
-          cvAbove80: 0,
-          cvBelow80: 0,
-          testAbove80: 0,
-          testBelow80: 0,
-          completed: 0,
-          pending: 0,
-        });
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("candidates")
-        .select("cv_rate, test_result, completed_test")
-        .eq("job_id", activeJobId);
-
-      if (error) {
-        console.error("Error fetching candidates:", error);
-        return;
-      }
-
-      if (data) {
-        setCandidatesStats({
-          cvAbove80: data.filter(c => c.cv_rate >= 80).length,
-          cvBelow80: data.filter(c => c.cv_rate < 80).length,
-          testAbove80: data.filter(c => c.test_result && c.test_result >= 80).length,
-          testBelow80: data.filter(c => c.test_result && c.test_result < 80).length,
-          completed: data.filter(c => c.completed_test).length,
-          pending: data.filter(c => !c.completed_test).length,
-        });
-      }
-    };
-
-    fetchCandidatesStats();
-  }, [activeJobId]);
-
-  // Scroll to job description if hash is present
-  useEffect(() => {
-    if (window.location.hash === '#job-description') {
-      setTimeout(() => {
-        document.getElementById('job-description')?.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }, 100);
-    }
-  }, [activeJobId]);
-
-  const handleAddJob = async () => {
+  const handleCreateJob = async () => {
     if (!user) {
       toast.error("You must be logged in to create jobs");
       return;
     }
 
     try {
-      // Create job directly in database to get proper UUID
       const { data: newJob, error } = await supabase
         .from('job_openings')
         .insert({
@@ -273,45 +211,23 @@ const Index = () => {
         questions: [],
       };
 
-      setJobs([...jobs, jobObj]);
+      setJobs([jobObj, ...jobs]);
       setActiveJobId(newJob.id);
-      toast.success("New job created");
-      
-      // Navigate to /jobs page with new job ID
-      navigate(`/jobs?id=${newJob.id}`);
+      setCurrentView("create");
+      setSearchParams({ id: newJob.id });
     } catch (error) {
       console.error("Error creating job:", error);
       toast.error("Failed to create job");
     }
   };
 
-  const handleUpdateRequirements = (requirements: string) => {
-    setJobs(jobs.map((job) =>
-      job.id === activeJobId ? { ...job, requirements } : job
-    ));
-    
-    // Auto-save after 1.5 seconds of inactivity
-    const currentJob = jobs.find(j => j.id === activeJobId);
-    if (currentJob && activeJobId) {
-      debouncedSaveJob(activeJobId, currentJob.title, requirements);
-    }
+  const handleSelectJob = (id: string) => {
+    setActiveJobId(id);
+    setCurrentView("detail");
+    setSearchParams({ id });
   };
-
-  const handleUpdateTitle = (title: string) => {
-    setJobs(jobs.map((job) =>
-      job.id === activeJobId ? { ...job, title } : job
-    ));
-    
-    // Auto-save after 1.5 seconds of inactivity
-    const currentJob = jobs.find(j => j.id === activeJobId);
-    if (currentJob && activeJobId) {
-      debouncedSaveJob(activeJobId, title, currentJob.requirements);
-    }
-  };
-
 
   const handleDeleteJob = async (id: string) => {
-    // Delete from Supabase
     const { error } = await supabase
       .from("job_openings")
       .delete()
@@ -323,32 +239,49 @@ const Index = () => {
       return;
     }
 
-    // Update state
     setJobs(jobs.filter((job) => job.id !== id));
     if (activeJobId === id) {
       setActiveJobId("");
+      setCurrentView("list");
+      setSearchParams({});
     }
     toast.success("Job deleted successfully");
   };
 
-  const handleRenameJob = async (id: string, newTitle: string) => {
-    // Update in Supabase
-    const { error } = await supabase
-      .from("job_openings")
-      .update({ title: newTitle })
-      .eq("id", id);
+  const handleSaveJob = async (title: string, description: string) => {
+    if (!activeJobId || !user) return;
 
-    if (error) {
-      console.error("Error renaming job:", error);
-      toast.error("Failed to rename job");
-      return;
+    try {
+      const { error } = await supabase
+        .from('job_openings')
+        .update({
+          title,
+          description,
+        })
+        .eq('id', activeJobId);
+
+      if (error) throw error;
+      
+      setJobs(jobs.map((job) =>
+        job.id === activeJobId ? { ...job, title, requirements: description } : job
+      ));
+      
+      toast.success("Job saved successfully!");
+      setCurrentView("detail");
+    } catch (error) {
+      console.error('Error saving job:', error);
+      toast.error("Failed to save job");
     }
+  };
 
-    // Update state
-    setJobs(jobs.map((job) =>
-      job.id === id ? { ...job, title: newTitle } : job
-    ));
-    toast.success("Job renamed successfully");
+  const handleBackToList = () => {
+    setActiveJobId("");
+    setCurrentView("list");
+    setSearchParams({});
+  };
+
+  const handleEditJob = () => {
+    setCurrentView("create");
   };
 
   const handleDeleteResume = async (id: string) => {
@@ -360,7 +293,6 @@ const Index = () => {
 
       if (error) throw error;
 
-      // Update local state
       setJobs(jobs.map((job) =>
         job.id === activeJobId
           ? { ...job, resumes: job.resumes.filter((r) => r.id !== id) }
@@ -380,65 +312,49 @@ const Index = () => {
       return;
     }
 
-    // Ensure job is saved to database first
-    const dbJobId = await handleSave();
-    if (!dbJobId) {
-      toast.error("Failed to save job before uploading resumes");
-      return;
-    }
-
     const pdfFiles = Array.from(files).filter(file => file.type === "application/pdf");
     if (pdfFiles.length === 0) {
       toast.error("Please upload PDF files only");
       return;
     }
 
-    // Add files to queue
     const queueItems = uploadQueue.addToQueue(pdfFiles);
-    setUploading(true);
 
-    // Fetch job description
     const { data: jobData } = await supabase
       .from("job_openings")
       .select("description, title")
-      .eq("id", dbJobId)
+      .eq("id", activeJobId)
       .single();
 
     if (!jobData) {
       toast.error("Job not found");
-      setUploading(false);
       queueItems.forEach(item => {
         uploadQueue.updateQueueItem(item.id, { status: 'failed', error: 'Job not found' });
       });
       return;
     }
 
-    // Process all files in parallel
     const uploadPromises = pdfFiles.map(async (file, index) => {
       const queueItem = queueItems[index];
       
       try {
         const candidateName = file.name.replace('.pdf', '');
 
-        // Update queue: extracting
         uploadQueue.updateQueueItem(queueItem.id, { 
           status: 'extracting', 
           progress: 20 
         });
 
-        // Extract text from PDF
         const cvText = await extractTextFromPDF(file);
 
-        // Update queue: extracted
         uploadQueue.updateQueueItem(queueItem.id, { 
           progress: 40 
         });
 
-        // Insert candidate into database
         const { data: newCandidate, error } = await supabase
           .from("candidates")
           .insert({
-            job_id: dbJobId,
+            job_id: activeJobId,
             user_id: user.id,
             name: candidateName,
             email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
@@ -450,17 +366,15 @@ const Index = () => {
 
         if (error) throw error;
 
-        // Update queue: analyzing
         uploadQueue.updateQueueItem(queueItem.id, { 
           status: 'analyzing', 
           progress: 60 
         });
 
-        // Call analyze-cv edge function
         const { error: analyzeError } = await supabase.functions.invoke('analyze-cv', {
           body: {
             candidate_id: newCandidate.id,
-            job_id: dbJobId,
+            job_id: activeJobId,
             cv_text: cvText,
             job_description: jobData.description,
             job_title: jobData.title
@@ -471,7 +385,6 @@ const Index = () => {
           throw analyzeError;
         }
 
-        // Update queue: completed
         uploadQueue.updateQueueItem(queueItem.id, { 
           status: 'completed', 
           progress: 100 
@@ -482,7 +395,6 @@ const Index = () => {
       } catch (error) {
         console.error("Error uploading CV:", error);
         
-        // Update queue: failed
         uploadQueue.updateQueueItem(queueItem.id, { 
           status: 'failed', 
           error: error instanceof Error ? error.message : 'Upload failed' 
@@ -492,10 +404,8 @@ const Index = () => {
       }
     });
 
-    // Wait for all uploads to complete
     const results = await Promise.allSettled(uploadPromises);
     
-    // Show summary toast
     const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
     const failCount = results.length - successCount;
     
@@ -506,9 +416,6 @@ const Index = () => {
       toast.error(`Failed to upload ${failCount} CV(s)`);
     }
 
-    setUploading(false);
-
-    // Update local state
     const newResumes: Resume[] = pdfFiles.map((file) => ({
       id: Date.now().toString() + Math.random(),
       name: file.name.replace('.pdf', ''),
@@ -517,47 +424,15 @@ const Index = () => {
     }));
 
     setJobs(jobs.map((job) =>
-      job.id === dbJobId
+      job.id === activeJobId
         ? { ...job, resumes: [...job.resumes, ...newResumes] }
         : job
     ));
   };
 
-  const handleSave = async () => {
-    if (!activeJob?.requirements.trim()) {
-      toast.error("Please enter a job description first");
-      return null;
-    }
-
-    if (!user) {
-      toast.error("You must be logged in to save jobs");
-      return null;
-    }
-
-    try {
-      // Job already exists in DB (created by handleAddJob), just update it
-      const { error: updateError } = await supabase
-        .from('job_openings')
-        .update({
-          title: activeJob.title,
-          description: activeJob.requirements,
-        })
-        .eq('id', activeJobId);
-
-      if (updateError) throw updateError;
-      
-      toast.success("Job description saved!");
-      return activeJobId;
-    } catch (error) {
-      console.error('Error saving job:', error);
-      toast.error("Failed to save job description");
-      return null;
-    }
-  };
-
   const startQuestionPolling = async (jobId: string, toastId: string, jobTitle: string) => {
     let pollCount = 0;
-    const maxPolls = 60; // 3 minutes max (60 * 3 seconds)
+    const maxPolls = 60;
     
     const poll = async () => {
       pollCount++;
@@ -571,10 +446,9 @@ const Index = () => {
         
         if (error) throw error;
         
-        const hasQuestions = data?.questions && Array.isArray(data.questions) && data.questions.length > 0;
+        const hasQuestionsNow = data?.questions && Array.isArray(data.questions) && data.questions.length > 0;
         
-        if (hasQuestions) {
-          // Questions are ready - update toast to success with action button
+        if (hasQuestionsNow) {
           toast.success("Questions Generated!", {
             id: toastId,
             description: jobTitle,
@@ -582,13 +456,11 @@ const Index = () => {
               label: "Review Questions →",
               onClick: () => navigate(`/questions-review?id=${jobId}`),
             },
-            duration: 10000, // Show for 10 seconds
+            duration: 10000,
           });
           
-          // Update local state
           setHasQuestions(true);
           
-          // Refresh jobs to get the latest questions
           const { data: jobData } = await supabase
             .from("job_openings")
             .select("*")
@@ -603,11 +475,10 @@ const Index = () => {
             ));
           }
           
-          return; // Stop polling
+          return;
         }
         
         if (pollCount >= maxPolls) {
-          // Timeout reached
           toast.error("Generation timed out", {
             id: toastId,
             description: "Please try again or check manually",
@@ -616,7 +487,6 @@ const Index = () => {
           return;
         }
         
-        // Continue polling after 3 seconds
         setTimeout(poll, 3000);
         
       } catch (error) {
@@ -628,7 +498,6 @@ const Index = () => {
       }
     };
     
-    // Start polling
     poll();
   };
 
@@ -638,19 +507,10 @@ const Index = () => {
       return;
     }
 
-    // First save to DB and get the database ID
-    const dbJobId = await handleSave();
-    
-    if (!dbJobId) {
-      toast.error("Failed to save job before generating questions");
-      return;
-    }
-
     try {
-      // Send to n8n webhook with the correct database ID
       const { data, error } = await supabase.functions.invoke('send-to-n8n', {
         body: {
-          job_id: dbJobId,
+          job_id: activeJobId,
           title: activeJob.title,
           description: activeJob.requirements,
         },
@@ -658,172 +518,70 @@ const Index = () => {
 
       if (error) throw error;
 
-      // Show persistent loading toast
-      const toastId = `generate-${dbJobId}`;
+      const toastId = `generate-${activeJobId}`;
       toast.loading("Generating Questions...", {
         id: toastId,
         description: `${activeJob.title || "Your job"} • This usually takes 20-60 seconds`,
-        duration: Infinity, // Persistent until updated
+        duration: Infinity,
       });
       
-      // Start background polling
-      startQuestionPolling(dbJobId, toastId, activeJob.title || "Your job");
+      startQuestionPolling(activeJobId, toastId, activeJob.title || "Your job");
       
-      // Generate questions locally as well (for immediate fallback)
       const questions = generateQuestions(activeJob.requirements);
       
       setJobs(jobs.map((job) =>
-        job.id === dbJobId
+        job.id === activeJobId
           ? { ...job, questions }
           : job
       ));
 
-      // Stay on current page - no navigation
     } catch (error) {
       console.error('Error sending to n8n:', error);
       toast.error("Failed to start question generation");
     }
   };
 
+  const handleGoToDashboard = () => {
+    if (activeJobId) {
+      navigate(`/candidates-dashboard?id=${activeJobId}`);
+    }
+  };
+
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <div className="flex-1 flex overflow-hidden">
-        <JobSidebar
-          jobs={jobs}
-          activeJobId={activeJobId}
-          onSelectJob={setActiveJobId}
-          onAddJob={handleAddJob}
-          onDeleteJob={handleDeleteJob}
-          onRenameJob={handleRenameJob}
-        />
-        {activeJob && (
-          <div className="flex-1 overflow-auto">
-            <div className="container mx-auto p-6 space-y-6">
-              {/* Stats Cards */}
-              <div className="grid grid-cols-3 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    CV Rating
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Above 80%:</span>
-                      <span className="font-semibold text-green-600">{candidatesStats.cvAbove80}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Below 80%:</span>
-                      <span className="font-semibold text-yellow-600">{candidatesStats.cvBelow80}</span>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => {
-                      document.querySelector('.lg\\:grid-cols-2')?.scrollIntoView({ 
-                        behavior: 'smooth',
-                        block: 'start'
-                      });
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                  >
-                    View Job Description
-                  </Button>
-                </CardContent>
-              </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Test Results
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>Above 80%:</span>
-                        <span className="font-semibold text-green-600">{candidatesStats.testAbove80}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Below 80%:</span>
-                        <span className="font-semibold text-yellow-600">{candidatesStats.testBelow80}</span>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => navigate(`/questions-review?id=${activeJobId}`)}
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                    >
-                      Send Candidate Test
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      AI Pre-Interview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>Completed:</span>
-                        <span className="font-semibold text-green-600">{candidatesStats.completed}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Pending:</span>
-                        <span className="font-semibold text-yellow-600">{candidatesStats.pending}</span>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => {}}
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                    >
-                      Make Pre-Interviews
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Dashboard Button */}
-              <Button
-                onClick={() => navigate(`/candidates-dashboard?id=${activeJob.id}`)}
-                variant="default"
-                size="lg"
-                className="w-full"
-              >
-                View Candidates Dashboard
-              </Button>
-
-              {/* Job Editor */}
-              <div id="job-description" className="grid grid-cols-1 lg:grid-cols-2 gap-6 scroll-mt-6">
-                <JobRequirements
-                  title={activeJob.title}
-                  requirements={activeJob.requirements}
-                  jobId={activeJob.id}
-                  hasQuestions={hasQuestions}
-                  onUpdateTitle={handleUpdateTitle}
-                  onUpdateRequirements={handleUpdateRequirements}
-                  onSave={handleSave}
-                  onGenerateQuestions={handleGenerateQuestions}
-                />
-                <ResumeUpload
-                  resumes={activeJob.resumes}
-                  onUploadResumes={handleUploadResumes}
-                  onDeleteResume={handleDeleteResume}
-                />
-              </div>
-            </div>
-          </div>
+      <main className="flex-1">
+        {currentView === "list" && (
+          <JobList
+            jobs={jobs}
+            onSelectJob={handleSelectJob}
+            onCreateJob={handleCreateJob}
+            onDeleteJob={handleDeleteJob}
+          />
         )}
-      </div>
+        
+        {currentView === "create" && activeJob && (
+          <JobCreateForm
+            initialTitle={activeJob.title}
+            initialDescription={activeJob.requirements}
+            onSave={handleSaveJob}
+            onBack={handleBackToList}
+          />
+        )}
+        
+        {currentView === "detail" && activeJob && (
+          <JobDetailView
+            job={activeJob}
+            onBack={handleBackToList}
+            onEdit={handleEditJob}
+            onUploadResumes={handleUploadResumes}
+            onDeleteResume={handleDeleteResume}
+            onGenerateQuestions={handleGenerateQuestions}
+            onGoToDashboard={handleGoToDashboard}
+            hasQuestions={hasQuestions}
+          />
+        )}
+      </main>
       <UploadQueue
         queue={uploadQueue.queue}
         isOpen={uploadQueue.isQueueOpen}
