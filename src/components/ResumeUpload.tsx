@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Resume } from "@/pages/Index";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-
 interface ResumeUploadProps {
   resumes: Resume[];
   onUploadResumes: (files: File[]) => void;
@@ -24,12 +23,10 @@ export const ResumeUpload = ({
       onUploadResumes(fileArray);
     }
   };
-
   const handleDeleteClick = (id: string) => {
     setDeletingResumeId(id);
     setDeleteDialogOpen(true);
   };
-
   const confirmDelete = () => {
     if (deletingResumeId && onDeleteResume) {
       onDeleteResume(deletingResumeId);
@@ -68,15 +65,15 @@ export const ResumeUpload = ({
               <ol className="space-y-2 text-sm text-foreground">
                 <li className="flex gap-2">
                   <span className="font-semibold">1.</span>
-                  <span>Enter your job description on the left.</span>
+                  <span>Save the job description.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="font-semibold">2.</span>
-                  <span>Upload several resumes on the right.</span>
+                  <span>Use the application link or Upload resumes</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="font-semibold">3.</span>
-                  <span>Get a sorted list of applicants in seconds.</span>
+                  <span>Get top candidates instantly.</span>
                 </li>
               </ol>
             </div>
@@ -103,16 +100,9 @@ export const ResumeUpload = ({
                 <div className="text-success font-semibold text-sm">
                   {resume.match}%
                 </div>
-                {onDeleteResume && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => handleDeleteClick(resume.id)}
-                  >
+                {onDeleteResume && <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive" onClick={() => handleDeleteClick(resume.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                )}
+                  </Button>}
               </div>
             </div>)}
         </div>
