@@ -78,33 +78,34 @@ export const JobDetailView = ({
       </div>
 
       {/* Job Summary Card */}
-      <Card>
-        <CardHeader>
+      <Card className={isEditing ? "border-primary/50 shadow-lg" : ""}>
+        <CardHeader className={isEditing ? "p-8" : "p-6"}>
           {isEditing ? (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <Input
                 placeholder="Job Title"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="text-xl font-semibold"
+                className="text-2xl font-semibold h-14 px-4"
               />
               <Textarea
                 placeholder="Job Description / Requirements"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
-                rows={6}
+                rows={12}
+                className="text-base min-h-[300px] p-4"
               />
-              <Button onClick={handleSave}>
-                <Save className="w-4 h-4 mr-2" />
+              <Button onClick={handleSave} size="lg" className="h-12 px-6">
+                <Save className="w-5 h-5 mr-2" />
                 Save
               </Button>
             </div>
           ) : (
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <CardTitle className="text-2xl">{job.title}</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">Created on {job.date}</p>
-                <p className="text-muted-foreground mt-3 whitespace-pre-wrap">
+                <CardTitle className="text-xl">{job.title}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Created on {job.date}</p>
+                <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap line-clamp-3">
                   {job.requirements}
                 </p>
               </div>
