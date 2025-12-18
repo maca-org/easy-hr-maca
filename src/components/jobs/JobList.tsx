@@ -147,11 +147,24 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.stopPropagation();
                           const link = `${window.location.origin}/apply/${job.id}`;
-                          navigator.clipboard.writeText(link);
-                          toast.success("Application link copied to clipboard!");
+                          try {
+                            await navigator.clipboard.writeText(link);
+                            toast.success("Application link copied!");
+                          } catch {
+                            // Fallback for older browsers
+                            const textArea = document.createElement("textarea");
+                            textArea.value = link;
+                            textArea.style.position = "fixed";
+                            textArea.style.left = "-9999px";
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(textArea);
+                            toast.success("Application link copied!");
+                          }
                         }}
                         className="h-7 text-xs"
                       >

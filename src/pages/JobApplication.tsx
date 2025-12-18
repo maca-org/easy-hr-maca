@@ -178,34 +178,35 @@ const JobApplication = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted py-8 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Job Header */}
+        {/* Job Header - Apply for Job Title */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-primary/10 shrink-0">
-                <Briefcase className="w-8 h-8 text-primary" />
+            <div className="text-center mb-6">
+              <div className="p-4 rounded-full bg-primary/10 w-fit mx-auto mb-4">
+                <Briefcase className="w-10 h-10 text-primary" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold mb-2">
-                  {job.title || "Job Opening"}
-                </h1>
-                <div className="prose prose-sm max-w-none text-muted-foreground">
-                  <div 
-                    className="whitespace-pre-wrap max-h-60 overflow-y-auto"
-                    dangerouslySetInnerHTML={{ __html: job.description }}
-                  />
-                </div>
-              </div>
+              <h1 className="text-2xl font-bold">
+                Apply for {job.title || "this position"}
+              </h1>
+            </div>
+            
+            {/* Job Description */}
+            <div className="prose prose-sm max-w-none text-muted-foreground border-t pt-4">
+              <h3 className="text-sm font-semibold text-foreground mb-2">Job Description</h3>
+              <div 
+                className="whitespace-pre-wrap max-h-48 overflow-y-auto text-sm"
+                dangerouslySetInnerHTML={{ __html: job.description }}
+              />
             </div>
           </CardContent>
         </Card>
 
-        {/* Application Form */}
+        {/* CV Upload Form */}
         <Card>
           <CardContent className="pt-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Upload className="w-5 h-5 text-primary" />
-              Just need to upload CV
+              Upload Your CV
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
