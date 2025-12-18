@@ -60,29 +60,15 @@ export const ResumeUpload = ({
             </>}
         </div>
 
-        {resumes.length === 0 && <>
-            <div className="space-y-4">
-              <h3 className="font-bold text-xl text-center text-foreground">
-                How does it work?
-              </h3>
-              <ol className="space-y-2 text-sm text-foreground">
-                <li className="flex gap-2">
-                  <span className="font-semibold">1.</span>
-                  <span>Enter your job description on the left.</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-semibold">2.</span>
-                  <span>Upload several resumes on the right.</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-semibold">3.</span>
-                  <span>Get a sorted list of applicants in seconds.</span>
-                </li>
-              </ol>
-            </div>
-
-            
-          </>}
+        {resumes.length === 0 && (
+          <div className="flex flex-col items-center">
+            <img 
+              src="/how-it-works.png" 
+              alt="How it works: 1. Save job description, 2. Upload CVs or share link, 3. Get top candidates"
+              className="w-full max-w-[280px] h-auto opacity-90"
+            />
+          </div>
+        )}
 
         <div className="space-y-2">
           {[...resumes].sort((a, b) => b.match - a.match).map((resume, index) => <div key={resume.id} className="group flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
