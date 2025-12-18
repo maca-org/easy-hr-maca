@@ -222,9 +222,7 @@ const Index = () => {
   };
 
   const handleSelectJob = (id: string) => {
-    setActiveJobId(id);
-    setCurrentView("detail");
-    setSearchParams({ id });
+    navigate(`/candidates-dashboard?id=${id}`);
   };
 
   const handleDeleteJob = async (id: string) => {
