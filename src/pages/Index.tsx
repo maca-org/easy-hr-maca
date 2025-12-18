@@ -130,16 +130,11 @@ const Index = () => {
         }));
         setJobs(mappedJobs);
         
-        // Set active job from URL parameter if present (only on initial load)
+        // Set active job from URL parameter if present
         const jobIdFromUrl = searchParams.get("id");
         if (jobIdFromUrl && mappedJobs.some(job => job.id === jobIdFromUrl)) {
-          // Only change view if activeJobId is not already set (initial page load)
-          setActiveJobId(prev => {
-            if (!prev) {
-              setCurrentView("detail");
-            }
-            return prev || jobIdFromUrl;
-          });
+          setActiveJobId(jobIdFromUrl);
+          setCurrentView("detail");
         }
       }
     };
