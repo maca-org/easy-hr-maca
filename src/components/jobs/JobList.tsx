@@ -1,4 +1,5 @@
-import { Plus, Briefcase, Calendar, Users, Trash2, ArrowUpDown, LayoutDashboard } from "lucide-react";
+import { Plus, Briefcase, Calendar, Users, Trash2, ArrowUpDown, LayoutDashboard, Link as LinkIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -140,6 +141,22 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
                       >
                         <LayoutDashboard className="w-3 h-3 mr-1" />
                         Dashboard
+                      </Button>
+
+                      {/* Get Link button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const link = `${window.location.origin}/apply/${job.id}`;
+                          navigator.clipboard.writeText(link);
+                          toast.success("Application link copied to clipboard!");
+                        }}
+                        className="h-7 text-xs"
+                      >
+                        <LinkIcon className="w-3 h-3 mr-1" />
+                        Get Link
                       </Button>
                       
                       {/* Date */}
