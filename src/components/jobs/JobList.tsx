@@ -1,5 +1,6 @@
-import { Plus, Briefcase, Calendar, FileText, Trash2, ArrowUpDown } from "lucide-react";
+import { Plus, Briefcase, Calendar, Users, Trash2, ArrowUpDown, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Job } from "@/pages/Index";
 import {
@@ -31,6 +32,7 @@ interface JobListProps {
 type SortOption = 'newest' | 'oldest' | 'a-z' | 'z-a';
 
 export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobListProps) => {
+  const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -118,18 +120,33 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
                       </h3>
                     </div>
                     
-                    {/* Center: Date + Resume count */}
-                    <div className="flex items-center gap-6 text-sm text-muted-foreground shrink-0">
-                      <div className="flex items-center gap-2">
+                    {/* Center: Candidate count (green) + Dashboard button + Date */}
+                    <div className="flex items-center gap-4 text-sm shrink-0">
+                      {/* Green candidate count */}
+                      <div className="flex items-center gap-2 text-green-600 font-medium">
+                        <Users className="w-4 h-4" />
+                        <span>{job.resumes.length} candidate{job.resumes.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      
+                      {/* Go to Dashboard button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/candidates-dashboard?id=${job.id}`);
+                        }}
+                        className="h-7 text-xs"
+                      >
+                        <LayoutDashboard className="w-3 h-3 mr-1" />
+                        Dashboard
+                      </Button>
+                      
+                      {/* Date */}
+                      <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar className="w-4 h-4" />
                         <span>{job.date}</span>
                       </div>
-                      {job.resumes.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4" />
-                          <span>{job.resumes.length} resume{job.resumes.length !== 1 ? 's' : ''}</span>
-                        </div>
-                      )}
                     </div>
                     
                     {/* Right: Delete button */}
