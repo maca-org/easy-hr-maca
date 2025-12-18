@@ -130,6 +130,7 @@ export const JobDetailView = ({
             resumes={job.resumes}
             onUploadResumes={onUploadResumes}
             onDeleteResume={onDeleteResume}
+            onGetApplicationLink={handleOpenShareModal}
           />
         </CardContent>
       </Card>
@@ -145,21 +146,12 @@ export const JobDetailView = ({
       />
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={handleOpenShareModal}
-          className="h-14"
-        >
-          <Link2 className="w-5 h-5 mr-2" />
-          Get Application Link
-        </Button>
+      <div className="flex justify-center">
         <Button
           variant={hasQuestions ? "outline" : "default"}
           size="lg"
           onClick={handlePublish}
-          className="h-14"
+          className="h-14 w-full max-w-md"
         >
           <Send className="w-5 h-5 mr-2" />
           {hasQuestions ? "Job Published" : "Publish Job Opening"}
