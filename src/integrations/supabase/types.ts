@@ -116,6 +116,7 @@ export type Database = {
           description: string
           id: string
           questions: Json | null
+          slug: string | null
           title: string | null
           updated_at: string | null
           user_id: string | null
@@ -125,6 +126,7 @@ export type Database = {
           description: string
           id?: string
           questions?: Json | null
+          slug?: string | null
           title?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -134,6 +136,7 @@ export type Database = {
           description?: string
           id?: string
           questions?: Json | null
+          slug?: string | null
           title?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -212,7 +215,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_job_slug: {
+        Args: { job_id: string; title: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
