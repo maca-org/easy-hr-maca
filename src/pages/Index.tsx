@@ -38,6 +38,7 @@ export interface Job {
   resumes: Resume[];
   questions: Question[];
   slug?: string | null;
+  candidateCount: number;
 }
 
 type ViewState = "list" | "create" | "detail";
@@ -116,6 +117,20 @@ const Index = () => {
         return;
       }
 
+      // Fetch candidate counts for all jobs
+      const { data: candidatesData } = await supabase
+        .from("candidates")
+        .select("job_id")
+        .eq("user_id", user.id);
+
+      // Count candidates per job
+      const countByJobId: Record<string, number> = {};
+      if (candidatesData) {
+        candidatesData.forEach((c) => {
+          countByJobId[c.job_id] = (countByJobId[c.job_id] || 0) + 1;
+        });
+      }
+
       if (data) {
         const mappedJobs: Job[] = data.map((row) => ({
           id: row.id,
@@ -129,6 +144,7 @@ const Index = () => {
           resumes: [],
           questions: [],
           slug: (row as any).slug || null,
+          candidateCount: countByJobId[row.id] || 0,
         }));
         setJobs(mappedJobs);
         
@@ -212,6 +228,7 @@ const Index = () => {
         resumes: [],
         questions: [],
         slug: (newJob as any).slug || null,
+        candidateCount: 0,
       };
 
       setJobs([jobObj, ...jobs]);

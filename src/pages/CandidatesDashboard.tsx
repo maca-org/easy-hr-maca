@@ -91,7 +91,8 @@ export default function CandidatesDashboard() {
         questions: job.questions as any || {
           mcq: [],
           open: []
-        }
+        },
+        candidateCount: 0
       }));
       setJobs(formattedJobs);
     };
