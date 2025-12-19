@@ -204,6 +204,8 @@ export type Database = {
           id: string
           monthly_unlocked_count: number | null
           plan_type: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           updated_at: string
         }
         Insert: {
@@ -214,6 +216,8 @@ export type Database = {
           id: string
           monthly_unlocked_count?: number | null
           plan_type?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -224,6 +228,8 @@ export type Database = {
           id?: string
           monthly_unlocked_count?: number | null
           plan_type?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Relationships: []

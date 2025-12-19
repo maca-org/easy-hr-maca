@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractTextFromPDF } from "@/utils/pdfExtractor";
 import { useUploadQueue } from "@/hooks/useUploadQueue";
 import { useUnlockSystem } from "@/hooks/useUnlockSystem";
+import { useSubscription } from "@/hooks/useSubscription";
 import AuthHeader from "@/components/AuthHeader";
 import { UploadQueue } from "@/components/UploadQueue";
 import { ViewAnswersModal } from "@/components/ViewAnswersModal";
@@ -12,7 +13,7 @@ import { UpsellBanner } from "@/components/UpsellBanner";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, Lock } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, Lock, CreditCard } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Job } from "./Index";
@@ -68,8 +69,24 @@ export default function CandidatesDashboard() {
   const [deletingCandidates, setDeletingCandidates] = useState<string[]>([]);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   
+  // Subscription hook - checks Stripe subscription status
+  const { planType: subscriptionPlanType, refreshSubscription } = useSubscription();
+  
   // Unlock system hook
   const { unlockStatus, unlockingIds, unlockCandidate, refreshStatus } = useUnlockSystem(user?.id);
+  // Check for payment success and refresh unlock status
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success') {
+      toast.success("Ödeme başarılı! Plan güncelleniyor...");
+      // Refresh both subscription and unlock status
+      refreshSubscription();
+      refreshStatus();
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname + `?id=${jobId}`);
+    }
+  }, [refreshSubscription, refreshStatus, jobId]);
+
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -520,12 +537,10 @@ export default function CandidatesDashboard() {
     }
   };
 
-  // Handle upgrade
+  // Handle upgrade - now uses Stripe checkout via UpgradeModal
   const handleSelectPlan = (plan: string) => {
-    // In a real implementation, this would redirect to Stripe checkout
-    toast.info(`Redirecting to ${plan} checkout...`);
+    // The UpgradeModal now handles the Stripe checkout directly
     setUpgradeModalOpen(false);
-    // TODO: Implement Stripe checkout
   };
 
   const sortedCandidates = [...candidates].sort((a, b) => {
