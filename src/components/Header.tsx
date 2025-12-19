@@ -1,4 +1,4 @@
-import { Sparkles, Crown } from "lucide-react";
+import { Sparkles, Crown, Shield } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { format } from "date-fns";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -19,6 +20,7 @@ export const Header = () => {
   const [companyName, setCompanyName] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { subscribed, planType, subscriptionEnd } = useSubscription();
+  const { isAdmin } = useAdminAuth();
 
   useEffect(() => {
     // Get current user
@@ -179,6 +181,15 @@ export const Header = () => {
                   <p className="text-sm font-medium truncate">{user.email}</p>
                 </div>
                 <DropdownMenuSeparator />
+                {isAdmin && (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => navigate("/admin/users")}
+                  >
+                    <Shield className="mr-2 h-4 w-4" />
+                    <span>Admin Panel</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => navigate("/settings/subscription")}
