@@ -14,8 +14,6 @@ import AssessmentSettings from "./pages/AssessmentSettings";
 import Assessment from "./pages/Assessment";
 import JobApplication from "./pages/JobApplication";
 import SubscriptionSettings from "./pages/SubscriptionSettings";
-import AdminUsers from "./pages/AdminUsers";
-import { AdminRoute } from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -35,7 +33,6 @@ const App = () => (
           <Route path="/assessment/:candidateId" element={<Assessment />} />
           <Route path="/apply/:jobId" element={<JobApplication />} />
           <Route path="/settings/subscription" element={<SubscriptionSettings />} />
-          <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

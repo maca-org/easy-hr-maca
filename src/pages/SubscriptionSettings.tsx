@@ -14,8 +14,8 @@ const PLAN_DETAILS: Record<string, { name: string; price: number; limit: number;
   free: {
     name: "Free",
     price: 0,
-    limit: 25,
-    features: ["25 candidates/month", "Basic CV screening", "Email support"],
+    limit: 10,
+    features: ["10 candidates/month", "Basic CV screening", "Email support"],
   },
   starter: {
     name: "Starter",

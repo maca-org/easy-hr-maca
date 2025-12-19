@@ -73,42 +73,7 @@ serve(async (req) => {
     // 3. Extract text from CV (basic for now - the analyze-cv will do the heavy lifting)
     const cvText = await cvFile.text().catch(() => '');
 
-    // 4. Check if user can auto-unlock this candidate
-    let shouldAutoUnlock = false;
-    try {
-      // Get user's profile with plan info
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('plan_type, monthly_unlocked_count')
-        .eq('id', job.user_id)
-        .maybeSingle();
-
-      if (profile) {
-        const PLAN_LIMITS: Record<string, number> = {
-          free: 25,
-          starter: 100,
-          pro: 250,
-          business: 1000,
-          enterprise: Infinity
-        };
-        const planType = profile.plan_type || 'free';
-        const limit = PLAN_LIMITS[planType] ?? 25;
-        const used = profile.monthly_unlocked_count || 0;
-        
-        if (used < limit) {
-          shouldAutoUnlock = true;
-          // Increment the monthly count
-          await supabase
-            .from('profiles')
-            .update({ monthly_unlocked_count: used + 1 })
-            .eq('id', job.user_id);
-        }
-      }
-    } catch (e) {
-      console.log('Could not check unlock limit, defaulting to locked');
-    }
-
-    // 5. Create candidate record
+    // 4. Create candidate record
     const candidateId = crypto.randomUUID();
     
     const { error: candidateError } = await supabase
@@ -123,8 +88,7 @@ serve(async (req) => {
         cv_text: cvText,
         cv_rate: 0,
         application_source: 'link_applied',
-        applied_at: new Date().toISOString(),
-        is_unlocked: shouldAutoUnlock
+        applied_at: new Date().toISOString()
       });
 
     if (candidateError) {
@@ -132,7 +96,7 @@ serve(async (req) => {
       throw new Error('Failed to create candidate record');
     }
 
-    console.log('Candidate created:', candidateId, 'Auto-unlocked:', shouldAutoUnlock);
+    console.log('Candidate created:', candidateId);
 
     // 5. Trigger CV analysis
     const CV_ANALYSIS_WEBHOOK_URL = Deno.env.get('CV_ANALYSIS_WEBHOOK_URL');
