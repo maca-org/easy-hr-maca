@@ -266,6 +266,35 @@ const Index = () => {
     toast.success("Job deleted successfully");
   };
 
+  // Trigger question generation in background (no waiting)
+  const triggerQuestionGeneration = async (jobId: string, title: string, description: string) => {
+    if (!description.trim()) return;
+    
+    try {
+      const toastId = `generate-${jobId}`;
+      
+      toast.loading("Generating interview questions...", {
+        id: toastId,
+        description: `${title || "Your job"} • This usually takes 20-60 seconds`,
+        duration: Infinity,
+      });
+      
+      const { error } = await supabase.functions.invoke('send-to-n8n', {
+        body: { job_id: jobId, title, description },
+      });
+
+      if (error) {
+        toast.error("Failed to start question generation", { id: toastId });
+        return;
+      }
+      
+      startQuestionPolling(jobId, toastId, title || "Your job");
+      
+    } catch (error) {
+      console.error('Error triggering question generation:', error);
+    }
+  };
+
   const handleSaveJob = async (title: string, description: string) => {
     if (!activeJobId || !user) return;
 
@@ -315,6 +344,10 @@ const Index = () => {
       
       toast.success("Job saved successfully!");
       setCurrentView("detail");
+      
+      // Automatically trigger question generation in background
+      triggerQuestionGeneration(activeJobId, title, description);
+      
     } catch (error) {
       console.error('Error saving job:', error);
       toast.error("Failed to save job");
