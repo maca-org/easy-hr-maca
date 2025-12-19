@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import AssessmentSettings from "./pages/AssessmentSettings";
 import Assessment from "./pages/Assessment";
 import JobApplication from "./pages/JobApplication";
+import SubscriptionSettings from "./pages/SubscriptionSettings";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/assessment-settings" element={<AssessmentSettings />} />
           <Route path="/assessment/:candidateId" element={<Assessment />} />
           <Route path="/apply/:jobId" element={<JobApplication />} />
+          <Route path="/settings/subscription" element={<SubscriptionSettings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

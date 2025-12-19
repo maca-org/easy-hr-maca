@@ -1,20 +1,24 @@
-import { Sparkles } from "lucide-react";
+import { Sparkles, Crown } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Settings } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSubscription } from "@/hooks/useSubscription";
+import { format } from "date-fns";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 export const Header = () => {
   const navigate = useNavigate();
-  const [balance, setBalance] = useState(5.00);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { subscribed, planType, subscriptionEnd } = useSubscription();
 
   useEffect(() => {
     // Get current user
@@ -63,11 +67,42 @@ export const Header = () => {
     return email.charAt(0).toUpperCase();
   };
 
-  const getBalanceColor = () => {
-    if (balance >= 5) return "bg-green-100 text-green-800";
-    if (balance < 1) return "bg-red-100 text-red-800";
-    return "bg-yellow-100 text-yellow-800";
+  const getPlanBadgeColor = () => {
+    switch (planType) {
+      case "business":
+        return "bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/20";
+      case "pro":
+        return "bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20";
+      case "starter":
+        return "bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20";
+      default:
+        return "bg-muted text-muted-foreground border-border hover:bg-muted/80";
+    }
   };
+
+  const getPlanDisplayName = () => {
+    switch (planType) {
+      case "business":
+        return "Business";
+      case "pro":
+        return "Pro";
+      case "starter":
+        return "Starter";
+      default:
+        return "Free";
+    }
+  };
+
+  const formatBillingDate = () => {
+    if (!subscriptionEnd) return null;
+    try {
+      return format(new Date(subscriptionEnd), "MMM d, yyyy");
+    } catch {
+      return null;
+    }
+  };
+
+  const billingDate = formatBillingDate();
 
   return (
     <header className="border-b border-border bg-background px-6 py-4">
@@ -99,15 +134,33 @@ export const Header = () => {
           <button className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">
             Support
           </button>
-          <button className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">
+          <button 
+            onClick={() => navigate("/settings/subscription")}
+            className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200"
+          >
             Settings
           </button>
-          <button 
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-opacity hover:opacity-80 ${getBalanceColor()}`}
-            onClick={() => console.log('Navigate to Settings')}
-          >
-            ${balance.toFixed(2)}
-          </button>
+          
+          {user && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge 
+                  variant="outline" 
+                  className={`cursor-pointer flex items-center gap-1.5 px-2.5 py-1 ${getPlanBadgeColor()}`}
+                  onClick={() => navigate("/settings/subscription")}
+                >
+                  <Crown className="h-3.5 w-3.5" />
+                  {getPlanDisplayName()}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="font-medium">{getPlanDisplayName()} Plan</p>
+                {subscribed && billingDate && (
+                  <p className="text-xs text-muted-foreground">Renews {billingDate}</p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          )}
           
           {user && (
             <DropdownMenu>
@@ -125,6 +178,14 @@ export const Header = () => {
                   <p className="text-xs text-muted-foreground">Signed in as</p>
                   <p className="text-sm font-medium truncate">{user.email}</p>
                 </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/settings/subscription")}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Subscription Settings</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="cursor-pointer"
