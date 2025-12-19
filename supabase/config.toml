@@ -48,3 +48,6 @@ verify_jwt = false
 
 [functions.customer-portal]
 verify_jwt = false
+
+[functions.use-analysis-credit]
+verify_jwt = false

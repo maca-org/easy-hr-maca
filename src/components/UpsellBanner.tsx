@@ -1,10 +1,10 @@
-import { Lock, Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight, FileSearch } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 interface UpsellBannerProps {
   totalCandidates: number;
-  unlockedCount: number;
+  analyzedCount: number;
   planType: string;
   monthlyLimit: number | 'unlimited';
   usedThisMonth: number;
@@ -13,19 +13,19 @@ interface UpsellBannerProps {
 
 export function UpsellBanner({
   totalCandidates,
-  unlockedCount,
+  analyzedCount,
   planType,
   monthlyLimit,
   usedThisMonth,
   onUpgrade
 }: UpsellBannerProps) {
-  const lockedCount = totalCandidates - unlockedCount;
+  const pendingAnalysis = totalCandidates - analyzedCount;
   const isFreeUser = planType === 'free';
-  const remaining = monthlyLimit === 'unlimited' ? 'unlimited' : Math.max(0, monthlyLimit - usedThisMonth);
-  const isLimitReached = monthlyLimit !== 'unlimited' && usedThisMonth >= monthlyLimit;
+  const remaining = monthlyLimit === 'unlimited' ? 'unlimited' : Math.max(0, Number(monthlyLimit) - usedThisMonth);
+  const isLimitReached = monthlyLimit !== 'unlimited' && usedThisMonth >= Number(monthlyLimit);
 
-  // Don't show if no locked candidates or user has unlimited plan with remaining unlocks
-  if (lockedCount === 0) return null;
+  // Don't show if all candidates are analyzed and user has credits
+  if (pendingAnalysis === 0 && !isLimitReached) return null;
   if (planType === 'enterprise') return null;
 
   // Plan pricing info
@@ -44,19 +44,22 @@ export function UpsellBanner({
           {/* Left side - Message */}
           <div className="flex items-center gap-4">
             <div className="p-3 bg-white/20 rounded-full">
-              <Lock className="h-6 w-6" />
+              <FileSearch className="h-6 w-6" />
             </div>
             <div>
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <Sparkles className="h-5 w-5" />
-                {lockedCount} candidate{lockedCount > 1 ? 's' : ''} applied!
+                {pendingAnalysis > 0 
+                  ? `${pendingAnalysis} CV${pendingAnalysis > 1 ? 's' : ''} pending analysis`
+                  : 'Analysis credits depleted'
+                }
               </h3>
               <p className="text-white/80 mt-1">
                 {isFreeUser 
-                  ? "Unlock to see who you should hire. Get candidate names, scores, and AI insights."
+                  ? "Upgrade to automatically analyze CVs and see candidate scores, insights, and match ratings."
                   : isLimitReached
-                    ? `You've used all ${monthlyLimit} unlocks this month. Upgrade to unlock more candidates.`
-                    : `You have ${remaining} unlock${remaining !== 1 ? 's' : ''} remaining this month.`
+                    ? `You've used all ${monthlyLimit} analysis credits this month. Upgrade for more.`
+                    : `You have ${remaining} analysis credit${remaining !== 1 ? 's' : ''} remaining this month.`
                 }
               </p>
             </div>
@@ -76,7 +79,7 @@ export function UpsellBanner({
             ) : (
               <div className="text-center">
                 <div className="text-2xl font-bold">{remaining}</div>
-                <div className="text-xs text-white/70">unlocks left</div>
+                <div className="text-xs text-white/70">credits left</div>
               </div>
             )}
           </div>
@@ -90,7 +93,7 @@ export function UpsellBanner({
                 <div key={plan.name} className="bg-white/10 rounded-lg p-3">
                   <div className="font-semibold">{plan.name}</div>
                   <div className="text-2xl font-bold">${plan.price}</div>
-                  <div className="text-xs text-white/70">{plan.limit} candidates/mo</div>
+                  <div className="text-xs text-white/70">{plan.limit} CVs/mo</div>
                 </div>
               ))}
             </div>
