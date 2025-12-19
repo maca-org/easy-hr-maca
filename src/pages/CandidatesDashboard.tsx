@@ -3,12 +3,16 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { extractTextFromPDF } from "@/utils/pdfExtractor";
 import { useUploadQueue } from "@/hooks/useUploadQueue";
+import { useUnlockSystem } from "@/hooks/useUnlockSystem";
 import AuthHeader from "@/components/AuthHeader";
 import { UploadQueue } from "@/components/UploadQueue";
 import { ViewAnswersModal } from "@/components/ViewAnswersModal";
+import { LockedCandidateRow } from "@/components/LockedCandidateRow";
+import { UpsellBanner } from "@/components/UpsellBanner";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2 } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, Lock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Job } from "./Index";
@@ -16,6 +20,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
 interface Candidate {
   id: string;
   name: string;
@@ -37,7 +42,9 @@ interface Candidate {
   analyzing?: boolean;
   assessment_answers?: any;
   test_detailed_scores?: any;
+  is_unlocked?: boolean;
 }
+
 export default function CandidatesDashboard() {
   const [searchParams] = useSearchParams();
   const jobId = searchParams.get("id");
@@ -58,6 +65,10 @@ export default function CandidatesDashboard() {
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingCandidates, setDeletingCandidates] = useState<string[]>([]);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  
+  // Unlock system hook
+  const { unlockStatus, unlockingIds, unlockCandidate, refreshStatus } = useUnlockSystem(user?.id);
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -473,6 +484,25 @@ export default function CandidatesDashboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Handle unlock candidate
+  const handleUnlockCandidate = async (candidateId: string) => {
+    const success = await unlockCandidate(candidateId);
+    if (success) {
+      // Update local state
+      setCandidates(prev => prev.map(c => 
+        c.id === candidateId ? { ...c, is_unlocked: true } : c
+      ));
+    }
+  };
+
+  // Handle upgrade
+  const handleSelectPlan = (plan: string) => {
+    // In a real implementation, this would redirect to Stripe checkout
+    toast.info(`Redirecting to ${plan} checkout...`);
+    setUpgradeModalOpen(false);
+    // TODO: Implement Stripe checkout
+  };
+
   const sortedCandidates = [...candidates].sort((a, b) => {
     switch (sortBy) {
       case "score":
@@ -485,12 +515,16 @@ export default function CandidatesDashboard() {
         return 0;
     }
   });
+
+  // Calculate stats
   const cvAbove80 = candidates.filter(c => c.cv_rate >= 80).length;
   const cvBelow80 = candidates.filter(c => c.cv_rate < 80).length;
   const testAbove80 = candidates.filter(c => c.test_result !== null && c.test_result >= 80).length;
   const testBelow80 = candidates.filter(c => c.test_result !== null && c.test_result < 80).length;
   const completedTests = candidates.filter(c => c.completed_test).length;
   const pendingTests = candidates.filter(c => !c.completed_test).length;
+  const unlockedCandidates = candidates.filter(c => c.is_unlocked).length;
+  const lockedCandidates = candidates.length - unlockedCandidates;
   if (loading || uploading) {
     return <div className="min-h-screen flex flex-col bg-background">
         <AuthHeader />
@@ -593,6 +627,18 @@ export default function CandidatesDashboard() {
             
           </div>
 
+          {/* Upsell Banner - Show when there are locked candidates */}
+          {lockedCandidates > 0 && (
+            <UpsellBanner
+              totalCandidates={candidates.length}
+              unlockedCount={unlockedCandidates}
+              planType={unlockStatus.planType}
+              monthlyLimit={unlockStatus.limit}
+              usedThisMonth={unlockStatus.used}
+              onUpgrade={() => setUpgradeModalOpen(true)}
+            />
+          )}
+
           {/* Make Assessment Button */}
           <div className="flex justify-center">
             <Button onClick={handleMakeAssessment} size="lg" className="px-8 py-6 text-lg" disabled={generatingQuestions}>
@@ -683,138 +729,26 @@ export default function CandidatesDashboard() {
                     <div className="text-center">Actions</div>
                   </div>
 
-                  {/* Table Rows */}
+                  {/* Table Rows - Using LockedCandidateRow component */}
                   {sortedCandidates.map(candidate => {
-                  const overallScore = calculateOverallScore(candidate);
-                  const scoreColor = overallScore >= 80 ? "text-green-600" : overallScore >= 60 ? "text-yellow-600" : "text-red-600";
-                  const isExpanded = expandedCandidateId === candidate.id;
-                  return <div key={candidate.id} className="border rounded-lg overflow-hidden">
-                        <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_100px_80px_80px] gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center">
-                        {/* Checkbox */}
-                        <div className="flex items-center justify-center">
-                          <Checkbox 
-                            checked={selectedCandidates.includes(candidate.id)}
-                            onCheckedChange={() => handleSelectCandidate(candidate.id)}
-                          />
-                        </div>
-
-                        {/* Overall Score */}
-                        <div className={`text-2xl font-bold ${scoreColor}`}>
-                          {overallScore}%
-                        </div>
-
-                        {/* Name & Title */}
-                        <div>
-                          <p className="font-medium text-foreground">{candidate.name}</p>
-                          {candidate.title && <p className="text-sm text-muted-foreground">{candidate.title}</p>}
-                        </div>
-
-                        {/* CV Rate */}
-                        <div className="text-center">
-                          {candidate.analyzing ? (
-                            <span className="text-xs text-purple-500 flex items-center justify-center gap-1">
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                              Analyzing...
-                            </span>
-                          ) : candidate.cv_rate === 0 && !candidate.relevance_analysis ? (
-                            <span className="text-xs text-muted-foreground">Queued</span>
-                          ) : (
-                            <span className={`font-semibold ${candidate.cv_rate >= 80 ? "text-green-600" : "text-red-600"}`}>
-                              {candidate.cv_rate}%
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Test Result */}
-                        <div className="text-center">
-                          {candidate.test_result !== null ? <span className={`font-semibold ${candidate.test_result >= 80 ? "text-green-600" : "text-red-600"}`}>
-                              {candidate.test_result}%
-                            </span> : <span className="text-muted-foreground text-sm">-</span>}
-                        </div>
-
-                        {/* AI Interview */}
-                        <div className="text-center">
-                          {candidate.ai_interview_score !== null ? <span className="font-semibold">{candidate.ai_interview_score}%</span> : <span className="text-muted-foreground text-sm">Coming Soon</span>}
-                        </div>
-
-                        {/* View Answers */}
-                        <div className="flex items-center justify-center">
-                          {candidate.completed_test && candidate.assessment_answers ? (
-                            <ViewAnswersModal
-                              candidateName={candidate.name}
-                              testResult={candidate.test_result}
-                              assessmentAnswers={Array.isArray(candidate.assessment_answers) ? candidate.assessment_answers : null}
-                              detailedScores={Array.isArray(candidate.test_detailed_scores) ? candidate.test_detailed_scores : null}
-                            />
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </div>
-
-                        {/* Contact Actions */}
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(`mailto:${candidate.email}`, "_blank")}>
-                            <Mail className="h-4 w-4" />
-                          </Button>
-
-                          {candidate.phone && <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <Phone className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>{candidate.phone}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center justify-center gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" 
-                            onClick={() => handleDeleteSingle(candidate.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8" 
-                            onClick={() => setExpandedCandidateId(isExpanded ? null : candidate.id)}
-                          >
-                            <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Expanded Insights Section */}
-                      {isExpanded && <div className="px-4 py-4 bg-muted/20 border-t">
-                          <div className="space-y-3">
-                            <div>
-                              <h4 className="font-semibold text-sm text-green-600 mb-2">
-                                ✓ Matches Job Description
-                              </h4>
-                              {candidate.insights.matching.length > 0 ? <ul className="space-y-1 text-sm text-muted-foreground">
-                                  {candidate.insights.matching.map((item, idx) => <li key={idx}>• {item}</li>)}
-                                </ul> : <p className="text-sm text-muted-foreground">-</p>}
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-sm text-red-600 mb-2">
-                                ✗ Does Not Match Job Description
-                              </h4>
-                              {candidate.insights.not_matching.length > 0 ? <ul className="space-y-1 text-sm text-muted-foreground">
-                                  {candidate.insights.not_matching.map((item, idx) => <li key={idx}>• {item}</li>)}
-                                </ul> : <p className="text-sm text-muted-foreground">-</p>}
-                            </div>
-                          </div>
-                        </div>}
-                    </div>;
-                })}
+                    const overallScore = calculateOverallScore(candidate);
+                    return (
+                      <LockedCandidateRow
+                        key={candidate.id}
+                        candidate={candidate}
+                        overallScore={overallScore}
+                        isExpanded={expandedCandidateId === candidate.id}
+                        isSelected={selectedCandidates.includes(candidate.id)}
+                        isUnlocking={unlockingIds.has(candidate.id)}
+                        onSelect={handleSelectCandidate}
+                        onExpand={setExpandedCandidateId}
+                        onDelete={handleDeleteSingle}
+                        onUnlock={handleUnlockCandidate}
+                        canUnlock={unlockStatus.canUnlock}
+                        planType={unlockStatus.planType}
+                      />
+                    );
+                  })}
                 </div>}
             </CardContent>
           </Card>
@@ -839,6 +773,14 @@ export default function CandidatesDashboard() {
         onClose={() => uploadQueue.setIsQueueOpen(false)}
         onClearCompleted={uploadQueue.clearCompleted}
         onClearAll={uploadQueue.clearAll}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        currentPlan={unlockStatus.planType}
+        onSelectPlan={handleSelectPlan}
       />
 
       {/* Delete Confirmation Dialog */}
