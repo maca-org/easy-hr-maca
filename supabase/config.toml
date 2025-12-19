@@ -30,3 +30,12 @@ verify_jwt = false
 
 [functions.public-apply]
 verify_jwt = false
+
+[functions.check-unlock-limit]
+verify_jwt = false
+
+[functions.unlock-candidate]
+verify_jwt = false
+
+[functions.reset-monthly-counts]
+verify_jwt = false

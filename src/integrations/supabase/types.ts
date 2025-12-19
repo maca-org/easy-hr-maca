@@ -35,6 +35,7 @@ export type Database = {
           id: string
           improvement_tips: Json | null
           insights: Json | null
+          is_unlocked: boolean | null
           job_id: string
           name: string
           phone: string | null
@@ -43,6 +44,8 @@ export type Database = {
           test_detailed_scores: Json | null
           test_result: number | null
           title: string | null
+          unlocked_at: string | null
+          unlocked_by: string | null
           updated_at: string
           user_id: string
         }
@@ -66,6 +69,7 @@ export type Database = {
           id?: string
           improvement_tips?: Json | null
           insights?: Json | null
+          is_unlocked?: boolean | null
           job_id: string
           name: string
           phone?: string | null
@@ -74,6 +78,8 @@ export type Database = {
           test_detailed_scores?: Json | null
           test_result?: number | null
           title?: string | null
+          unlocked_at?: string | null
+          unlocked_by?: string | null
           updated_at?: string
           user_id: string
         }
@@ -97,6 +103,7 @@ export type Database = {
           id?: string
           improvement_tips?: Json | null
           insights?: Json | null
+          is_unlocked?: boolean | null
           job_id?: string
           name?: string
           phone?: string | null
@@ -105,6 +112,8 @@ export type Database = {
           test_detailed_scores?: Json | null
           test_result?: number | null
           title?: string | null
+          unlocked_at?: string | null
+          unlocked_by?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -188,25 +197,73 @@ export type Database = {
       }
       profiles: {
         Row: {
+          billing_period_start: string | null
           company_name: string | null
           created_at: string
           email: string
           id: string
+          monthly_unlocked_count: number | null
+          plan_type: string | null
           updated_at: string
         }
         Insert: {
+          billing_period_start?: string | null
           company_name?: string | null
           created_at?: string
           email: string
           id: string
+          monthly_unlocked_count?: number | null
+          plan_type?: string | null
           updated_at?: string
         }
         Update: {
+          billing_period_start?: string | null
           company_name?: string | null
           created_at?: string
           email?: string
           id?: string
+          monthly_unlocked_count?: number | null
+          plan_type?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      subscription_history: {
+        Row: {
+          amount_cents: number | null
+          created_at: string | null
+          currency: string | null
+          ended_at: string | null
+          id: string
+          plan_type: string
+          started_at: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          created_at?: string | null
+          currency?: string | null
+          ended_at?: string | null
+          id?: string
+          plan_type: string
+          started_at?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number | null
+          created_at?: string | null
+          currency?: string | null
+          ended_at?: string | null
+          id?: string
+          plan_type?: string
+          started_at?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
