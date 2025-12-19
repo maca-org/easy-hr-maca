@@ -39,3 +39,12 @@ verify_jwt = false
 
 [functions.reset-monthly-counts]
 verify_jwt = false
+
+[functions.create-checkout-session]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false

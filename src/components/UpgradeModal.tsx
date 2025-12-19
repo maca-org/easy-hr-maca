@@ -1,7 +1,10 @@
-import { Check, Sparkles, X } from "lucide-react";
+import { useState } from "react";
+import { Check, Sparkles, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -54,7 +57,36 @@ const plans = [
 ];
 
 export function UpgradeModal({ isOpen, onClose, currentPlan, onSelectPlan }: UpgradeModalProps) {
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const currentPlanIndex = plans.findIndex(p => p.id === currentPlan);
+
+  const handleUpgrade = async (planId: string) => {
+    setLoadingPlan(planId);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: { planId }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.url) {
+        // Open Stripe checkout in new tab
+        window.open(data.url, '_blank');
+        onClose();
+        toast.success("Stripe ödeme sayfası açıldı. Lütfen ödemeyi tamamlayın.");
+      } else {
+        throw new Error("Checkout URL alınamadı");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error("Ödeme sayfası açılırken bir hata oluştu");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -71,6 +103,7 @@ export function UpgradeModal({ isOpen, onClose, currentPlan, onSelectPlan }: Upg
             const isCurrentPlan = plan.id === currentPlan;
             const isDowngrade = index < currentPlanIndex;
             const isUpgrade = index > currentPlanIndex || currentPlan === 'free';
+            const isLoading = loadingPlan === plan.id;
 
             return (
               <Card 
@@ -106,10 +139,21 @@ export function UpgradeModal({ isOpen, onClose, currentPlan, onSelectPlan }: Upg
                   <Button 
                     className="w-full" 
                     variant={plan.popular ? 'default' : 'outline'}
-                    disabled={isCurrentPlan || isDowngrade}
-                    onClick={() => onSelectPlan(plan.id)}
+                    disabled={isCurrentPlan || isDowngrade || isLoading}
+                    onClick={() => handleUpgrade(plan.id)}
                   >
-                    {isCurrentPlan ? 'Current Plan' : isDowngrade ? 'Downgrade' : 'Upgrade'}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : isCurrentPlan ? (
+                      'Current Plan'
+                    ) : isDowngrade ? (
+                      'Downgrade'
+                    ) : (
+                      'Upgrade'
+                    )}
                   </Button>
                 </CardContent>
               </Card>
