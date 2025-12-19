@@ -100,7 +100,7 @@ export const ResumeUpload = ({
                 variant="outline"
                 size="lg"
                 onClick={onGetApplicationLink}
-                className="h-14 w-full"
+                className="h-14 w-full border-primary/40 bg-gradient-to-r from-background to-primary/15 animate-[pulse_3s_ease-in-out_infinite] hover:from-success/20 hover:to-success/30 hover:border-success hover:text-success transition-all duration-300"
               >
                 <Link2 className="w-5 h-5 mr-2" />
                 Get Application Link
