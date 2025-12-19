@@ -11,6 +11,7 @@ import { ViewAnswersModal } from "@/components/ViewAnswersModal";
 import { LockedCandidateRow } from "@/components/LockedCandidateRow";
 import { UpsellBanner } from "@/components/UpsellBanner";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { UsageProgressBar } from "@/components/UsageProgressBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, Lock, CreditCard } from "lucide-react";
@@ -68,6 +69,7 @@ export default function CandidatesDashboard() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingCandidates, setDeletingCandidates] = useState<string[]>([]);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [limitWarningShown, setLimitWarningShown] = useState(false);
   
   // Subscription hook - checks Stripe subscription status
   const { planType: subscriptionPlanType, refreshSubscription } = useSubscription();
@@ -86,6 +88,28 @@ export default function CandidatesDashboard() {
       window.history.replaceState({}, '', window.location.pathname + `?id=${jobId}`);
     }
   }, [refreshSubscription, refreshStatus, jobId]);
+
+  // Show limit warnings when approaching or reaching limit
+  useEffect(() => {
+    if (limitWarningShown || unlockStatus.limit === 'unlimited') return;
+    
+    const limit = typeof unlockStatus.limit === 'number' ? unlockStatus.limit : 25;
+    const used = unlockStatus.used;
+    const percentage = (used / limit) * 100;
+    
+    if (percentage >= 100 && !limitWarningShown) {
+      setLimitWarningShown(true);
+      setUpgradeModalOpen(true);
+      toast.error("Aylık limitinize ulaştınız! Daha fazla aday için planınızı yükseltin.", {
+        duration: 5000
+      });
+    } else if (percentage >= 80 && !limitWarningShown) {
+      setLimitWarningShown(true);
+      toast.warning(`Aylık limitinizin %${Math.round(percentage)}'ini kullandınız. ${limit - used} hak kaldı.`, {
+        duration: 5000
+      });
+    }
+  }, [unlockStatus.used, unlockStatus.limit, limitWarningShown]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -683,6 +707,13 @@ export default function CandidatesDashboard() {
 
             
           </div>
+
+          {/* Usage Progress Bar - Always show for monitoring usage */}
+          <UsageProgressBar
+            planType={unlockStatus.planType}
+            used={unlockStatus.used}
+            onUpgrade={() => setUpgradeModalOpen(true)}
+          />
 
           {/* Upsell Banner - Show when there are locked candidates */}
           {lockedCandidates > 0 && (
