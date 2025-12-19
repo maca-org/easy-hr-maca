@@ -43,6 +43,7 @@ interface Candidate {
   assessment_answers?: any;
   test_detailed_scores?: any;
   is_unlocked?: boolean;
+  cv_file_path?: string | null;
 }
 
 export default function CandidatesDashboard() {
@@ -334,12 +335,35 @@ export default function CandidatesDashboard() {
         // Extract text from PDF
         const cvText = await extractTextFromPDF(file);
 
-        // Update queue: extracted
+        // Update queue: uploading to storage
         uploadQueue.updateQueueItem(queueItem.id, { 
-          progress: 40 
+          progress: 35 
         });
 
-        // Insert candidate into database
+        // Generate unique file path for storage
+        const timestamp = Date.now();
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const cvFilePath = `${jobId}/${timestamp}_${safeFileName}`;
+
+        // Upload CV to storage
+        const { error: storageError } = await supabase.storage
+          .from('cvs')
+          .upload(cvFilePath, file, {
+            contentType: 'application/pdf',
+            upsert: false
+          });
+
+        if (storageError) {
+          console.error("Storage upload error:", storageError);
+          // Continue without storage - CV text is still saved
+        }
+
+        // Update queue: extracted
+        uploadQueue.updateQueueItem(queueItem.id, { 
+          progress: 45 
+        });
+
+        // Insert candidate into database with cv_file_path
         const { data: newCandidate, error } = await supabase
           .from("candidates")
           .insert({
@@ -348,7 +372,8 @@ export default function CandidatesDashboard() {
             name: candidateName,
             email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
             cv_rate: 0,
-            cv_text: cvText
+            cv_text: cvText,
+            cv_file_path: storageError ? null : cvFilePath
           })
           .select()
           .single();
@@ -712,7 +737,7 @@ export default function CandidatesDashboard() {
                   </p>
                 </div> : <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {/* Table Header */}
-                  <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_100px_80px_80px] gap-4 px-4 py-2 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground sticky top-0 z-10">
+                  <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_100px_80px_80px_50px] gap-4 px-4 py-2 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground sticky top-0 z-10">
                     <div className="flex items-center justify-center">
                       <Checkbox 
                         checked={selectedCandidates.length === candidates.length && candidates.length > 0}
@@ -726,6 +751,7 @@ export default function CandidatesDashboard() {
                     <div>AI Interview</div>
                     <div className="text-center">Answers</div>
                     <div className="text-center">Contact</div>
+                    <div className="text-center">CV</div>
                     <div className="text-center">Actions</div>
                   </div>
 
