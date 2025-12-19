@@ -3,17 +3,17 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { extractTextFromPDF } from "@/utils/pdfExtractor";
 import { useUploadQueue } from "@/hooks/useUploadQueue";
-import { useUnlockSystem } from "@/hooks/useUnlockSystem";
+import { useAnalysisCredits } from "@/hooks/useAnalysisCredits";
 import { useSubscription } from "@/hooks/useSubscription";
 import AuthHeader from "@/components/AuthHeader";
 import { UploadQueue } from "@/components/UploadQueue";
 import { ViewAnswersModal } from "@/components/ViewAnswersModal";
-import { LockedCandidateRow } from "@/components/LockedCandidateRow";
+import { CandidateRow } from "@/components/CandidateRow";
 import { UpsellBanner } from "@/components/UpsellBanner";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, Lock, CreditCard } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, CreditCard } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Job } from "./Index";
@@ -72,20 +72,21 @@ export default function CandidatesDashboard() {
   // Subscription hook - checks Stripe subscription status
   const { planType: subscriptionPlanType, refreshSubscription } = useSubscription();
   
-  // Unlock system hook
-  const { unlockStatus, unlockingIds, unlockCandidate, refreshStatus } = useUnlockSystem(user?.id);
-  // Check for payment success and refresh unlock status
+  // Analysis credits hook - replaces unlock system
+  const { creditStatus, useCredit, refreshCredits } = useAnalysisCredits(user?.id);
+  
+  // Check for payment success and refresh credit status
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('payment') === 'success') {
       toast.success("Ödeme başarılı! Plan güncelleniyor...");
-      // Refresh both subscription and unlock status
+      // Refresh both subscription and credit status
       refreshSubscription();
-      refreshStatus();
+      refreshCredits();
       // Clean up URL
       window.history.replaceState({}, '', window.location.pathname + `?id=${jobId}`);
     }
-  }, [refreshSubscription, refreshStatus, jobId]);
+  }, [refreshSubscription, refreshCredits, jobId]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -380,6 +381,10 @@ export default function CandidatesDashboard() {
           progress: 45 
         });
 
+        // Check if user has analysis credits BEFORE inserting candidate
+        const creditResult = await useCredit();
+        const canAnalyze = creditResult.canAnalyze;
+
         // Insert candidate into database with cv_file_path
         const { data: newCandidate, error } = await supabase
           .from("candidates")
@@ -390,48 +395,62 @@ export default function CandidatesDashboard() {
             email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
             cv_rate: 0,
             cv_text: cvText,
-            cv_file_path: storageError ? null : cvFilePath
+            cv_file_path: storageError ? null : cvFilePath,
+            is_unlocked: true // All candidates are now automatically unlocked
           })
           .select()
           .single();
 
         if (error) throw error;
 
-        // Add to UI with analyzing flag
+        // Add to UI
         setCandidates(prev => [{
           ...newCandidate,
-          analyzing: true,
+          analyzing: canAnalyze, // Only show analyzing if we have credits
           insights: { matching: [], not_matching: [] }
         }, ...prev]);
 
-        // Update queue: analyzing
-        uploadQueue.updateQueueItem(queueItem.id, { 
-          status: 'analyzing', 
-          progress: 60 
-        });
+        if (canAnalyze) {
+          // Update queue: analyzing
+          uploadQueue.updateQueueItem(queueItem.id, { 
+            status: 'analyzing', 
+            progress: 60 
+          });
 
-        // Call analyze-cv edge function
-        const { error: analyzeError } = await supabase.functions.invoke('analyze-cv', {
-          body: {
-            candidate_id: newCandidate.id,
-            job_id: jobId,
-            cv_text: cvText,
-            job_description: jobData.description,
-            job_title: jobData.title
+          // Call analyze-cv edge function
+          const { error: analyzeError } = await supabase.functions.invoke('analyze-cv', {
+            body: {
+              candidate_id: newCandidate.id,
+              job_id: jobId,
+              cv_text: cvText,
+              job_description: jobData.description,
+              job_title: jobData.title
+            }
+          });
+
+          if (analyzeError) {
+            throw analyzeError;
           }
-        });
 
-        if (analyzeError) {
-          throw analyzeError;
+          // Update queue: completed
+          uploadQueue.updateQueueItem(queueItem.id, { 
+            status: 'completed', 
+            progress: 100 
+          });
+        } else {
+          // No credits - CV saved but not analyzed
+          uploadQueue.updateQueueItem(queueItem.id, { 
+            status: 'completed', 
+            progress: 100 
+          });
+          
+          // Show message that CV was saved but not analyzed
+          toast.info(`${candidateName}: CV saved. Upgrade to analyze.`, {
+            description: `Remaining credits: ${creditResult.remaining}`
+          });
         }
 
-        // Update queue: completed
-        uploadQueue.updateQueueItem(queueItem.id, { 
-          status: 'completed', 
-          progress: 100 
-        });
-
-        return { success: true, fileName: file.name };
+        return { success: true, fileName: file.name, analyzed: canAnalyze };
 
       } catch (error) {
         console.error("Error uploading CV:", error);
@@ -450,16 +469,23 @@ export default function CandidatesDashboard() {
     const results = await Promise.allSettled(uploadPromises);
     
     // Show summary toast
-    const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
-    const failCount = results.length - successCount;
+    const successResults = results.filter(r => r.status === 'fulfilled' && r.value.success);
+    const analyzedCount = successResults.filter(r => r.status === 'fulfilled' && r.value.analyzed).length;
+    const savedCount = successResults.length - analyzedCount;
+    const failCount = results.length - successResults.length;
     
-    if (successCount > 0) {
-      toast.success(`${successCount} CV(s) uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ''}`);
+    if (analyzedCount > 0) {
+      toast.success(`${analyzedCount} CV(s) uploaded and analyzing...`);
     }
-    if (failCount > 0 && successCount === 0) {
+    if (savedCount > 0) {
+      toast.info(`${savedCount} CV(s) saved. Upgrade to analyze them.`);
+    }
+    if (failCount > 0 && successResults.length === 0) {
       toast.error(`Failed to upload ${failCount} CV(s)`);
     }
 
+    // Refresh credit status after uploads
+    refreshCredits();
     setUploading(false);
   };
   const handleDrop = (e: React.DragEvent) => {
@@ -526,17 +552,6 @@ export default function CandidatesDashboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Handle unlock candidate
-  const handleUnlockCandidate = async (candidateId: string) => {
-    const success = await unlockCandidate(candidateId);
-    if (success) {
-      // Update local state
-      setCandidates(prev => prev.map(c => 
-        c.id === candidateId ? { ...c, is_unlocked: true } : c
-      ));
-    }
-  };
-
   // Handle upgrade - now uses Stripe checkout via UpgradeModal
   const handleSelectPlan = (plan: string) => {
     // The UpgradeModal now handles the Stripe checkout directly
@@ -563,8 +578,8 @@ export default function CandidatesDashboard() {
   const testBelow80 = candidates.filter(c => c.test_result !== null && c.test_result < 80).length;
   const completedTests = candidates.filter(c => c.completed_test).length;
   const pendingTests = candidates.filter(c => !c.completed_test).length;
-  const unlockedCandidates = candidates.filter(c => c.is_unlocked).length;
-  const lockedCandidates = candidates.length - unlockedCandidates;
+  const analyzedCandidates = candidates.filter(c => c.cv_rate > 0 || c.relevance_analysis).length;
+  const pendingAnalysis = candidates.length - analyzedCandidates;
   if (loading || uploading) {
     return <div className="min-h-screen flex flex-col bg-background">
         <AuthHeader />
@@ -667,14 +682,14 @@ export default function CandidatesDashboard() {
             
           </div>
 
-          {/* Upsell Banner - Show when there are locked candidates */}
-          {lockedCandidates > 0 && (
+          {/* Upsell Banner - Show when there are pending analysis candidates or credits running low */}
+          {(pendingAnalysis > 0 || !creditStatus.canAnalyze) && (
             <UpsellBanner
               totalCandidates={candidates.length}
-              unlockedCount={unlockedCandidates}
-              planType={unlockStatus.planType}
-              monthlyLimit={unlockStatus.limit}
-              usedThisMonth={unlockStatus.used}
+              analyzedCount={analyzedCandidates}
+              planType={creditStatus.planType}
+              monthlyLimit={creditStatus.limit}
+              usedThisMonth={creditStatus.used}
               onUpgrade={() => setUpgradeModalOpen(true)}
             />
           )}
@@ -770,23 +785,19 @@ export default function CandidatesDashboard() {
                     <div className="text-center">Actions</div>
                   </div>
 
-                  {/* Table Rows - Using LockedCandidateRow component */}
+                  {/* Table Rows - Using CandidateRow component */}
                   {sortedCandidates.map(candidate => {
                     const overallScore = calculateOverallScore(candidate);
                     return (
-                      <LockedCandidateRow
+                      <CandidateRow
                         key={candidate.id}
                         candidate={candidate}
                         overallScore={overallScore}
                         isExpanded={expandedCandidateId === candidate.id}
                         isSelected={selectedCandidates.includes(candidate.id)}
-                        isUnlocking={unlockingIds.has(candidate.id)}
                         onSelect={handleSelectCandidate}
                         onExpand={setExpandedCandidateId}
                         onDelete={handleDeleteSingle}
-                        onUnlock={handleUnlockCandidate}
-                        canUnlock={unlockStatus.canUnlock}
-                        planType={unlockStatus.planType}
                       />
                     );
                   })}
@@ -820,7 +831,7 @@ export default function CandidatesDashboard() {
       <UpgradeModal
         isOpen={upgradeModalOpen}
         onClose={() => setUpgradeModalOpen(false)}
-        currentPlan={unlockStatus.planType}
+        currentPlan={creditStatus.planType}
         onSelectPlan={handleSelectPlan}
       />
 
