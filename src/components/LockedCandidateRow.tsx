@@ -1,4 +1,6 @@
-import { Lock, Unlock, Mail, Phone, ChevronDown, Trash2, Loader2 } from "lucide-react";
+import { Lock, Unlock, Mail, Phone, ChevronDown, Trash2, Loader2, FileDown } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -26,6 +28,7 @@ interface Candidate {
   assessment_answers?: any;
   test_detailed_scores?: any;
   is_unlocked?: boolean;
+  cv_file_path?: string | null;
 }
 
 interface LockedCandidateRowProps {
@@ -64,9 +67,40 @@ export function LockedCandidateRow({
   const displayTitle = isLocked ? "••••••••" : candidate.title;
   const displayEmail = isLocked ? "••••@••••.com" : candidate.email;
 
+  // Handle CV download
+  const handleDownloadCV = async () => {
+    if (!candidate.cv_file_path) {
+      toast.error("CV file not available");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('cvs')
+        .download(candidate.cv_file_path);
+
+      if (error) throw error;
+
+      // Create download link
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = candidate.cv_file_path.split('/').pop() || 'cv.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success("CV downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading CV:", error);
+      toast.error("Failed to download CV");
+    }
+  };
+
   return (
     <div className="border rounded-lg overflow-hidden">
-      <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_100px_80px_80px] gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center">
+      <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_100px_80px_80px_50px] gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center">
         {/* Checkbox */}
         <div className="flex items-center justify-center">
           <Checkbox 
@@ -196,6 +230,28 @@ export function LockedCandidateRow({
               )}
             </>
           )}
+        </div>
+
+        {/* CV Download - Always available */}
+        <div className="flex items-center justify-center">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8"
+                  onClick={handleDownloadCV}
+                  disabled={!candidate.cv_file_path}
+                >
+                  <FileDown className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{candidate.cv_file_path ? "Download CV" : "CV not available"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {/* Actions */}

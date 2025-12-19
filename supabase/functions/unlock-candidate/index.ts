@@ -8,7 +8,7 @@ const corsHeaders = {
 
 // Plan limits configuration
 const PLAN_LIMITS: Record<string, number> = {
-  free: 0,
+  free: 25,
   starter: 100,
   pro: 250,
   business: 1000,
