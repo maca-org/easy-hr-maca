@@ -380,7 +380,18 @@ export default function CandidatesDashboard() {
           progress: 45 
         });
 
-        // Insert candidate into database with cv_file_path
+        // Check unlock limit and auto-unlock if within limit
+        let shouldAutoUnlock = false;
+        try {
+          const { data: limitData } = await supabase.functions.invoke('check-unlock-limit');
+          if (limitData?.can_unlock) {
+            shouldAutoUnlock = true;
+          }
+        } catch (e) {
+          console.log('Could not check unlock limit, defaulting to locked');
+        }
+
+        // Insert candidate into database with cv_file_path and auto-unlock status
         const { data: newCandidate, error } = await supabase
           .from("candidates")
           .insert({
@@ -390,12 +401,18 @@ export default function CandidatesDashboard() {
             email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
             cv_rate: 0,
             cv_text: cvText,
-            cv_file_path: storageError ? null : cvFilePath
+            cv_file_path: storageError ? null : cvFilePath,
+            is_unlocked: shouldAutoUnlock
           })
           .select()
           .single();
 
         if (error) throw error;
+
+        // If auto-unlocked, increment the monthly count
+        if (shouldAutoUnlock) {
+          await supabase.functions.invoke('increment-unlock-count');
+        }
 
         // Add to UI with analyzing flag
         setCandidates(prev => [{
