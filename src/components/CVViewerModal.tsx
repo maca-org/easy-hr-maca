@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Eye, ExternalLink, Download, Lock, CheckCircle, XCircle, Lightbulb, FileText, Rocket } from "lucide-react";
+import { Eye, ExternalLink, Download, Lock, CheckCircle, XCircle, Lightbulb, FileText, Rocket, FileDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import jsPDF from "jspdf";
 
 interface RelevanceAnalysis {
   overall_score?: number;
@@ -30,6 +31,9 @@ interface CVViewerModalProps {
   improvementTips?: ImprovementTip[] | string[] | null;
   isAnalyzed: boolean;
   onUpgrade?: () => void;
+  candidateEmail?: string;
+  candidatePhone?: string;
+  candidateTitle?: string;
 }
 
 export function CVViewerModal({
@@ -40,9 +44,13 @@ export function CVViewerModal({
   improvementTips,
   isAnalyzed,
   onUpgrade,
+  candidateEmail,
+  candidatePhone,
+  candidateTitle,
 }: CVViewerModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleOpenPDF = async () => {
     if (!cvFilePath) {
@@ -96,16 +104,190 @@ export function CVViewerModal({
     }
   };
 
+  const handleExportAnalysisReport = () => {
+    setIsExporting(true);
+    
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      const contentWidth = pageWidth - margin * 2;
+      let yPos = 20;
+
+      // Helper function to add text with word wrap
+      const addWrappedText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number = 6): number => {
+        const lines = doc.splitTextToSize(text, maxWidth);
+        doc.text(lines, x, y);
+        return y + lines.length * lineHeight;
+      };
+
+      // Helper to check if we need a new page
+      const checkNewPage = (neededSpace: number) => {
+        if (yPos + neededSpace > 280) {
+          doc.addPage();
+          yPos = 20;
+        }
+      };
+
+      // Title
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.text("CV Analysis Report", margin, yPos);
+      yPos += 15;
+
+      // Candidate Info Section
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Candidate Information", margin, yPos);
+      yPos += 8;
+
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Name: ${candidateName}`, margin, yPos);
+      yPos += 6;
+
+      if (candidateTitle) {
+        doc.text(`Title: ${candidateTitle}`, margin, yPos);
+        yPos += 6;
+      }
+
+      if (candidateEmail) {
+        doc.text(`Email: ${candidateEmail}`, margin, yPos);
+        yPos += 6;
+      }
+
+      if (candidatePhone) {
+        doc.text(`Phone: ${candidatePhone}`, margin, yPos);
+        yPos += 6;
+      }
+
+      yPos += 5;
+
+      // Overall Score Section
+      doc.setDrawColor(200, 200, 200);
+      doc.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 10;
+
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Overall Match Score", margin, yPos);
+      
+      // Score badge
+      const score = overallScore;
+      const scoreColor = score >= 80 ? [34, 197, 94] : score >= 60 ? [234, 179, 8] : [239, 68, 68];
+      doc.setFillColor(scoreColor[0], scoreColor[1], scoreColor[2]);
+      doc.roundedRect(pageWidth - margin - 30, yPos - 6, 30, 10, 2, 2, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(11);
+      doc.text(`${score}%`, pageWidth - margin - 15, yPos, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+      
+      yPos += 15;
+
+      // Summary Section
+      if (summary) {
+        checkNewPage(40);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Summary", margin, yPos);
+        yPos += 7;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        yPos = addWrappedText(summary, margin, yPos, contentWidth, 5);
+        yPos += 10;
+      }
+
+      // Matching Skills Section
+      if (matchingSkills.length > 0) {
+        checkNewPage(30 + matchingSkills.length * 6);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(34, 197, 94);
+        doc.text(`Matching Skills (${matchingSkills.length})`, margin, yPos);
+        doc.setTextColor(0, 0, 0);
+        yPos += 7;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        matchingSkills.forEach((skill) => {
+          checkNewPage(6);
+          doc.text(`• ${skill}`, margin + 5, yPos);
+          yPos += 6;
+        });
+        yPos += 5;
+      }
+
+      // Missing Skills Section
+      if (missingSkills.length > 0) {
+        checkNewPage(30 + missingSkills.length * 6);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(239, 68, 68);
+        doc.text(`Missing Skills (${missingSkills.length})`, margin, yPos);
+        doc.setTextColor(0, 0, 0);
+        yPos += 7;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        missingSkills.forEach((skill) => {
+          checkNewPage(6);
+          doc.text(`• ${skill}`, margin + 5, yPos);
+          yPos += 6;
+        });
+        yPos += 5;
+      }
+
+      // Improvement Tips Section
+      if (parsedTips.length > 0) {
+        checkNewPage(30 + parsedTips.length * 12);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(217, 119, 6);
+        doc.text("Improvement Tips", margin, yPos);
+        doc.setTextColor(0, 0, 0);
+        yPos += 7;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        parsedTips.forEach((tip, idx) => {
+          checkNewPage(15);
+          yPos = addWrappedText(`${idx + 1}. ${tip}`, margin + 5, yPos, contentWidth - 10, 5);
+          yPos += 3;
+        });
+      }
+
+      // Footer
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+          `Generated on ${new Date().toLocaleDateString()} | Page ${i} of ${totalPages}`,
+          pageWidth / 2,
+          290,
+          { align: 'center' }
+        );
+      }
+
+      // Save the PDF
+      const fileName = `${candidateName.replace(/\s+/g, '_')}_Analysis_Report.pdf`;
+      doc.save(fileName);
+      
+      toast.success("Analysis report exported successfully!");
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast.error("Failed to export analysis report");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600";
     if (score >= 60) return "text-yellow-600";
     return "text-red-600";
-  };
-
-  const getScoreBackground = (score: number) => {
-    if (score >= 80) return "bg-green-600";
-    if (score >= 60) return "bg-yellow-600";
-    return "bg-red-600";
   };
 
   // Parse improvement tips - handle both array of strings and array of objects
@@ -145,7 +327,7 @@ export function CVViewerModal({
           <ScrollArea className="max-h-[70vh] pr-4">
             <div className="space-y-6">
               {/* Action Buttons */}
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button 
                   onClick={handleOpenPDF} 
                   disabled={isLoading || !cvFilePath}
@@ -162,6 +344,15 @@ export function CVViewerModal({
                 >
                   <Download className="h-4 w-4" />
                   Download CV
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  onClick={handleExportAnalysisReport}
+                  disabled={isExporting}
+                  className="gap-2"
+                >
+                  <FileDown className="h-4 w-4" />
+                  {isExporting ? "Exporting..." : "Export Analysis (PDF)"}
                 </Button>
               </div>
 
