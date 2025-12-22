@@ -180,6 +180,9 @@ export function CandidateRow({
                     improvementTips={candidate.improvement_tips}
                     isAnalyzed={isAnalyzed}
                     onUpgrade={onUpgrade}
+                    candidateEmail={candidate.email}
+                    candidatePhone={candidate.phone || undefined}
+                    candidateTitle={candidate.title || undefined}
                   />
                 </div>
               </TooltipTrigger>
