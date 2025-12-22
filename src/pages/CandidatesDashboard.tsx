@@ -798,6 +798,7 @@ export default function CandidatesDashboard() {
                         onSelect={handleSelectCandidate}
                         onExpand={setExpandedCandidateId}
                         onDelete={handleDeleteSingle}
+                        onUpgrade={() => setUpgradeModalOpen(true)}
                       />
                     );
                   })}

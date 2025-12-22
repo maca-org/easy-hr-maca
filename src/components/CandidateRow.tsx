@@ -1,10 +1,9 @@
-import { Mail, Phone, ChevronDown, Trash2, Loader2, FileDown, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Mail, Phone, ChevronDown, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ViewAnswersModal } from "@/components/ViewAnswersModal";
+import { CVViewerModal } from "@/components/CVViewerModal";
 import { Badge } from "@/components/ui/badge";
 
 interface Candidate {
@@ -40,6 +39,7 @@ interface CandidateRowProps {
   onSelect: (id: string) => void;
   onExpand: (id: string | null) => void;
   onDelete: (id: string) => void;
+  onUpgrade?: () => void;
 }
 
 export function CandidateRow({
@@ -49,42 +49,12 @@ export function CandidateRow({
   isSelected,
   onSelect,
   onExpand,
-  onDelete
+  onDelete,
+  onUpgrade
 }: CandidateRowProps) {
   const scoreColor = overallScore >= 80 ? "text-green-600" : overallScore >= 60 ? "text-yellow-600" : "text-red-600";
   const isAnalyzed = candidate.cv_rate > 0 || candidate.relevance_analysis;
   const isPendingAnalysis = !isAnalyzed && !candidate.analyzing;
-
-  // Handle CV download
-  const handleDownloadCV = async () => {
-    if (!candidate.cv_file_path) {
-      toast.error("CV file not available");
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.storage
-        .from('cvs')
-        .download(candidate.cv_file_path);
-
-      if (error) throw error;
-
-      // Create download link
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = candidate.cv_file_path.split('/').pop() || 'cv.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      toast.success("CV downloaded successfully");
-    } catch (error) {
-      console.error("Error downloading CV:", error);
-      toast.error("Failed to download CV");
-    }
-  };
 
   return (
     <div className="border rounded-lg overflow-hidden">
@@ -196,23 +166,25 @@ export function CandidateRow({
           )}
         </div>
 
-        {/* CV Download */}
+        {/* CV Viewer */}
         <div className="flex items-center justify-center">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8"
-                  onClick={handleDownloadCV}
-                  disabled={!candidate.cv_file_path}
-                >
-                  <FileDown className="h-4 w-4" />
-                </Button>
+                <div>
+                  <CVViewerModal
+                    candidateName={candidate.name}
+                    cvFilePath={candidate.cv_file_path || null}
+                    cvRate={candidate.cv_rate}
+                    relevanceAnalysis={candidate.relevance_analysis}
+                    improvementTips={candidate.improvement_tips}
+                    isAnalyzed={isAnalyzed}
+                    onUpgrade={onUpgrade}
+                  />
+                </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{candidate.cv_file_path ? "Download CV" : "CV not available"}</p>
+                <p>{candidate.cv_file_path ? "View CV & Analysis" : "CV not available"}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
