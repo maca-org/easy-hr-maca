@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSubscription } from "@/hooks/useSubscription";
+import { CreditProgressBar } from "@/components/CreditProgressBar";
 import { format } from "date-fns";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 export const Header = () => {
@@ -128,6 +129,19 @@ export const Header = () => {
             Settings
           </button>
           
+          {user && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="cursor-pointer" onClick={() => navigate("/settings/subscription")}>
+                  <CreditProgressBar compact />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">Click to manage subscription</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           {user && <Tooltip>
               <TooltipTrigger asChild>
                 <Badge variant="outline" className={`cursor-pointer flex items-center gap-1.5 px-2.5 py-1 ${getPlanBadgeColor()}`} onClick={() => navigate("/settings/subscription")}>

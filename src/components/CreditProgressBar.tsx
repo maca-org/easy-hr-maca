@@ -6,10 +6,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface CreditProgressBarProps {
   showLabel?: boolean;
   compact?: boolean;
+  onLimitReached?: () => void;
 }
 
-export function CreditProgressBar({ showLabel = true, compact = false }: CreditProgressBarProps) {
-  const { used, limit, remaining, percentage, loading, planType } = useCreditStatus();
+export function CreditProgressBar({ showLabel = true, compact = false, onLimitReached }: CreditProgressBarProps) {
+  const { used, limit, remaining, percentage, loading, isAtLimit } = useCreditStatus({
+    onLimitReached
+  });
 
   if (loading) {
     return <Skeleton className={compact ? "h-2 w-24" : "h-8 w-full"} />;
@@ -17,13 +20,6 @@ export function CreditProgressBar({ showLabel = true, compact = false }: CreditP
 
   const isUnlimited = limit === 'unlimited';
   const isNearLimit = !isUnlimited && percentage >= 80;
-  const isAtLimit = !isUnlimited && percentage >= 100;
-
-  const getProgressColor = () => {
-    if (isAtLimit) return "bg-destructive";
-    if (isNearLimit) return "bg-yellow-500";
-    return "bg-primary";
-  };
 
   if (compact) {
     return (

@@ -1,10 +1,11 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { extractTextFromPDF } from "@/utils/pdfExtractor";
 import { useUploadQueue } from "@/hooks/useUploadQueue";
 import { useAnalysisCredits } from "@/hooks/useAnalysisCredits";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useCreditStatus } from "@/hooks/useCreditStatus";
 import AuthHeader from "@/components/AuthHeader";
 import { UploadQueue } from "@/components/UploadQueue";
 import { ViewAnswersModal } from "@/components/ViewAnswersModal";
@@ -68,6 +69,19 @@ export default function CandidatesDashboard() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingCandidates, setDeletingCandidates] = useState<string[]>([]);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  
+  // Callback for when credit limit is reached
+  const handleLimitReached = useCallback(() => {
+    setUpgradeModalOpen(true);
+    toast.warning("You've reached your monthly credit limit!", {
+      description: "Upgrade your plan to continue analyzing CVs."
+    });
+  }, []);
+  
+  // Credit status hook with limit reached callback
+  const { isAtLimit, refreshCredits: refreshCreditStatus } = useCreditStatus({
+    onLimitReached: handleLimitReached
+  });
   
   // Subscription hook - checks Stripe subscription status
   const { planType: subscriptionPlanType, refreshSubscription } = useSubscription();
