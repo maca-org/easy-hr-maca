@@ -55,7 +55,7 @@ const Landing = () => {
               </Button>
             </Link>
             <Link to="/auth">
-              <Button size="sm" className="bg-primary hover:bg-primary/90 rounded-full px-5">
+              <Button size="sm" className="btn-glow bg-primary hover:bg-primary/90 rounded-full px-5">
                 Get Started
               </Button>
             </Link>
@@ -102,7 +102,7 @@ const Landing = () => {
 
             <div className="fade-in-up-delay-3 flex flex-wrap gap-4 pt-2">
               <Link to="/auth">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 rounded-full px-8 h-12 text-base font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
+                <Button size="lg" className="btn-glow bg-primary hover:bg-primary/90 rounded-full px-8 h-12 text-base font-medium shadow-lg shadow-primary/25">
                   Get Started Free
                 </Button>
               </Link>
@@ -354,7 +354,7 @@ const Landing = () => {
               </ul>
 
               <Link to="/auth" className="block pt-4">
-                <Button className="w-full rounded-full h-12 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25">
+                <Button className="btn-glow w-full rounded-full h-12 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25">
                   Start Free Trial
                 </Button>
               </Link>
