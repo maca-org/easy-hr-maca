@@ -170,6 +170,25 @@ All colors MUST be HSL.
   .pro-glow {
     @apply transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl hover:shadow-primary/30;
   }
+
+  /* CTA button glow animation */
+  .btn-glow {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+
+  .btn-glow::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full;
+    animation: none;
+  }
+
+  .btn-glow:hover::before {
+    animation: shimmer 1.5s infinite;
+  }
+
+  .btn-glow:hover {
+    @apply shadow-xl shadow-primary/40 scale-105;
+  }
 }
 
 @keyframes fadeInUp {
@@ -191,5 +210,14 @@ All colors MUST be HSL.
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
   }
 }
