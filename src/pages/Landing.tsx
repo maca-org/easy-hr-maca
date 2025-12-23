@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import logoImage from "@/assets/logo.png";
 
 interface BlogPost {
   id: string;
@@ -62,9 +63,7 @@ const Landing = () => {
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-pink flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img src={logoImage} alt="Candidate Assess Logo" className="w-10 h-10 object-contain" />
             <span className="text-xl font-semibold text-foreground">Candidate Assess</span>
           </div>
           
