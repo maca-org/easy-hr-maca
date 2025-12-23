@@ -251,3 +251,17 @@ All colors MUST be HSL.
     transform: translateX(100%);
   }
 }
+
+/* Floating animation for buttons */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
