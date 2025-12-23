@@ -87,7 +87,7 @@ serve(async (req) => {
         console.log(`Sending assessment email to: ${candidate.email}`);
         
         const emailResponse = await resend.emails.send({
-          from: `${companyName} <onboarding@resend.dev>`,
+          from: `${companyName} <no-reply@candidateassess.com>`,
           to: [candidate.email],
           subject: `Assessment Invitation - ${job.title}`,
           html: `

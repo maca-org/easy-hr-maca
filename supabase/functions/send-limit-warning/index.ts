@@ -31,7 +31,7 @@ serve(async (req) => {
     const appUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".lovable.app") || "https://app.example.com";
 
     const emailResponse = await resend.emails.send({
-      from: "HireAI <notifications@resend.dev>",
+      from: "CandidateAssess <no-reply@candidateassess.com>",
       to: [email],
       subject: `⚠️ Credit limit almost reached - ${remaining} credits remaining`,
       html: `
