@@ -1,4 +1,4 @@
-import { Plus, Briefcase, Calendar, Users, Trash2, ArrowUpDown, LayoutDashboard, Link as LinkIcon } from "lucide-react";
+import { Rocket, Briefcase, Calendar, Users, Trash2, ArrowUpDown, LayoutDashboard, Link as LinkIcon, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -84,15 +84,21 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
   return (
     <div className="container mx-auto p-6 space-y-8">
       {/* Create New Job Button */}
-      <div className="flex justify-center">
+      <div className="flex flex-col items-center gap-3">
         <Button
           onClick={onCreateJob}
           size="lg"
-          className="h-20 px-12 text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg"
+          className="group h-auto py-4 px-10 text-lg font-semibold bg-gradient-to-r from-primary via-primary/90 to-primary/80 hover:from-primary/90 hover:via-primary/80 hover:to-primary/70 shadow-xl hover:shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:-translate-y-1 animate-float btn-glow"
         >
-          <Plus className="w-6 h-6 mr-3" />
-          Create a new job
+          <Rocket className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />
+          <div className="flex flex-col items-start">
+            <span>Start Hiring</span>
+            <span className="text-xs font-normal opacity-80">Takes only 2 minutes</span>
+          </div>
         </Button>
+        <p className="text-sm text-muted-foreground flex items-center gap-2">
+          <span className="text-green-500">✓</span> Free to start • No credit card required
+        </p>
       </div>
 
       {/* Existing Jobs List */}
@@ -190,12 +196,37 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
 
       {/* Empty State */}
       {jobs.length === 0 && (
-        <div className="text-center py-12">
-          <Briefcase className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-          <h3 className="text-lg font-medium text-muted-foreground">No job openings yet</h3>
-          <p className="text-sm text-muted-foreground/70 mt-1">
-            Create your first job opening to start screening candidates
+        <div className="text-center py-16 px-4">
+          <div className="relative inline-block mb-6">
+            <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse" />
+            <div className="relative p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+              <Sparkles className="w-12 h-12 text-primary animate-pulse" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-semibold text-foreground mb-2">Ready to find your next star?</h3>
+          <p className="text-muted-foreground max-w-md mx-auto mb-8">
+            Post your first job and let AI help you find the perfect candidates. 
+            <span className="text-primary font-medium"> It's quick and easy!</span>
           </p>
+          <Button
+            onClick={onCreateJob}
+            size="lg"
+            className="group h-auto py-4 px-8 text-base font-semibold bg-gradient-to-r from-primary via-primary/90 to-primary/80 hover:from-primary/90 hover:via-primary/80 hover:to-primary/70 shadow-xl hover:shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:-translate-y-1 btn-glow"
+          >
+            <Rocket className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />
+            <span>Post Your First Job</span>
+          </Button>
+          <div className="mt-6 flex items-center justify-center gap-6 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="text-green-500">✓</span> Free to start
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-green-500">✓</span> AI-powered screening
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-green-500">✓</span> 2-minute setup
+            </span>
+          </div>
         </div>
       )}
 
