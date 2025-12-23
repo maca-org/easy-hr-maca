@@ -6,6 +6,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Validation helpers
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_NAME_LENGTH = 100;
+const MAX_PHONE_LENGTH = 30;
+const MAX_TITLE_LENGTH = 150;
+const MAX_EMAIL_LENGTH = 255;
+
+const sanitizeText = (text: string, maxLength: number): string => {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/[<>"']/g, '') // Remove potentially dangerous chars
+    .trim()
+    .substring(0, maxLength);
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -22,8 +38,12 @@ serve(async (req) => {
       improvement_tips 
     } = payload;
 
-    if (!candidate_id) {
-      throw new Error('candidate_id is required');
+    // Validate candidate_id
+    if (!candidate_id || !UUID_REGEX.test(candidate_id)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or missing candidate_id' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Initialize Supabase client with service role key
@@ -54,15 +74,24 @@ serve(async (req) => {
       };
     }
 
-    // Update name, phone, title from extracted_data if available
-    if (extracted_data?.name) updateData.name = extracted_data.name;
-    if (extracted_data?.phone) updateData.phone = extracted_data.phone;
-    if (extracted_data?.current_title) updateData.title = extracted_data.current_title;
+    // Update name, phone, title from extracted_data with sanitization
+    if (extracted_data?.name) {
+      updateData.name = sanitizeText(extracted_data.name, MAX_NAME_LENGTH);
+    }
+    if (extracted_data?.phone) {
+      updateData.phone = sanitizeText(extracted_data.phone, MAX_PHONE_LENGTH);
+    }
+    if (extracted_data?.current_title) {
+      updateData.title = sanitizeText(extracted_data.current_title, MAX_TITLE_LENGTH);
+    }
     
     // Only update email if extracted email is valid (not auto-generated from filename)
     if (extracted_data?.email && isValidEmail(extracted_data.email) && !extracted_data.email.includes('@example.com')) {
-      updateData.email = extracted_data.email;
-      console.log('Updating candidate email to:', extracted_data.email);
+      const sanitizedEmail = extracted_data.email.trim().substring(0, MAX_EMAIL_LENGTH);
+      if (isValidEmail(sanitizedEmail)) {
+        updateData.email = sanitizedEmail;
+        console.log('Updating candidate email to:', sanitizedEmail);
+      }
     }
 
     console.log('Updating candidate with data:', updateData);
