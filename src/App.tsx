@@ -14,6 +14,11 @@ import AssessmentSettings from "./pages/AssessmentSettings";
 import Assessment from "./pages/Assessment";
 import JobApplication from "./pages/JobApplication";
 import SubscriptionSettings from "./pages/SubscriptionSettings";
+import Blog from "./pages/Blog";
+import BlogPostPage from "./pages/BlogPost";
+import Authors from "./pages/Authors";
+import AuthorProfile from "./pages/AuthorProfile";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +38,11 @@ const App = () => (
           <Route path="/assessment/:candidateId" element={<Assessment />} />
           <Route path="/apply/:jobId" element={<JobApplication />} />
           <Route path="/settings/subscription" element={<SubscriptionSettings />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPostPage />} />
+          <Route path="/authors" element={<Authors />} />
+          <Route path="/authors/:id" element={<AuthorProfile />} />
+          <Route path="/admin" element={<Admin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

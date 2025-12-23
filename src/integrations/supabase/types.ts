@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      authors: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          expertise_area: string | null
+          first_name: string
+          id: string
+          last_name: string
+          linkedin_url: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          expertise_area?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          linkedin_url?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          expertise_area?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          linkedin_url?: string | null
+        }
+        Relationships: []
+      }
+      blog_posts: {
+        Row: {
+          author_id: string | null
+          category: string | null
+          content: string
+          created_at: string
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string
+          published: boolean
+          published_at: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string | null
+          content: string
+          created_at?: string
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          published?: boolean
+          published_at?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          category?: string | null
+          content?: string
+          created_at?: string
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          published?: boolean
+          published_at?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "authors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidates: {
         Row: {
           ai_interview_score: number | null
@@ -302,6 +385,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_blog_slug: {
+        Args: { post_id: string; title: string }
+        Returns: string
+      }
       generate_job_slug: {
         Args: { job_id: string; title: string }
         Returns: string
