@@ -1,14 +1,33 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, CheckCircle, Mail, HelpCircle, Zap, Send, ClipboardCheck, Target, ArrowDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles, CheckCircle, Mail, HelpCircle, Zap, Send, ClipboardCheck, Target, ArrowDown, Calendar, User, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  category: string | null;
+  featured_image_url: string | null;
+  published_at: string | null;
+  created_at: string;
+  authors: {
+    first_name: string;
+    last_name: string;
+  } | null;
+}
 
 const rotatingWords = ["Assess", "Screen", "Evaluate", "Shortlist", "Rank", "Decide"];
 
 const Landing = () => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [latestPosts, setLatestPosts] = useState<BlogPost[]>([]);
   const featuresRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -17,6 +36,21 @@ const Landing = () => {
     }, 2500);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    fetchLatestPosts();
+  }, []);
+
+  const fetchLatestPosts = async () => {
+    const { data } = await supabase
+      .from("blog_posts")
+      .select("id, title, slug, excerpt, category, featured_image_url, published_at, created_at, authors(first_name, last_name)")
+      .eq("published", true)
+      .order("published_at", { ascending: false })
+      .limit(3);
+    
+    setLatestPosts(data || []);
+  };
 
   const scrollToFeatures = () => {
     featuresRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -41,9 +75,12 @@ const Landing = () => {
             <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
               Pricing
             </a>
-            <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-              About
-            </a>
+            <Link to="/blog" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+              Blog
+            </Link>
+            <Link to="/authors" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+              Authors
+            </Link>
             <a href="#support" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
               Support
             </a>
@@ -495,6 +532,86 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Latest Blog Posts Section */}
+      {latestPosts.length > 0 && (
+        <section className="container mx-auto px-4 py-24">
+          <ScrollReveal direction="up">
+            <div className="text-center space-y-4 mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+                Latest from our Blog
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                Insights and tips to help you hire smarter.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {latestPosts.map((post, index) => (
+              <ScrollReveal key={post.id} direction="up" delay={index * 0.1}>
+                <Link to={`/blog/${post.slug}`}>
+                  <Card className="group hover-glow border-border/50 bg-card/50 rounded-3xl overflow-hidden h-full">
+                    {post.featured_image_url && (
+                      <div className="aspect-video overflow-hidden">
+                        <img
+                          src={post.featured_image_url}
+                          alt={post.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                    )}
+                    <CardContent className="p-6 space-y-4">
+                      {post.category && (
+                        <Badge variant="secondary" className="rounded-full">
+                          {post.category}
+                        </Badge>
+                      )}
+                      
+                      <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                        {post.title}
+                      </h3>
+                      
+                      {post.excerpt && (
+                        <p className="text-muted-foreground text-sm line-clamp-2">
+                          {post.excerpt}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground">
+                        {post.authors && (
+                          <div className="flex items-center gap-1">
+                            <User className="h-4 w-4" />
+                            <span>{post.authors.first_name} {post.authors.last_name}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>{format(new Date(post.published_at || post.created_at), "MMM d")}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-primary text-sm font-medium group-hover:gap-2 transition-all">
+                        Read more
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </ScrollReveal>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link to="/blog">
+              <Button variant="outline" className="rounded-full px-8 gap-2">
+                View all articles
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-24">
         <ScrollReveal direction="scale">
@@ -538,9 +655,12 @@ const Landing = () => {
               <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
               </a>
-              <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">
-                About
-              </a>
+              <Link to="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
+                Blog
+              </Link>
+              <Link to="/authors" className="text-muted-foreground hover:text-foreground transition-colors">
+                Authors
+              </Link>
               <a href="#support" className="text-muted-foreground hover:text-foreground transition-colors">
                 Support
               </a>
