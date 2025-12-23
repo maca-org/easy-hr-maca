@@ -51,3 +51,6 @@ verify_jwt = false
 
 [functions.use-analysis-credit]
 verify_jwt = false
+
+[functions.get-public-job]
+verify_jwt = false
