@@ -67,12 +67,12 @@ const Landing = () => {
       <section className="container mx-auto px-4 py-20 md:py-28 overflow-hidden">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+            <div className="fade-in-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
               <Zap className="w-4 h-4" />
               <span>Hiring made simple</span>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 fade-in-up-delay-1">
               <h1 className="text-5xl md:text-7xl font-bold text-foreground leading-[1.1] tracking-tight">
                 Candidate…
               </h1>
@@ -96,11 +96,11 @@ const Landing = () => {
               </p>
             </div>
 
-            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
+            <p className="fade-in-up-delay-2 text-lg text-muted-foreground max-w-lg leading-relaxed">
               Generate role-based assessments, send them to candidates, and instantly see who really fits.
             </p>
 
-            <div className="flex flex-wrap gap-4 pt-2">
+            <div className="fade-in-up-delay-3 flex flex-wrap gap-4 pt-2">
               <Link to="/auth">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 rounded-full px-8 h-12 text-base font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
                   Get Started Free
@@ -117,7 +117,7 @@ const Landing = () => {
               </Button>
             </div>
 
-            <p className="text-sm text-muted-foreground">
+            <p className="fade-in-up-delay-4 text-sm text-muted-foreground">
               No demos. No calls. Just try it free.
             </p>
           </div>
@@ -215,52 +215,52 @@ const Landing = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-          <Card className="group hover-lift border-border/50 bg-card/50 rounded-3xl overflow-hidden">
+          <Card className="group hover-glow border-border/50 bg-card/50 rounded-3xl overflow-hidden hover:border-primary/30">
             <CardContent className="p-8 space-y-5">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <Zap className="w-7 h-7 text-primary" />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                <Zap className="w-7 h-7 text-primary group-hover:animate-pulse" />
               </div>
               
-              <h3 className="text-xl font-semibold text-foreground">Create once, relax</h3>
+              <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors duration-300">Create once, relax</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Set up your job opening with just a title and description. We handle the rest — assessments, questions, scoring.
               </p>
             </CardContent>
           </Card>
 
-          <Card className="group hover-lift border-border/50 bg-card/50 rounded-3xl overflow-hidden">
+          <Card className="group hover-glow border-border/50 bg-card/50 rounded-3xl overflow-hidden hover:border-pink/30">
             <CardContent className="p-8 space-y-5">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink/20 to-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <Send className="w-7 h-7 text-pink" />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink/20 to-primary/20 flex items-center justify-center group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500">
+                <Send className="w-7 h-7 text-pink group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
               </div>
               
-              <h3 className="text-xl font-semibold text-foreground">Send it everywhere</h3>
+              <h3 className="text-xl font-semibold text-foreground group-hover:text-pink transition-colors duration-300">Send it everywhere</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Share your apply link or manually upload resumes — your choice, always. Candidates come to you.
               </p>
             </CardContent>
           </Card>
 
-          <Card className="group hover-lift border-border/50 bg-card/50 rounded-3xl overflow-hidden">
+          <Card className="group hover-glow border-border/50 bg-card/50 rounded-3xl overflow-hidden hover:border-primary/30">
             <CardContent className="p-8 space-y-5">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <ClipboardCheck className="w-7 h-7 text-primary" />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                <ClipboardCheck className="w-7 h-7 text-primary group-hover:scale-110 transition-transform duration-300" />
               </div>
               
-              <h3 className="text-xl font-semibold text-foreground">Assess what matters</h3>
+              <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors duration-300">Assess what matters</h3>
               <p className="text-muted-foreground leading-relaxed">
                 Automatically generate assessments tailored to your job's skills and requirements. Candidates complete the test, and we score their answers instantly.
               </p>
             </CardContent>
           </Card>
 
-          <Card className="group hover-lift border-border/50 bg-card/50 rounded-3xl overflow-hidden">
+          <Card className="group hover-glow border-border/50 bg-card/50 rounded-3xl overflow-hidden hover:border-pink/30">
             <CardContent className="p-8 space-y-5">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink/20 to-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <Target className="w-7 h-7 text-pink" />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink/20 to-primary/20 flex items-center justify-center group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500">
+                <Target className="w-7 h-7 text-pink group-hover:scale-125 transition-transform duration-300" />
               </div>
               
-              <h3 className="text-xl font-semibold text-foreground">See who actually fits</h3>
+              <h3 className="text-xl font-semibold text-foreground group-hover:text-pink transition-colors duration-300">See who actually fits</h3>
               <p className="text-muted-foreground leading-relaxed">
                 AI-powered scores show you the best matches instantly. No more guesswork, no more spreadsheets.
               </p>
