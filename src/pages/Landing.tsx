@@ -1,44 +1,61 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link2, Send, Users, Sparkles, CheckCircle, Mail, HelpCircle, Building2 } from "lucide-react";
+import { Sparkles, CheckCircle, Mail, HelpCircle, Zap, Send, Target, ArrowDown } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+
+const rotatingWords = ["Assess", "Screen", "Evaluate", "Shortlist", "Rank", "Decide"];
 
 const Landing = () => {
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const featuresRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const scrollToFeatures = () => {
+    featuresRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-primary" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-pink flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-semibold text-foreground">Candidate Assess</span>
           </div>
           
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
               Features
             </a>
-            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
               Pricing
             </a>
-            <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
               About
             </a>
-            <a href="#support" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#support" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
               Support
             </a>
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link to="/auth">
-              <Button variant="ghost" className="text-foreground">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
                 Sign In
               </Button>
             </Link>
             <Link to="/auth">
-              <Button className="bg-primary hover:bg-primary/90">
+              <Button size="sm" className="bg-primary hover:bg-primary/90 rounded-full px-5">
                 Get Started
               </Button>
             </Link>
@@ -47,102 +64,192 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 md:py-32">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8 animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm">
-              <CheckCircle className="w-4 h-4" />
-              <span>Simple & Powerful Hiring Tool</span>
+      <section className="container mx-auto px-4 py-20 md:py-28 overflow-hidden">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="space-y-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+              <Zap className="w-4 h-4" />
+              <span>Hiring made simple</span>
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
-              Just need to give Job opening title and description and good to go!
-            </h1>
+            <div className="space-y-4">
+              <h1 className="text-5xl md:text-7xl font-bold text-foreground leading-[1.1] tracking-tight">
+                Candidate…
+              </h1>
+              <div className="h-[1.2em] overflow-hidden">
+                <div 
+                  className="transition-transform duration-500 ease-out"
+                  style={{ transform: `translateY(-${currentWordIndex * 100}%)` }}
+                >
+                  {rotatingWords.map((word, index) => (
+                    <div 
+                      key={word}
+                      className="text-5xl md:text-7xl font-bold gradient-text h-[1.2em] flex items-center"
+                    >
+                      {word}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xl text-foreground/80 font-medium mt-4">
+                but smarter.
+              </p>
+            </div>
 
-            <p className="text-lg text-muted-foreground max-w-xl">
-              Candidate Assess helps you collect applications, send assessments, and find the best candidates with minimal effort.
+            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
+              Generate role-based assessments, send them to candidates, and instantly see who really fits.
             </p>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 pt-2">
               <Link to="/auth">
-                <Button size="lg" className="bg-primary hover:bg-primary/90">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 rounded-full px-8 h-12 text-base font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
                   Get Started Free
                 </Button>
               </Link>
-              <Link to="/auth">
-                <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/10">
-                  Watch Demo
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                variant="ghost" 
+                className="rounded-full px-8 h-12 text-base font-medium text-muted-foreground hover:text-foreground group"
+                onClick={scrollToFeatures}
+              >
+                See how it works
+                <ArrowDown className="w-4 h-4 ml-2 group-hover:translate-y-1 transition-transform" />
+              </Button>
             </div>
 
-            <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-primary" />
-                <span>No credit card required</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-primary" />
-                <span>Free plan available</span>
-              </div>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              No demos. No calls. Just try it free.
+            </p>
           </div>
 
-          <div className="relative animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            <div className="aspect-square rounded-3xl bg-gradient-to-br from-primary/20 via-pink/20 to-primary/10 flex items-center justify-center p-12">
-              <Sparkles className="w-32 h-32 text-primary opacity-50" />
+          {/* Hero Visual - Glassmorphism UI Mockup */}
+          <div className="relative">
+            <div className="absolute inset-0 gradient-bg rounded-[2.5rem] blur-3xl opacity-60" />
+            <div className="relative glass rounded-[2rem] p-8 animate-float">
+              <div className="space-y-6">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse-soft" />
+                    <span className="text-foreground font-semibold">Senior Frontend Developer</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">Active</span>
+                </div>
+
+                {/* Assessment Status */}
+                <div className="flex items-center gap-2 text-sm">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span className="text-muted-foreground">Assessment generated</span>
+                  <span className="text-primary">✨</span>
+                </div>
+
+                {/* Candidate Scores */}
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-pink flex items-center justify-center text-primary-foreground text-sm font-medium">
+                      JD
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-foreground">John Doe</span>
+                        <span className="text-sm font-semibold text-primary">92%</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-primary to-pink rounded-full" style={{ width: "92%" }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink to-primary/70 flex items-center justify-center text-primary-foreground text-sm font-medium">
+                      SA
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-foreground">Sarah Anderson</span>
+                        <span className="text-sm font-semibold text-primary">87%</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-primary to-pink rounded-full" style={{ width: "87%" }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/60 to-pink/60 flex items-center justify-center text-primary-foreground text-sm font-medium">
+                      MK
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-foreground">Mike Kim</span>
+                        <span className="text-sm font-semibold text-muted-foreground">74%</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-muted-foreground/50 to-muted-foreground/30 rounded-full" style={{ width: "74%" }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action hint */}
+                <div className="pt-4 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground text-center">
+                    3 candidates assessed • 1 ready to interview
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="container mx-auto px-4 py-20">
-        <div className="text-center space-y-4 mb-16 animate-fade-in">
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground">
-            Everything you need for better hiring
+      <section id="features" ref={featuresRef} className="container mx-auto px-4 py-24">
+        <div className="text-center space-y-4 mb-20">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+            Hiring, but simpler.
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Simple, powerful, and beautifully designed
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            Everything you need to find the perfect candidate, nothing you don't.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <Card className="group hover:shadow-xl transition-all duration-300 animate-fade-in border-border/50">
-            <CardContent className="p-8 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-pink/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Link2 className="w-7 h-7 text-pink" />
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <Card className="group hover-lift border-border/50 bg-card/50 rounded-3xl overflow-hidden">
+            <CardContent className="p-8 space-y-5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Zap className="w-7 h-7 text-primary" />
               </div>
               
-              <h3 className="text-xl font-semibold text-foreground">Get job apply link or manually upload resume</h3>
-              <p className="text-muted-foreground">
-                Create a shareable application link for candidates or upload resumes manually to your dashboard.
+              <h3 className="text-xl font-semibold text-foreground">Create once, relax</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Set up your job opening with just a title and description. We handle the rest — assessments, questions, scoring.
               </p>
             </CardContent>
           </Card>
 
-          <Card className="group hover:shadow-xl transition-all duration-300 animate-fade-in border-border/50" style={{ animationDelay: "0.1s" }}>
-            <CardContent className="p-8 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Send className="w-7 h-7 text-primary" />
+          <Card className="group hover-lift border-border/50 bg-card/50 rounded-3xl overflow-hidden">
+            <CardContent className="p-8 space-y-5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink/20 to-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Send className="w-7 h-7 text-pink" />
               </div>
               
-              <h3 className="text-xl font-semibold text-foreground">Send assessment to candidates</h3>
-              <p className="text-muted-foreground">
-                Automatically send customized assessments to evaluate candidate skills and qualifications.
+              <h3 className="text-xl font-semibold text-foreground">Send it everywhere</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Share your apply link or manually upload resumes — your choice, always. Candidates come to you.
               </p>
             </CardContent>
           </Card>
 
-          <Card className="group hover:shadow-xl transition-all duration-300 animate-fade-in border-border/50" style={{ animationDelay: "0.2s" }}>
-            <CardContent className="p-8 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-pink/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Users className="w-7 h-7 text-pink" />
+          <Card className="group hover-lift border-border/50 bg-card/50 rounded-3xl overflow-hidden">
+            <CardContent className="p-8 space-y-5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Target className="w-7 h-7 text-primary" />
               </div>
               
-              <h3 className="text-xl font-semibold text-foreground">Build your best future team</h3>
-              <p className="text-muted-foreground">
-                Never miss good candidates. Make data-driven decisions to build your dream team.
+              <h3 className="text-xl font-semibold text-foreground">See who actually fits</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                AI-powered scores show you the best matches instantly. No more guesswork, no more spreadsheets.
               </p>
             </CardContent>
           </Card>
@@ -150,47 +257,47 @@ const Landing = () => {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="container mx-auto px-4 py-20">
-        <div className="text-center space-y-4 mb-16 animate-fade-in">
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground">
-            Simple, transparent pricing
+      <section id="pricing" className="container mx-auto px-4 py-24">
+        <div className="text-center space-y-4 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+            Pricing that doesn't overthink.
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Choose the plan that fits your hiring needs
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            Start free. Upgrade only when you need more candidate analysis.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mt-16">
           {/* Free Plan */}
-          <Card className="group hover:shadow-xl transition-all duration-300 animate-fade-in border-border/50">
+          <Card className="hover-lift border-border/50 rounded-3xl bg-card/50">
             <CardContent className="p-8 space-y-6">
               <div className="space-y-2">
                 <h3 className="text-2xl font-bold text-foreground">Free</h3>
-                <p className="text-muted-foreground">Perfect for getting started</p>
+                <p className="text-muted-foreground text-sm">Perfect for getting started</p>
               </div>
               
               <div className="space-y-1">
-                <span className="text-4xl font-bold text-foreground">$0</span>
+                <span className="text-5xl font-bold text-foreground">$0</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
 
-              <ul className="space-y-3">
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+              <ul className="space-y-3 pt-4">
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span>Unlimited CV uploads</span>
                 </li>
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span>Basic analytics</span>
                 </li>
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span>Email support</span>
                 </li>
               </ul>
 
-              <Link to="/auth" className="block">
-                <Button variant="outline" className="w-full">
+              <Link to="/auth" className="block pt-4">
+                <Button variant="outline" className="w-full rounded-full h-12">
                   Get Started
                 </Button>
               </Link>
@@ -198,42 +305,42 @@ const Landing = () => {
           </Card>
 
           {/* Pro Plan */}
-          <Card className="group hover:shadow-xl transition-all duration-300 animate-fade-in border-primary/50 relative" style={{ animationDelay: "0.1s" }}>
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-full">
+          <Card className="hover-lift border-primary/50 rounded-3xl relative bg-gradient-to-b from-primary/5 to-transparent">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-primary-foreground text-sm font-medium rounded-full">
               Most Popular
             </div>
             <CardContent className="p-8 space-y-6">
               <div className="space-y-2">
                 <h3 className="text-2xl font-bold text-foreground">Pro</h3>
-                <p className="text-muted-foreground">For growing teams</p>
+                <p className="text-muted-foreground text-sm">For growing teams</p>
               </div>
               
               <div className="space-y-1">
-                <span className="text-4xl font-bold text-foreground">$79</span>
+                <span className="text-5xl font-bold text-foreground">$79</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
 
-              <ul className="space-y-3">
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+              <ul className="space-y-3 pt-4">
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span>Everything in Free</span>
                 </li>
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span>250 candidate unlocks/month</span>
                 </li>
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span>Advanced analytics</span>
                 </li>
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span>Priority support</span>
                 </li>
               </ul>
 
-              <Link to="/auth" className="block">
-                <Button className="w-full bg-primary hover:bg-primary/90">
+              <Link to="/auth" className="block pt-4">
+                <Button className="w-full rounded-full h-12 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25">
                   Start Free Trial
                 </Button>
               </Link>
@@ -241,38 +348,38 @@ const Landing = () => {
           </Card>
 
           {/* Enterprise Plan */}
-          <Card className="group hover:shadow-xl transition-all duration-300 animate-fade-in border-border/50" style={{ animationDelay: "0.2s" }}>
+          <Card className="hover-lift border-border/50 rounded-3xl bg-card/50">
             <CardContent className="p-8 space-y-6">
               <div className="space-y-2">
                 <h3 className="text-2xl font-bold text-foreground">Enterprise</h3>
-                <p className="text-muted-foreground">For large organizations</p>
+                <p className="text-muted-foreground text-sm">For large organizations</p>
               </div>
               
               <div className="space-y-1">
-                <span className="text-4xl font-bold text-foreground">Custom</span>
+                <span className="text-5xl font-bold text-foreground">Custom</span>
               </div>
 
-              <ul className="space-y-3">
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+              <ul className="space-y-3 pt-4">
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span>Everything in Pro</span>
                 </li>
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span>Unlimited candidate unlocks</span>
                 </li>
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span>Custom integrations</span>
                 </li>
-                <li className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircle className="w-5 h-5 text-primary" />
+                <li className="flex items-center gap-3 text-muted-foreground">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                   <span>Dedicated account manager</span>
                 </li>
               </ul>
 
-              <Link to="/auth" className="block">
-                <Button variant="outline" className="w-full">
+              <Link to="/auth" className="block pt-4">
+                <Button variant="outline" className="w-full rounded-full h-12">
                   Contact Sales
                 </Button>
               </Link>
@@ -282,72 +389,64 @@ const Landing = () => {
       </section>
 
       {/* About Section */}
-      <section id="about" className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-br from-primary/5 to-pink/5 border-border/50 animate-fade-in">
-            <CardContent className="p-12 space-y-8">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Building2 className="w-8 h-8 text-primary" />
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-foreground">About Candidate Assess</h2>
-              </div>
-              
-              <div className="space-y-4 text-lg text-muted-foreground">
-                <p>
-                  Candidate Assess is built to simplify the hiring process for teams of all sizes. We believe that finding the right talent shouldn't be complicated or time-consuming.
-                </p>
-                <p>
-                  Our platform combines powerful AI-driven assessments with an intuitive interface, helping you focus on what matters most - connecting with great candidates and building your dream team.
-                </p>
-                <p>
-                  Whether you're a startup looking for your first hire or an enterprise scaling your workforce, Candidate Assess provides the tools you need to make confident hiring decisions.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+      <section id="about" className="container mx-auto px-4 py-24">
+        <div className="max-w-3xl mx-auto text-center space-y-8">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+            About us
+          </h2>
+          
+          <div className="space-y-6 text-lg text-muted-foreground leading-relaxed">
+            <p>
+              We built Candidate Assess because hiring should be simple. 
+              Not spreadsheets. Not guesswork. Just clarity.
+            </p>
+            <p>
+              We're a small team obsessed with making hiring feel less like a chore 
+              and more like finding the perfect puzzle piece.
+            </p>
+          </div>
         </div>
       </section>
 
       {/* Support Section */}
-      <section id="support" className="container mx-auto px-4 py-20">
-        <div className="text-center space-y-4 mb-16 animate-fade-in">
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground">
+      <section id="support" className="container mx-auto px-4 py-24">
+        <div className="text-center space-y-4 mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
             We're here to help
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Get the support you need, when you need it
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            Get the support you need, when you need it.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <Card className="group hover:shadow-xl transition-all duration-300 animate-fade-in border-border/50">
+        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <Card className="hover-lift border-border/50 rounded-3xl bg-card/50">
             <CardContent className="p-8 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center">
                 <Mail className="w-7 h-7 text-primary" />
               </div>
               
               <h3 className="text-xl font-semibold text-foreground">Email Support</h3>
               <p className="text-muted-foreground">
-                Have a question or need assistance? Our support team is ready to help you.
+                Have a question? We're here to help.
               </p>
-              <a href="mailto:support@candidateassess.com" className="text-primary hover:underline font-medium">
+              <a href="mailto:support@candidateassess.com" className="text-primary hover:underline font-medium inline-block">
                 support@candidateassess.com
               </a>
             </CardContent>
           </Card>
 
-          <Card className="group hover:shadow-xl transition-all duration-300 animate-fade-in border-border/50" style={{ animationDelay: "0.1s" }}>
+          <Card className="hover-lift border-border/50 rounded-3xl bg-card/50">
             <CardContent className="p-8 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-pink/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink/20 to-primary/20 flex items-center justify-center">
                 <HelpCircle className="w-7 h-7 text-pink" />
               </div>
               
-              <h3 className="text-xl font-semibold text-foreground">FAQ & Documentation</h3>
+              <h3 className="text-xl font-semibold text-foreground">Docs & FAQ</h3>
               <p className="text-muted-foreground">
-                Find answers to common questions and learn how to get the most out of Candidate Assess.
+                Find answers to common questions.
               </p>
-              <span className="text-primary font-medium">
+              <span className="text-muted-foreground/70 font-medium inline-block">
                 Coming soon
               </span>
             </CardContent>
@@ -356,49 +455,54 @@ const Landing = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20">
-        <Card className="bg-gradient-to-r from-primary via-primary/90 to-pink border-0 overflow-hidden animate-fade-in">
-          <CardContent className="p-12 md:p-16 text-center space-y-6">
-            <h2 className="text-3xl md:text-5xl font-bold text-white">
-              Ready to transform your hiring?
-            </h2>
-            <p className="text-lg text-white/90 max-w-2xl mx-auto">
-              Join hundreds of HR teams who trust Candidate Assess for their recruitment needs.
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/auth">
-                <Button size="lg" variant="secondary" className="bg-white text-primary hover:bg-white/90">
-                  Get Started Free
-                </Button>
-              </Link>
-              <Link to="/auth">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-                  Schedule Demo
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+      <section className="container mx-auto px-4 py-24">
+        <div className="max-w-4xl mx-auto">
+          <Card className="bg-gradient-to-r from-primary via-primary/95 to-pink border-0 overflow-hidden rounded-3xl">
+            <CardContent className="p-12 md:p-16 text-center space-y-6">
+              <h2 className="text-3xl md:text-5xl font-bold text-primary-foreground">
+                Ready to hire smarter?
+              </h2>
+              <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto">
+                Join hundreds of teams who trust Candidate Assess for their hiring.
+              </p>
+              <div className="flex flex-wrap gap-4 justify-center pt-4">
+                <Link to="/auth">
+                  <Button size="lg" variant="secondary" className="bg-background text-foreground hover:bg-background/90 rounded-full px-8 h-12 font-medium shadow-lg">
+                    Get Started Free
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-muted/30 mt-20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-primary" />
+      <footer className="border-t border-border/50 bg-background/50">
+        <div className="container mx-auto px-4 py-12">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-pink flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold text-foreground">Candidate Assess</span>
+              <span className="text-lg font-semibold text-foreground">Candidate Assess</span>
             </div>
 
-            <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-              <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-              <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-              <a href="#about" className="hover:text-foreground transition-colors">About</a>
-              <a href="#support" className="hover:text-foreground transition-colors">Support</a>
+            <nav className="flex items-center gap-8 text-sm">
+              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+                Features
+              </a>
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                Pricing
+              </a>
+              <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">
+                About
+              </a>
+              <a href="#support" className="text-muted-foreground hover:text-foreground transition-colors">
+                Support
+              </a>
             </nav>
-            
+
             <p className="text-sm text-muted-foreground">
               © 2025 Candidate Assess. All rights reserved.
             </p>
