@@ -102,3 +102,25 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .glass {
+    @apply bg-background/60 backdrop-blur-xl border border-border/30 shadow-2xl;
+  }
+  
+  .glass-dark {
+    @apply bg-foreground/5 backdrop-blur-xl border border-foreground/10 shadow-2xl;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary via-pink to-primary bg-clip-text text-transparent;
+  }
+
+  .gradient-bg {
+    @apply bg-gradient-to-br from-primary/20 via-pink/10 to-primary/5;
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+  }
+}
