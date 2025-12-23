@@ -6,6 +6,42 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 5;
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+// Clean up old entries periodically
+const cleanupRateLimitMap = () => {
+  const now = Date.now();
+  for (const [key, value] of rateLimitMap.entries()) {
+    if (now > value.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+};
+
+// Check rate limit for an IP
+const checkRateLimit = (ip: string): { allowed: boolean; remaining: number; resetIn: number } => {
+  cleanupRateLimitMap();
+  
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  
+  if (!record || now > record.resetTime) {
+    // New window
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1, resetIn: RATE_LIMIT_WINDOW_MS };
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return { allowed: false, remaining: 0, resetIn: record.resetTime - now };
+  }
+  
+  record.count++;
+  return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - record.count, resetIn: record.resetTime - now };
+};
+
 // Validation helpers
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,6 +62,34 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Get client IP for rate limiting
+  const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                   req.headers.get('x-real-ip') || 
+                   'unknown';
+  
+  // Check rate limit
+  const rateLimitResult = checkRateLimit(clientIP);
+  
+  if (!rateLimitResult.allowed) {
+    console.log(`Rate limit exceeded for IP: ${clientIP}`);
+    return new Response(
+      JSON.stringify({ 
+        error: 'Too many requests. Please try again later.',
+        retryAfter: Math.ceil(rateLimitResult.resetIn / 1000)
+      }),
+      { 
+        status: 429, 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Retry-After': Math.ceil(rateLimitResult.resetIn / 1000).toString(),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetIn / 1000).toString()
+        } 
+      }
+    );
+  }
+
   try {
     const formData = await req.formData();
     const cvFile = formData.get('cv') as File;
@@ -38,7 +102,8 @@ serve(async (req) => {
       candidateName,
       candidateEmail,
       fileName: cvFile?.name,
-      fileSize: cvFile?.size
+      fileSize: cvFile?.size,
+      clientIP
     });
 
     // Validate required fields
@@ -197,7 +262,11 @@ serve(async (req) => {
         candidate_id: candidateId
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString()
+        },
         status: 200 
       }
     );
