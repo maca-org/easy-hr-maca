@@ -1,4 +1,5 @@
-import { Sparkles, Crown, LogOut, Settings, Mail, Clock } from "lucide-react";
+import { Crown, LogOut, Settings, Mail, Clock } from "lucide-react";
+import logoImage from "@/assets/logo.png";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -106,9 +107,7 @@ export const Header = () => {
   return <header className="border-b border-border bg-background px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 bg-primary rounded-lg">
-            <Sparkles className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img src={logoImage} alt="Candidate Assess Logo" className="w-10 h-10 object-contain" />
           <div className="flex flex-col">
             <h1 className="text-xl font-bold text-foreground">Candidate Assess
             </h1>
