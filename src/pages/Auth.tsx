@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import logoImage from "@/assets/logo.png";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -118,7 +119,11 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
+        <CardHeader className="text-center">
+          <Link to="/" className="flex items-center justify-center gap-3 mb-4">
+            <img src={logoImage} alt="Candidate Assess Logo" className="w-12 h-12 object-contain" />
+            <span className="text-xl font-semibold text-foreground">Candidate Assess</span>
+          </Link>
           <CardTitle>{isSignUp ? "Create Account" : "Sign In"}</CardTitle>
           <CardDescription>
             {isSignUp
