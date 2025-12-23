@@ -13,7 +13,7 @@ const Landing = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
-    }, 2000);
+    }, 2500);
     return () => clearInterval(interval);
   }, []);
 
@@ -76,15 +76,15 @@ const Landing = () => {
               <h1 className="text-5xl md:text-7xl font-bold text-foreground leading-[1.1] tracking-tight">
                 Candidate…
               </h1>
-              <div className="h-[1.2em] overflow-hidden">
+              <div className="h-16 md:h-20 overflow-hidden">
                 <div 
-                  className="transition-transform duration-500 ease-out"
-                  style={{ transform: `translateY(-${currentWordIndex * 100}%)` }}
+                  className="transition-transform duration-700 ease-out"
+                  style={{ transform: `translateY(-${currentWordIndex * 16.667}%)` }}
                 >
-                  {rotatingWords.map((word, index) => (
+                  {rotatingWords.map((word) => (
                     <div 
                       key={word}
-                      className="text-5xl md:text-7xl font-bold gradient-text h-[1.2em] flex items-center"
+                      className="text-5xl md:text-7xl font-bold gradient-text h-16 md:h-20 flex items-center"
                     >
                       {word}
                     </div>
