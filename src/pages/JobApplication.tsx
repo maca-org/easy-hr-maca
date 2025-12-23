@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,30 +28,30 @@ const JobApplication = () => {
     const fetchJob = async () => {
       if (!jobId) return;
 
-      // Check if jobId is a UUID or a slug
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const isUUID = uuidRegex.test(jobId);
+      try {
+        // Use edge function to fetch job (bypasses RLS securely)
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-job`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jobId }),
+          }
+        );
 
-      let query = supabase
-        .from("job_openings")
-        .select("id, title, description");
+        const result = await response.json();
 
-      if (isUUID) {
-        query = query.eq("id", jobId);
-      } else {
-        query = query.eq("slug", jobId);
-      }
-
-      const { data, error } = await query.maybeSingle();
-
-      if (error) {
+        if (!response.ok) {
+          console.error("Error fetching job:", result.error);
+          toast.error("Job opening not found");
+        } else {
+          setJob(result);
+        }
+      } catch (error) {
         console.error("Error fetching job:", error);
-        toast.error("Job opening not found");
-      } else if (!data) {
-        console.error("Job not found for:", jobId);
-      } else {
-        setJob(data);
+        toast.error("Failed to load job opening");
       }
+      
       setLoading(false);
     };
 
