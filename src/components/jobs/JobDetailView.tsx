@@ -65,15 +65,25 @@ export const JobDetailView = ({
     }
   };
 
+  const isJobComplete = job.title && job.title !== "Untitled Job" && job.requirements;
+
+  const handleBack = () => {
+    if (isJobComplete) {
+      onGoToDashboard();
+    } else {
+      onBack();
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
-          onClick={onBack}
+          onClick={handleBack}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to jobs
+          {isJobComplete ? "Go to Dashboard" : "Back to jobs"}
         </Button>
       </div>
 
