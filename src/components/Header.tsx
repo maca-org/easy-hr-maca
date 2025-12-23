@@ -108,7 +108,7 @@ export const Header = () => {
             <Sparkles className="w-6 h-6 text-primary-foreground" />
           </div>
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold text-foreground">Candidate Assess<span className="text-primary">AI</span> Resume Screening
+            <h1 className="text-xl font-bold text-foreground">Candidate Assess
             </h1>
             {companyName && <span className="text-sm text-muted-foreground">{companyName}</span>}
           </div>

@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/hooks/useSubscription";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { CreditProgressBar } from "@/components/CreditProgressBar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Crown, Calendar, Users, ExternalLink, Loader2, Sparkles } from "lucide-react";
+import { Crown, Calendar, Users, ExternalLink, Loader2, Sparkles, Zap } from "lucide-react";
 import { format } from "date-fns";
 
 const PLAN_DETAILS: Record<string, { name: string; price: number; limit: number; features: string[] }> = {
@@ -169,13 +170,15 @@ export default function SubscriptionSettings() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                Billing Information
+                <Zap className="h-5 w-5 text-primary" />
+                Credit Usage
               </CardTitle>
-              <CardDescription>Your billing cycle and usage limits</CardDescription>
+              <CardDescription>Your monthly credit usage and limits</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                <CreditProgressBar />
+
                 {subscribed && billingDate ? (
                   <>
                     <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -190,19 +193,14 @@ export default function SubscriptionSettings() {
                     )}
                   </>
                 ) : (
-                  <div className="p-3 bg-muted/50 rounded-lg text-center">
-                    <span className="text-sm text-muted-foreground">No active subscription</span>
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Billing cycle</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">Monthly reset</span>
                   </div>
                 )}
-
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Monthly limit</span>
-                  </div>
-                  <span className="font-medium text-foreground">{currentPlan.limit} candidates</span>
-                </div>
-
                 <Button
                   onClick={() => setIsUpgradeModalOpen(true)}
                   className="w-full mt-4"
@@ -214,6 +212,7 @@ export default function SubscriptionSettings() {
             </CardContent>
           </Card>
         </div>
+
 
         <UpgradeModal
           isOpen={isUpgradeModalOpen}
