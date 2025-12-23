@@ -63,7 +63,7 @@ const Landing = () => {
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logoImage} alt="Candidate Assess Logo" className="w-10 h-10 object-contain" />
+            <img src={logoImage} alt="Candidate Assess Logo" className="w-12 h-12 object-contain" />
             <span className="text-xl font-semibold text-foreground">Candidate Assess</span>
           </div>
           
