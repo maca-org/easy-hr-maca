@@ -28,6 +28,7 @@ interface JobDetailViewProps {
   onGenerateQuestions: () => void;
   onGoToDashboard: () => void;
   hasQuestions: boolean;
+  onDeleteIncomplete?: () => void;
 }
 
 export const JobDetailView = ({
@@ -39,6 +40,7 @@ export const JobDetailView = ({
   onGenerateQuestions,
   onGoToDashboard,
   hasQuestions,
+  onDeleteIncomplete,
 }: JobDetailViewProps) => {
   const [isEditing, setIsEditing] = useState(
     !job.title || job.title === "Untitled Job" || !job.requirements
@@ -96,6 +98,13 @@ export const JobDetailView = ({
 
   const confirmExit = () => {
     setShowExitDialog(false);
+    
+    // If it's a new empty job (never saved), delete it
+    const isNewEmptyJob = !job.title && !job.requirements;
+    if (isNewEmptyJob && onDeleteIncomplete) {
+      onDeleteIncomplete();
+    }
+    
     onBack();
   };
 

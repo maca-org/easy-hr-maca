@@ -659,6 +659,7 @@ const Index = () => {
             onGenerateQuestions={handleGenerateQuestions}
             onGoToDashboard={handleGoToDashboard}
             hasQuestions={hasQuestions}
+            onDeleteIncomplete={() => handleDeleteJob(activeJobId)}
           />
         )}
       </main>
