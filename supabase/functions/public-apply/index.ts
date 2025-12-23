@@ -6,6 +6,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Validation helpers
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_NAME_LENGTH = 100;
+const MAX_EMAIL_LENGTH = 255;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_FILE_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+const sanitizeText = (text: string): string => {
+  return text
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/[<>"'&]/g, '') // Remove potentially dangerous chars
+    .trim();
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -15,7 +30,7 @@ serve(async (req) => {
     const formData = await req.formData();
     const cvFile = formData.get('cv') as File;
     const jobId = formData.get('job_id') as string;
-    const candidateName = formData.get('name') as string || 'Unknown';
+    let candidateName = formData.get('name') as string || 'Unknown';
     const candidateEmail = formData.get('email') as string;
 
     console.log('Public application received:', {
@@ -26,8 +41,50 @@ serve(async (req) => {
       fileSize: cvFile?.size
     });
 
+    // Validate required fields
     if (!cvFile || !jobId || !candidateEmail) {
-      throw new Error('Missing required fields: cv, job_id, or email');
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: cv, job_id, or email' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate job_id format
+    if (!UUID_REGEX.test(jobId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid job_id format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate email
+    if (!EMAIL_REGEX.test(candidateEmail) || candidateEmail.length > MAX_EMAIL_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email address' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Sanitize and validate name
+    candidateName = sanitizeText(candidateName).substring(0, MAX_NAME_LENGTH);
+    if (!candidateName) {
+      candidateName = 'Unknown';
+    }
+
+    // Validate file size
+    if (cvFile.size > MAX_FILE_SIZE) {
+      return new Response(
+        JSON.stringify({ error: 'File size exceeds 10MB limit' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate file type
+    if (!ALLOWED_FILE_TYPES.includes(cvFile.type)) {
+      return new Response(
+        JSON.stringify({ error: 'Only PDF and Word documents are allowed' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;

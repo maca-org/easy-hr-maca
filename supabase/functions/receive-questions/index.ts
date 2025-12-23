@@ -7,6 +7,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Validation helpers
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_QUESTION_LENGTH = 2000;
+const MAX_OPTION_LENGTH = 500;
+const MAX_QUESTIONS = 50;
+
+const sanitizeText = (text: string): string => {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+    .replace(/<[^>]*>/g, '') // Remove other HTML tags
+    .trim()
+    .substring(0, MAX_QUESTION_LENGTH);
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -23,9 +38,10 @@ serve(async (req) => {
       open_count: Array.isArray(open_questions) ? open_questions.length : 'not array'
     });
 
-    if (!job_id) {
+    // Validate job_id format
+    if (!job_id || !UUID_REGEX.test(job_id)) {
       return new Response(
-        JSON.stringify({ success: false, error: "Missing job_id" }),
+        JSON.stringify({ success: false, error: "Invalid or missing job_id" }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -73,33 +89,45 @@ serve(async (req) => {
     // Transform n8n questions to our format
     const questions: Array<Record<string, any>> = [];
 
-    // Add MCQ questions
+    // Add MCQ questions with validation and sanitization
     if (mcq && Array.isArray(mcq)) {
-      mcq.forEach((q: any, idx: number) => {
-        questions.push({
-          id: `mcq-${Date.now()}-${idx}`,
-          type: 'mcq',
-          question: q.question,
-          options: q.options || [],
-          correct_answer: q.correct_answer,
-          skill: q.skill,
-          difficulty: q.difficulty
-        });
+      const limitedMcq = mcq.slice(0, MAX_QUESTIONS);
+      limitedMcq.forEach((q: any, idx: number) => {
+        if (q.question && typeof q.question === 'string') {
+          const sanitizedOptions = Array.isArray(q.options) 
+            ? q.options.slice(0, 10).map((opt: any) => 
+                typeof opt === 'string' ? sanitizeText(opt).substring(0, MAX_OPTION_LENGTH) : ''
+              ).filter(Boolean)
+            : [];
+          
+          questions.push({
+            id: `mcq-${Date.now()}-${idx}`,
+            type: 'mcq',
+            question: sanitizeText(q.question),
+            options: sanitizedOptions,
+            correct_answer: typeof q.correct_answer === 'string' ? sanitizeText(q.correct_answer).substring(0, MAX_OPTION_LENGTH) : '',
+            skill: typeof q.skill === 'string' ? sanitizeText(q.skill).substring(0, 100) : '',
+            difficulty: typeof q.difficulty === 'string' ? sanitizeText(q.difficulty).substring(0, 20) : ''
+          });
+        }
       });
-      console.log(`Added ${mcq.length} MCQ questions`);
+      console.log(`Added ${questions.filter(q => q.type === 'mcq').length} MCQ questions`);
     }
 
-    // Add open questions
+    // Add open questions with validation and sanitization
     if (open_questions && Array.isArray(open_questions)) {
-      open_questions.forEach((q: any, idx: number) => {
-        questions.push({
-          id: `open-${Date.now()}-${idx}`,
-          type: 'open',
-          question: q.question,
-          skill: q.skill
-        });
+      const limitedOpen = open_questions.slice(0, MAX_QUESTIONS);
+      limitedOpen.forEach((q: any, idx: number) => {
+        if (q.question && typeof q.question === 'string') {
+          questions.push({
+            id: `open-${Date.now()}-${idx}`,
+            type: 'open',
+            question: sanitizeText(q.question),
+            skill: typeof q.skill === 'string' ? sanitizeText(q.skill).substring(0, 100) : ''
+          });
+        }
       });
-      console.log(`Added ${open_questions.length} open questions`);
+      console.log(`Added ${questions.filter(q => q.type === 'open').length} open questions`);
     }
 
     console.log('Transformed questions:', { count: questions.length });
