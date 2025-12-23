@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, CheckCircle, Loader2, FileText, Briefcase } from "lucide-react";
 import { toast } from "sonner";
+import DOMPurify from "dompurify";
 
 interface JobOpening {
   id: string;
@@ -207,7 +208,12 @@ const JobApplication = () => {
               <h3 className="text-sm font-semibold text-foreground mb-2">Job Description</h3>
               <div 
                 className="whitespace-pre-wrap max-h-48 overflow-y-auto text-sm"
-                dangerouslySetInnerHTML={{ __html: job.description }}
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(job.description, {
+                    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 'h3', 'h4', 'span', 'div'],
+                    ALLOWED_ATTR: []
+                  })
+                }}
               />
             </div>
           </CardContent>
