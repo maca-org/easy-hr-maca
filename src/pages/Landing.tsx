@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, CheckCircle, Mail, HelpCircle, Zap, Send, Target, ArrowDown } from "lucide-react";
+import { Sparkles, CheckCircle, Mail, HelpCircle, Zap, Send, ClipboardCheck, Target, ArrowDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 
@@ -214,7 +214,7 @@ const Landing = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
           <Card className="group hover-lift border-border/50 bg-card/50 rounded-3xl overflow-hidden">
             <CardContent className="p-8 space-y-5">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -244,7 +244,20 @@ const Landing = () => {
           <Card className="group hover-lift border-border/50 bg-card/50 rounded-3xl overflow-hidden">
             <CardContent className="p-8 space-y-5">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <Target className="w-7 h-7 text-primary" />
+                <ClipboardCheck className="w-7 h-7 text-primary" />
+              </div>
+              
+              <h3 className="text-xl font-semibold text-foreground">Assess what matters</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Automatically generate assessments tailored to your job's skills and requirements. Candidates complete the test, and we score their answers instantly.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover-lift border-border/50 bg-card/50 rounded-3xl overflow-hidden">
+            <CardContent className="p-8 space-y-5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink/20 to-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Target className="w-7 h-7 text-pink" />
               </div>
               
               <h3 className="text-xl font-semibold text-foreground">See who actually fits</h3>
