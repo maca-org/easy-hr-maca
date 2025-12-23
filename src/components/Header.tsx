@@ -1,11 +1,10 @@
-import { Sparkles, Crown } from "lucide-react";
+import { Sparkles, Crown, LogOut, Settings, Mail, Clock } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -13,11 +12,13 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { CreditProgressBar } from "@/components/CreditProgressBar";
 import { format } from "date-fns";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 export const Header = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showSupportDialog, setShowSupportDialog] = useState(false);
   const {
     subscribed,
     planType,
@@ -119,10 +120,10 @@ export const Header = () => {
           <button onClick={() => navigate("/")} className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">
             Home
           </button>
-          <button className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">
-            Pricing
+          <button onClick={() => navigate("/jobs")} className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">
+            Dashboard
           </button>
-          <button className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">
+          <button onClick={() => setShowSupportDialog(true)} className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">
             Support
           </button>
           <button onClick={() => navigate("/settings/subscription")} className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">
@@ -184,5 +185,40 @@ export const Header = () => {
             </DropdownMenu>}
         </nav>
       </div>
+
+      {/* Support Contact Dialog */}
+      <Dialog open={showSupportDialog} onOpenChange={setShowSupportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>İletişim</DialogTitle>
+            <DialogDescription>
+              Sorularınız için bize ulaşın
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <Mail className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">E-posta</p>
+                <a 
+                  href="mailto:support@candidateassess.com" 
+                  className="text-foreground font-medium hover:text-primary transition-colors"
+                >
+                  support@candidateassess.com
+                </a>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <Clock className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Yanıt Süresi</p>
+                <p className="text-foreground font-medium">24 saat içinde</p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </header>;
 };
