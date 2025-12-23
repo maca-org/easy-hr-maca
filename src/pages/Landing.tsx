@@ -123,7 +123,8 @@ const Landing = () => {
           </div>
 
           {/* Hero Visual - Glassmorphism UI Mockup */}
-          <div className="relative">
+          {/* Hero Visual - Glassmorphism UI Mockup */}
+          <div className="relative slide-in-right">
             <div className="absolute inset-0 gradient-bg rounded-[2.5rem] blur-3xl opacity-60" />
             <div className="relative glass rounded-[2rem] p-8 animate-float">
               <div className="space-y-6">
@@ -282,7 +283,7 @@ const Landing = () => {
 
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mt-16">
           {/* Free Plan */}
-          <Card className="hover-lift border-border/50 rounded-3xl bg-card/50">
+          <Card className="group hover-glow border-border/50 rounded-3xl bg-card/50 hover:border-border">
             <CardContent className="p-8 space-y-6">
               <div className="space-y-2">
                 <h3 className="text-2xl font-bold text-foreground">Free</h3>
@@ -318,7 +319,7 @@ const Landing = () => {
           </Card>
 
           {/* Pro Plan */}
-          <Card className="hover-lift border-primary/50 rounded-3xl relative bg-gradient-to-b from-primary/5 to-transparent">
+          <Card className="group pro-glow border-primary/50 rounded-3xl relative bg-gradient-to-b from-primary/5 to-transparent hover:border-primary ring-2 ring-primary/20 hover:ring-primary/40">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-primary-foreground text-sm font-medium rounded-full">
               Most Popular
             </div>
@@ -361,7 +362,7 @@ const Landing = () => {
           </Card>
 
           {/* Enterprise Plan */}
-          <Card className="hover-lift border-border/50 rounded-3xl bg-card/50">
+          <Card className="group hover-glow border-border/50 rounded-3xl bg-card/50 hover:border-border">
             <CardContent className="p-8 space-y-6">
               <div className="space-y-2">
                 <h3 className="text-2xl font-bold text-foreground">Enterprise</h3>
