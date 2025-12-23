@@ -202,6 +202,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          limit_warning_sent: boolean | null
           monthly_unlocked_count: number | null
           plan_type: string | null
           stripe_customer_id: string | null
@@ -214,6 +215,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          limit_warning_sent?: boolean | null
           monthly_unlocked_count?: number | null
           plan_type?: string | null
           stripe_customer_id?: string | null
@@ -226,6 +228,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          limit_warning_sent?: boolean | null
           monthly_unlocked_count?: number | null
           plan_type?: string | null
           stripe_customer_id?: string | null

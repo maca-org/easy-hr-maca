@@ -1,3 +1,4 @@
+/// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -52,7 +53,7 @@ serve(async (req) => {
     // Get user's profile with plan info
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('plan_type, monthly_unlocked_count, billing_period_start')
+      .select('plan_type, monthly_unlocked_count, billing_period_start, limit_warning_sent')
       .eq('id', user.id)
       .maybeSingle();
 
@@ -68,6 +69,7 @@ serve(async (req) => {
     const planType = profile?.plan_type || 'free';
     const monthlyUnlockedCount = profile?.monthly_unlocked_count || 0;
     const billingPeriodStart = profile?.billing_period_start || new Date().toISOString();
+    const limitWarningSent = profile?.limit_warning_sent || false;
 
     // Get plan limit
     const limit = PLAN_LIMITS[planType] ?? 0;
@@ -75,6 +77,34 @@ serve(async (req) => {
     const canUnlock = remaining > 0;
 
     console.log(`User ${user.id}: plan=${planType}, used=${monthlyUnlockedCount}, limit=${limit}, remaining=${remaining}`);
+
+    // Check if we should send a 90% warning email
+    if (limit !== Infinity && limit > 0) {
+      const usagePercentage = (monthlyUnlockedCount / limit) * 100;
+      const shouldSendWarning = usagePercentage >= 90 && !limitWarningSent;
+
+      if (shouldSendWarning && user.email) {
+        console.log(`User ${user.id} reached 90% usage, sending warning email to ${user.email}`);
+        
+        // Send warning email as background task
+        EdgeRuntime.waitUntil(
+          fetch(`${supabaseUrl}/functions/v1/send-limit-warning`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              userId: user.id,
+              email: user.email,
+              remaining,
+              limit,
+              planType,
+            }),
+          }).catch(err => console.error('Failed to send limit warning:', err))
+        );
+      }
+    }
 
     return new Response(
       JSON.stringify({

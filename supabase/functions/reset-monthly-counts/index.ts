@@ -19,14 +19,15 @@ serve(async (req) => {
 
     console.log('Starting monthly count reset...');
 
-    // Reset all users' monthly_unlocked_count to 0 and update billing_period_start
+    // Reset all users' monthly_unlocked_count to 0, billing_period_start, and limit_warning_sent
     const { data, error } = await supabase
       .from('profiles')
       .update({
         monthly_unlocked_count: 0,
-        billing_period_start: new Date().toISOString()
+        billing_period_start: new Date().toISOString(),
+        limit_warning_sent: false  // Reset warning flag for new billing cycle
       })
-      .neq('monthly_unlocked_count', 0) // Only update users who have used their quota
+      .or('monthly_unlocked_count.neq.0,limit_warning_sent.eq.true') // Update users who used quota OR received warning
       .select('id');
 
     if (error) {
