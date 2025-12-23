@@ -8,6 +8,16 @@ import { ResumeUpload } from "@/components/ResumeUpload";
 import { Job, Resume } from "@/pages/Index";
 import { toast } from "sonner";
 import { ShareLinkModal } from "./ShareLinkModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface JobDetailViewProps {
   job: Job & { slug?: string | null };
@@ -66,13 +76,27 @@ export const JobDetailView = ({
   };
 
   const isJobComplete = job.title && job.title !== "Untitled Job" && job.requirements;
+  const [showExitDialog, setShowExitDialog] = useState(false);
+
+  const hasUnsavedChanges = () => {
+    const titleChanged = editTitle.trim() !== (job.title || "");
+    const descChanged = editDescription.trim() !== (job.requirements || "");
+    return isEditing && (titleChanged || descChanged) && (editTitle.trim() || editDescription.trim());
+  };
 
   const handleBack = () => {
     if (isJobComplete) {
       onGoToDashboard();
+    } else if (hasUnsavedChanges()) {
+      setShowExitDialog(true);
     } else {
       onBack();
     }
+  };
+
+  const confirmExit = () => {
+    setShowExitDialog(false);
+    onBack();
   };
 
   return (
@@ -154,6 +178,24 @@ export const JobDetailView = ({
         jobTitle={job.title}
         slug={job.slug}
       />
+
+      {/* Exit Confirmation Dialog */}
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmExit} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Action Buttons */}
       <div className="flex justify-center">
