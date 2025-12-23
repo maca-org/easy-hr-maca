@@ -12,8 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Sparkles, Plus, Edit, Trash2, ArrowLeft, Users, FileText, CreditCard } from "lucide-react";
+import { Sparkles, Plus, Edit, Trash2, ArrowLeft, Users, FileText, CreditCard, Upload, Image } from "lucide-react";
 import { format } from "date-fns";
+import { useRef } from "react";
 
 interface Author {
   id: string;
@@ -73,6 +74,10 @@ const Admin = () => {
     featured_image_url: "",
     published: false,
   });
+  const [uploadingFeaturedImage, setUploadingFeaturedImage] = useState(false);
+  const [uploadingAuthorAvatar, setUploadingAuthorAvatar] = useState(false);
+  const featuredImageInputRef = useRef<HTMLInputElement>(null);
+  const authorAvatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     checkAdminStatus();
@@ -201,6 +206,67 @@ const Admin = () => {
       linkedin_url: "",
       avatar_url: "",
     });
+  };
+
+  // Image upload handlers
+  const handleFeaturedImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFeaturedImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `blog-${Date.now()}.${fileExt}`;
+      const filePath = `featured/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(filePath);
+
+      setBlogForm({ ...blogForm, featured_image_url: publicUrl });
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setUploadingFeaturedImage(false);
+    }
+  };
+
+  const handleAuthorAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingAuthorAvatar(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `avatar-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(filePath);
+
+      setAuthorForm({ ...authorForm, avatar_url: publicUrl });
+      toast.success("Avatar uploaded successfully");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload avatar");
+    } finally {
+      setUploadingAuthorAvatar(false);
+    }
   };
 
   const openAuthorEdit = (author: Author) => {
@@ -460,13 +526,45 @@ const Admin = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="featured_image">Featured Image URL</Label>
-                      <Input
-                        id="featured_image"
-                        value={blogForm.featured_image_url}
-                        onChange={(e) => setBlogForm({ ...blogForm, featured_image_url: e.target.value })}
-                        placeholder="https://example.com/image.jpg"
-                      />
+                      <Label>Featured Image</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={blogForm.featured_image_url}
+                          onChange={(e) => setBlogForm({ ...blogForm, featured_image_url: e.target.value })}
+                          placeholder="https://example.com/image.jpg"
+                          className="flex-1"
+                        />
+                        <input
+                          type="file"
+                          ref={featuredImageInputRef}
+                          onChange={handleFeaturedImageUpload}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => featuredImageInputRef.current?.click()}
+                          disabled={uploadingFeaturedImage}
+                          className="gap-2"
+                        >
+                          {uploadingFeaturedImage ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                          ) : (
+                            <Upload className="h-4 w-4" />
+                          )}
+                          Upload
+                        </Button>
+                      </div>
+                      {blogForm.featured_image_url && (
+                        <div className="mt-2 relative rounded-lg overflow-hidden border border-border">
+                          <img
+                            src={blogForm.featured_image_url}
+                            alt="Featured preview"
+                            className="w-full h-32 object-cover"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -604,13 +702,45 @@ const Admin = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="avatar_url">Avatar URL</Label>
-                      <Input
-                        id="avatar_url"
-                        value={authorForm.avatar_url}
-                        onChange={(e) => setAuthorForm({ ...authorForm, avatar_url: e.target.value })}
-                        placeholder="https://example.com/avatar.jpg"
-                      />
+                      <Label>Avatar</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={authorForm.avatar_url}
+                          onChange={(e) => setAuthorForm({ ...authorForm, avatar_url: e.target.value })}
+                          placeholder="https://example.com/avatar.jpg"
+                          className="flex-1"
+                        />
+                        <input
+                          type="file"
+                          ref={authorAvatarInputRef}
+                          onChange={handleAuthorAvatarUpload}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => authorAvatarInputRef.current?.click()}
+                          disabled={uploadingAuthorAvatar}
+                          className="gap-2"
+                        >
+                          {uploadingAuthorAvatar ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                          ) : (
+                            <Upload className="h-4 w-4" />
+                          )}
+                          Upload
+                        </Button>
+                      </div>
+                      {authorForm.avatar_url && (
+                        <div className="mt-2 flex justify-center">
+                          <img
+                            src={authorForm.avatar_url}
+                            alt="Avatar preview"
+                            className="w-20 h-20 rounded-full object-cover border border-border"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <Button onClick={handleAuthorSubmit} className="w-full">
