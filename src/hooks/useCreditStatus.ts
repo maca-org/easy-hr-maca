@@ -29,12 +29,16 @@ export function useCreditStatus(options?: UseCreditStatusOptions) {
   const checkCredits = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!session?.access_token) {
         setStatus(prev => ({ ...prev, loading: false }));
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('check-unlock-limit');
+      const { data, error } = await supabase.functions.invoke('check-unlock-limit', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
       if (error) {
         console.error("Error checking credits:", error);
