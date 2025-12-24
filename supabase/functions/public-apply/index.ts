@@ -48,12 +48,15 @@ const SLUG_REGEX = /^[a-z0-9-]+$/i;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_FILE_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 
+// Sanitize text to remove NULL bytes and control characters that PostgreSQL can't handle
 const sanitizeText = (text: string): string => {
+  if (!text || typeof text !== 'string') return '';
   return text
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/[<>"'&]/g, '') // Remove potentially dangerous chars
+    .replace(/\u0000/g, '') // Remove NULL bytes
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '') // Remove control characters
     .trim();
 };
+
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -261,7 +264,8 @@ serve(async (req) => {
     const cvSignedUrl = signedUrlData?.signedUrl || '';
 
     // 4. Extract text from CV (basic fallback - webhook will do proper extraction)
-    const cvText = await cvFile.text().catch(() => '');
+    const rawCvText = await cvFile.text().catch(() => '');
+    const cvText = sanitizeText(rawCvText);
 
     // 5. Create candidate record with authenticated user
     const candidateId = crypto.randomUUID();
