@@ -1,11 +1,12 @@
-import { Mail, Phone, ChevronDown, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { Mail, Phone, ChevronDown, Trash2, Loader2, AlertCircle, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ViewAnswersModal } from "@/components/ViewAnswersModal";
 import { CVViewerModal } from "@/components/CVViewerModal";
 import { Badge } from "@/components/ui/badge";
-
+import { useState } from "react";
+import { toast } from "sonner";
 interface Candidate {
   id: string;
   name: string;
@@ -52,10 +53,28 @@ export function CandidateRow({
   onDelete,
   onUpgrade
 }: CandidateRowProps) {
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
+  
   const scoreColor = overallScore >= 80 ? "text-green-600" : overallScore >= 60 ? "text-yellow-600" : "text-red-600";
   const isAnalyzed = candidate.cv_rate > 0 || candidate.relevance_analysis;
   const isPendingAnalysis = !isAnalyzed && !candidate.analyzing;
 
+  const copyToClipboard = async (text: string, type: 'email' | 'phone') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'email') {
+        setCopiedEmail(true);
+        setTimeout(() => setCopiedEmail(false), 2000);
+      } else {
+        setCopiedPhone(true);
+        setTimeout(() => setCopiedPhone(false), 2000);
+      }
+      toast.success(`${type === 'email' ? 'Email' : 'Phone'} copied!`);
+    } catch (err) {
+      toast.error('Failed to copy');
+    }
+  };
   return (
     <div className="border rounded-lg overflow-hidden">
       <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_100px_80px_80px_50px] gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center">
@@ -142,24 +161,46 @@ export function CandidateRow({
 
         {/* Contact Actions */}
         <div className="flex items-center justify-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8" 
-            onClick={() => window.open(`mailto:${candidate.email}`, "_blank")}
-          >
-            <Mail className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8" 
+                  onClick={() => copyToClipboard(candidate.email, 'email')}
+                >
+                  {copiedEmail ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Mail className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{copiedEmail ? 'Copied!' : 'Click to copy email'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {candidate.phone && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Phone className="h-4 w-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => copyToClipboard(candidate.phone!, 'phone')}
+                  >
+                    {copiedPhone ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Phone className="h-4 w-4" />
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{candidate.phone}</p>
+                  <p>{copiedPhone ? 'Copied!' : 'Click to copy phone'}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

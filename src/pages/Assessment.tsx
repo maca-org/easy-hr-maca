@@ -142,17 +142,7 @@ const Assessment = () => {
   };
 
   const handleSubmit = async () => {
-    // Check if all questions are answered
-    const unansweredQuestions = questions.filter(q => !answers[q.id]);
-    if (unansweredQuestions.length > 0) {
-      toast({
-        title: "Incomplete Assessment",
-        description: `Please answer all questions before submitting (${unansweredQuestions.length} remaining)`,
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Questions are now optional - allow submission with unanswered questions
     setSubmitting(true);
 
     try {
@@ -245,7 +235,7 @@ const Assessment = () => {
   const currentQuestion = questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
-  const allAnswered = questions.every(q => answers[q.id]);
+  const answeredCount = questions.filter(q => answers[q.id]).length;
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -323,26 +313,33 @@ const Assessment = () => {
           </Button>
 
           <div className="text-sm text-muted-foreground">
-            {allAnswered ? (
+            {answeredCount === questions.length ? (
               <span className="text-green-600 font-medium">All questions answered ✓</span>
             ) : (
-              <span>{questions.filter(q => answers[q.id]).length} of {questions.length} answered</span>
+              <span>{answeredCount} of {questions.length} answered (skipping allowed)</span>
             )}
           </div>
 
-          {!isLastQuestion ? (
-            <Button onClick={handleNext}>
-              Next
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleSubmit} 
-              disabled={submitting || !allAnswered}
-            >
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {submitting ? "Submitting..." : "Submit Assessment"}
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {!isLastQuestion ? (
+              <>
+                <Button variant="ghost" onClick={handleNext} className="text-muted-foreground">
+                  Skip
+                </Button>
+                <Button onClick={handleNext}>
+                  Next
+                </Button>
+              </>
+            ) : (
+              <Button 
+                onClick={handleSubmit} 
+                disabled={submitting}
+              >
+                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {submitting ? "Submitting..." : "Submit Assessment"}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

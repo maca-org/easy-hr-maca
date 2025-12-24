@@ -79,21 +79,44 @@ const Index = () => {
     [user]
   );
 
-  // Check authentication
+  // Check authentication and account type
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         navigate("/");
         return;
       }
       setUser(session.user);
+      
+      // Check account type
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("account_type")
+        .eq("id", session.user.id)
+        .single();
+      
+      if (profile?.account_type === 'candidate') {
+        navigate('/my-applications');
+        return;
+      }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session) {
         navigate("/");
       } else {
         setUser(session.user);
+        
+        // Check account type on auth change
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("account_type")
+          .eq("id", session.user.id)
+          .single();
+        
+        if (profile?.account_type === 'candidate') {
+          navigate('/my-applications');
+        }
       }
     });
 
