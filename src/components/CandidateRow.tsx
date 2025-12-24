@@ -1,4 +1,4 @@
-import { Mail, Phone, ChevronDown, Trash2, Loader2, AlertCircle, Check, Copy } from "lucide-react";
+import { Mail, Phone, ChevronDown, Trash2, Loader2, AlertCircle, Check, Copy, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -7,6 +7,7 @@ import { CVViewerModal } from "@/components/CVViewerModal";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { toast } from "sonner";
+
 interface Candidate {
   id: string;
   name: string;
@@ -30,6 +31,7 @@ interface Candidate {
   test_detailed_scores?: any;
   is_unlocked?: boolean;
   cv_file_path?: string | null;
+  is_favorite?: boolean;
 }
 
 interface CandidateRowProps {
@@ -37,10 +39,12 @@ interface CandidateRowProps {
   overallScore: number;
   isExpanded: boolean;
   isSelected: boolean;
+  isFavorite: boolean;
   onSelect: (id: string) => void;
   onExpand: (id: string | null) => void;
   onDelete: (id: string) => void;
   onUpgrade?: () => void;
+  onToggleFavorite: (id: string, newValue: boolean) => void;
 }
 
 export function CandidateRow({
@@ -48,10 +52,12 @@ export function CandidateRow({
   overallScore,
   isExpanded,
   isSelected,
+  isFavorite,
   onSelect,
   onExpand,
   onDelete,
-  onUpgrade
+  onUpgrade,
+  onToggleFavorite
 }: CandidateRowProps) {
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
@@ -92,9 +98,37 @@ export function CandidateRow({
         </div>
 
         {/* Name & Title */}
-        <div>
-          <p className="font-medium text-foreground">{candidate.name}</p>
-          {candidate.title && <p className="text-sm text-muted-foreground">{candidate.title}</p>}
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite(candidate.id, !isFavorite);
+                  }}
+                >
+                  <Star 
+                    className={`h-4 w-4 transition-all ${
+                      isFavorite 
+                        ? 'fill-yellow-400 text-yellow-400' 
+                        : 'text-muted-foreground hover:text-yellow-400'
+                    }`} 
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isFavorite ? 'Remove from favorites' : 'Mark as favorite'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <div>
+            <p className="font-medium text-foreground">{candidate.name}</p>
+            {candidate.title && <p className="text-sm text-muted-foreground">{candidate.title}</p>}
+          </div>
         </div>
 
         {/* CV Rate */}
