@@ -69,6 +69,7 @@ export default function CandidatesDashboard() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingCandidates, setDeletingCandidates] = useState<string[]>([]);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [isScreening, setIsScreening] = useState(false);
   
   // Callback for when credit limit is reached
   const handleLimitReached = useCallback(() => {
@@ -566,6 +567,63 @@ export default function CandidatesDashboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Get selected candidates that are pending analysis (cv_rate = 0)
+  const selectedPendingCandidates = selectedCandidates.filter(id => {
+    const candidate = candidates.find(c => c.id === id);
+    return candidate && candidate.cv_rate === 0;
+  });
+
+  // Handle Resume Screening for pending candidates
+  const handleResumeScreening = async () => {
+    if (selectedPendingCandidates.length === 0) return;
+    
+    setIsScreening(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Authentication required");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('analyze-pending-cvs', {
+        body: { candidate_ids: selectedPendingCandidates },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      // Mark processed candidates as analyzing in the UI
+      if (data.processed_ids) {
+        setCandidates(prev => prev.map(c => 
+          data.processed_ids.includes(c.id) 
+            ? { ...c, analyzing: true }
+            : c
+        ));
+      }
+
+      if (data.processed > 0) {
+        toast.success(`${data.processed} aday analiz ediliyor!`);
+      }
+      if (data.skipped > 0) {
+        toast.warning(`${data.skipped} aday için credit yetersiz`, {
+          description: `Kalan credit: ${data.remaining_credits}`
+        });
+      }
+
+      // Clear selection and refresh credits
+      setSelectedCandidates([]);
+      refreshCredits();
+      refreshCreditStatus();
+    } catch (error) {
+      console.error('Resume screening error:', error);
+      toast.error('Analiz başlatılamadı');
+    } finally {
+      setIsScreening(false);
+    }
+  };
+
   // Handle upgrade - now uses Stripe checkout via UpgradeModal
   const handleSelectPlan = (plan: string) => {
     // The UpgradeModal now handles the Stripe checkout directly
@@ -759,7 +817,7 @@ export default function CandidatesDashboard() {
                 </div>
               </div>
               
-              {candidates.length > 0 && <div className="flex items-center gap-2">
+              {candidates.length > 0 && <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm text-muted-foreground">Sort by:</span>
                   <Select value={sortBy} onValueChange={(value: "score" | "name" | "date") => setSortBy(value)}>
                     <SelectTrigger className="w-[180px]">
@@ -771,6 +829,20 @@ export default function CandidatesDashboard() {
                       <SelectItem value="date">Upload Date (Newest)</SelectItem>
                     </SelectContent>
                   </Select>
+                  
+                  {/* Resume Screening Button - shows when pending candidates are selected */}
+                  {selectedPendingCandidates.length > 0 && (
+                    <Button 
+                      onClick={handleResumeScreening}
+                      variant="default"
+                      size="sm"
+                      disabled={isScreening || !creditStatus.canAnalyze}
+                      className="ml-2"
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${isScreening ? 'animate-spin' : ''}`} />
+                      Resume Screening ({selectedPendingCandidates.length})
+                    </Button>
+                  )}
                 </div>}
             </CardHeader>
             <CardContent>
