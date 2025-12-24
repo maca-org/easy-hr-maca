@@ -158,6 +158,21 @@ serve(async (req) => {
         const jobData = candidate.job_openings as any;
         const callback_url = `${SUPABASE_URL}/functions/v1/receive-cv-analysis`;
 
+        // Get cv_file_path for signed URL generation
+        const { data: candidateFull } = await supabaseAdmin
+          .from('candidates')
+          .select('cv_file_path')
+          .eq('id', candidateId)
+          .single();
+
+        let cvSignedUrl = '';
+        if (candidateFull?.cv_file_path) {
+          const { data: signedUrlData } = await supabaseAdmin.storage
+            .from('cvs')
+            .createSignedUrl(candidateFull.cv_file_path, 3600);
+          cvSignedUrl = signedUrlData?.signedUrl || '';
+        }
+
         try {
           const analysisResponse = await fetch(CV_ANALYSIS_WEBHOOK_URL, {
             method: 'POST',
@@ -165,7 +180,9 @@ serve(async (req) => {
             body: JSON.stringify({
               candidate_id: candidateId,
               job_id: candidate.job_id,
-              cv: candidate.cv_text,
+              cv: '', // Boş - n8n cv_url'den parse edecek
+              cv_url: cvSignedUrl,
+              cv_file_path: candidateFull?.cv_file_path || '',
               job_description: jobData.description,
               job_title: jobData.title,
               callback_url

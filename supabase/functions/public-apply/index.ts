@@ -263,9 +263,9 @@ serve(async (req) => {
 
     const cvSignedUrl = signedUrlData?.signedUrl || '';
 
-    // 4. Extract text from CV (basic fallback - webhook will do proper extraction)
-    const rawCvText = await cvFile.text().catch(() => '');
-    const cvText = sanitizeText(rawCvText);
+    // 4. PDF parsing yapılmıyor - n8n cv_url'den PDF'i indirip parse edecek
+    // cvFile.text() PDF binary'yi bozuk text olarak döndürüyor, bu yüzden boş bırakıyoruz
+    const cvText = '';
 
     // 5. Create candidate record with authenticated user
     const candidateId = crypto.randomUUID();
