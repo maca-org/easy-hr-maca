@@ -293,40 +293,83 @@ serve(async (req) => {
 
     console.log('Candidate created:', candidateId, 'for user:', user.id);
 
-    // 6. Trigger CV analysis with signed URL
-    const CV_ANALYSIS_WEBHOOK_URL = Deno.env.get('CV_ANALYSIS_WEBHOOK_URL');
-    
-    if (CV_ANALYSIS_WEBHOOK_URL) {
-      const callback_url = `${SUPABASE_URL}/functions/v1/receive-cv-analysis`;
-      
-      console.log('Triggering CV analysis for candidate:', candidateId);
-      
-      try {
-        const analysisResponse = await fetch(CV_ANALYSIS_WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            candidate_id: candidateId,
-            job_id: job.id,
-            cv: cvText,
-            cv_url: cvSignedUrl,
-            cv_file_path: uploadData.path,
-            job_description: job.description,
-            job_title: job.title,
-            callback_url
-          }),
-        });
+    // 6. Check employer's credit before triggering CV analysis
+    const PLAN_LIMITS: Record<string, number> = {
+      free: 25,
+      starter: 100,
+      pro: 250,
+      business: 1000,
+      enterprise: 999999
+    };
 
-        if (!analysisResponse.ok) {
-          console.error('CV analysis trigger failed:', await analysisResponse.text());
-        } else {
-          console.log('CV analysis triggered successfully');
-        }
-      } catch (analysisError) {
-        console.error('Error triggering CV analysis:', analysisError);
-      }
+    const { data: employerProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('plan_type, monthly_unlocked_count')
+      .eq('id', job.user_id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching employer profile:', profileError);
+    }
+
+    const planType = employerProfile?.plan_type || 'free';
+    const limit = PLAN_LIMITS[planType] ?? 25;
+    const used = employerProfile?.monthly_unlocked_count || 0;
+    const hasCredit = used < limit;
+
+    console.log('Employer credit check:', { planType, used, limit, hasCredit, employerId: job.user_id });
+
+    if (!hasCredit) {
+      console.log('Employer has no credits remaining. CV will stay pending. Plan:', planType, 'Used:', used, 'Limit:', limit);
+      // CV created but analysis NOT triggered - will stay pending until employer gets more credits
     } else {
-      console.log('CV_ANALYSIS_WEBHOOK_URL not configured, skipping analysis');
+      // Use 1 credit
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ monthly_unlocked_count: used + 1 })
+        .eq('id', job.user_id);
+
+      if (updateError) {
+        console.error('Error updating credit count:', updateError);
+      } else {
+        console.log('Credit used. New count:', used + 1, '/', limit);
+      }
+
+      // 7. Trigger CV analysis with signed URL
+      const CV_ANALYSIS_WEBHOOK_URL = Deno.env.get('CV_ANALYSIS_WEBHOOK_URL');
+      
+      if (CV_ANALYSIS_WEBHOOK_URL) {
+        const callback_url = `${SUPABASE_URL}/functions/v1/receive-cv-analysis`;
+        
+        console.log('Triggering CV analysis for candidate:', candidateId);
+        
+        try {
+          const analysisResponse = await fetch(CV_ANALYSIS_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              candidate_id: candidateId,
+              job_id: job.id,
+              cv: cvText,
+              cv_url: cvSignedUrl,
+              cv_file_path: uploadData.path,
+              job_description: job.description,
+              job_title: job.title,
+              callback_url
+            }),
+          });
+
+          if (!analysisResponse.ok) {
+            console.error('CV analysis trigger failed:', await analysisResponse.text());
+          } else {
+            console.log('CV analysis triggered successfully');
+          }
+        } catch (analysisError) {
+          console.error('Error triggering CV analysis:', analysisError);
+        }
+      } else {
+        console.log('CV_ANALYSIS_WEBHOOK_URL not configured, skipping analysis');
+      }
     }
 
     return new Response(
