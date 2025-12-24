@@ -60,3 +60,6 @@ verify_jwt = false
 
 [functions.get-candidate-jobs]
 verify_jwt = false
+
+[functions.analyze-pending-cvs]
+verify_jwt = false
