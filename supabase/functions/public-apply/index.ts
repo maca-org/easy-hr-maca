@@ -45,9 +45,6 @@ const checkRateLimit = (ip: string): { allowed: boolean; remaining: number; rese
 // Validation helpers
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SLUG_REGEX = /^[a-z0-9-]+$/i;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MAX_NAME_LENGTH = 100;
-const MAX_EMAIL_LENGTH = 255;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_FILE_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 
@@ -92,25 +89,66 @@ serve(async (req) => {
   }
 
   try {
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    // Verify the user is authenticated
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required. Please login to apply.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create client with user's token to get their info
+    const supabaseUser = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    
+    if (userError || !user) {
+      console.error('Auth error:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired session. Please login again.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Authenticated user:', user.id, user.email);
+
+    // Create admin client for database operations
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
     const formData = await req.formData();
     const cvFile = formData.get('cv') as File;
-    const jobIdentifier = formData.get('job_id') as string; // Can be UUID or slug
-    let candidateName = formData.get('name') as string || 'Unknown';
-    const candidateEmail = formData.get('email') as string;
+    const jobIdentifier = formData.get('job_id') as string;
+
+    // Get name from user metadata or email
+    let candidateName = user.user_metadata?.full_name || 
+                        user.user_metadata?.name || 
+                        user.email?.split('@')[0] || 
+                        'Unknown';
+    candidateName = sanitizeText(candidateName).substring(0, 100);
+
+    const candidateEmail = user.email || '';
 
     console.log('Public application received:', {
       jobIdentifier,
       candidateName,
       candidateEmail,
+      userId: user.id,
       fileName: cvFile?.name,
       fileSize: cvFile?.size,
       clientIP
     });
 
     // Validate required fields
-    if (!cvFile || !jobIdentifier || !candidateEmail) {
+    if (!cvFile || !jobIdentifier) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: cv, job_id, or email' }),
+        JSON.stringify({ error: 'Missing required fields: cv or job_id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -124,20 +162,6 @@ serve(async (req) => {
         JSON.stringify({ error: 'Invalid job identifier format' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
-    // Validate email
-    if (!EMAIL_REGEX.test(candidateEmail) || candidateEmail.length > MAX_EMAIL_LENGTH) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid email address' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Sanitize and validate name
-    candidateName = sanitizeText(candidateName).substring(0, MAX_NAME_LENGTH);
-    if (!candidateName) {
-      candidateName = 'Unknown';
     }
 
     // Validate file size
@@ -155,11 +179,6 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // 1. Get job details - support both UUID and slug
     let job;
@@ -193,6 +212,21 @@ serve(async (req) => {
     }
 
     console.log('Found job:', job.title, 'with ID:', job.id);
+
+    // Check if user already applied to this job
+    const { data: existingApplication } = await supabase
+      .from('candidates')
+      .select('id')
+      .eq('job_id', job.id)
+      .eq('applicant_user_id', user.id)
+      .single();
+
+    if (existingApplication) {
+      return new Response(
+        JSON.stringify({ error: 'You have already applied to this job.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // 2. Upload CV to storage (use actual job.id UUID)
     const fileExt = cvFile.name.split('.').pop();
@@ -229,15 +263,16 @@ serve(async (req) => {
     // 4. Extract text from CV (basic fallback - webhook will do proper extraction)
     const cvText = await cvFile.text().catch(() => '');
 
-    // 5. Create candidate record (use actual job.id UUID)
+    // 5. Create candidate record with authenticated user
     const candidateId = crypto.randomUUID();
     
     const { error: candidateError } = await supabase
       .from('candidates')
       .insert({
         id: candidateId,
-        job_id: job.id, // Always use the resolved UUID
-        user_id: job.user_id,
+        job_id: job.id,
+        user_id: job.user_id, // Job owner
+        applicant_user_id: user.id, // The applying candidate
         name: candidateName,
         email: candidateEmail,
         cv_file_path: uploadData.path,
@@ -252,7 +287,7 @@ serve(async (req) => {
       throw new Error('Failed to create candidate record');
     }
 
-    console.log('Candidate created:', candidateId);
+    console.log('Candidate created:', candidateId, 'for user:', user.id);
 
     // 6. Trigger CV analysis with signed URL
     const CV_ANALYSIS_WEBHOOK_URL = Deno.env.get('CV_ANALYSIS_WEBHOOK_URL');
@@ -268,10 +303,10 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             candidate_id: candidateId,
-            job_id: job.id, // Always use resolved UUID
-            cv: cvText, // Backward compatibility
-            cv_url: cvSignedUrl, // New: signed URL for proper PDF extraction
-            cv_file_path: uploadData.path, // Storage path
+            job_id: job.id,
+            cv: cvText,
+            cv_url: cvSignedUrl,
+            cv_file_path: uploadData.path,
             job_description: job.description,
             job_title: job.title,
             callback_url
@@ -285,7 +320,6 @@ serve(async (req) => {
         }
       } catch (analysisError) {
         console.error('Error triggering CV analysis:', analysisError);
-        // Don't fail the application if analysis fails
       }
     } else {
       console.log('CV_ANALYSIS_WEBHOOK_URL not configured, skipping analysis');
