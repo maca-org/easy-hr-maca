@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LogOut, User } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { LogOut, User, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 interface AuthHeaderProps {
@@ -14,6 +14,22 @@ interface AuthHeaderProps {
 export default function AuthHeader({ userEmail }: AuthHeaderProps) {
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [accountType, setAccountType] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAccountType = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("account_type")
+          .eq("id", session.user.id)
+          .single();
+        setAccountType(data?.account_type || 'hr');
+      }
+    };
+    fetchAccountType();
+  }, []);
 
   const handleSignOut = async () => {
     setIsLoggingOut(true);
@@ -24,7 +40,11 @@ export default function AuthHeader({ userEmail }: AuthHeaderProps) {
   };
 
   const handleHomeClick = () => {
-    navigate("/jobs");
+    if (accountType === 'candidate') {
+      navigate("/my-applications");
+    } else {
+      navigate("/jobs");
+    }
   };
 
   const getInitials = (email: string) => {
@@ -57,6 +77,14 @@ export default function AuthHeader({ userEmail }: AuthHeaderProps) {
                 <p className="text-sm font-medium leading-none">{userEmail}</p>
               </div>
             )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => navigate("/profile")}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Profile Settings</span>
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer"
               onClick={handleSignOut}

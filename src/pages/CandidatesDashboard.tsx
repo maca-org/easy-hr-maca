@@ -3,9 +3,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { extractTextFromPDF } from "@/utils/pdfExtractor";
 import { useUploadQueue } from "@/hooks/useUploadQueue";
-import { useAnalysisCredits } from "@/hooks/useAnalysisCredits";
+import { useCreditSystem, clearCreditCache } from "@/hooks/useCreditSystem";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useCreditStatus } from "@/hooks/useCreditStatus";
 import AuthHeader from "@/components/AuthHeader";
 import { UploadQueue } from "@/components/UploadQueue";
 import { ViewAnswersModal } from "@/components/ViewAnswersModal";
@@ -79,23 +78,29 @@ export default function CandidatesDashboard() {
     });
   }, []);
   
-  // Credit status hook with limit reached callback
-  const { isAtLimit, refreshCredits: refreshCreditStatus } = useCreditStatus({
+  // Unified credit system hook - replaces both useCreditStatus and useAnalysisCredits
+  const { 
+    isAtLimit, 
+    canAnalyze,
+    used,
+    remaining,
+    planType: creditPlanType,
+    useCredit, 
+    refreshCredits 
+  } = useCreditSystem(user?.id, {
     onLimitReached: handleLimitReached
   });
   
   // Subscription hook - checks Stripe subscription status
   const { planType: subscriptionPlanType, refreshSubscription } = useSubscription();
   
-  // Analysis credits hook - replaces unlock system
-  const { creditStatus, useCredit, refreshCredits } = useAnalysisCredits(user?.id);
-  
   // Check for payment success and refresh credit status
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('payment') === 'success') {
       toast.success("Ödeme başarılı! Plan güncelleniyor...");
-      // Refresh both subscription and credit status
+      // Clear cache and refresh
+      clearCreditCache();
       refreshSubscription();
       refreshCredits();
       // Clean up URL
@@ -615,7 +620,6 @@ export default function CandidatesDashboard() {
       // Clear selection and refresh credits
       setSelectedCandidates([]);
       refreshCredits();
-      refreshCreditStatus();
     } catch (error) {
       console.error('Resume screening error:', error);
       toast.error('Analiz başlatılamadı');
@@ -755,13 +759,13 @@ export default function CandidatesDashboard() {
           </div>
 
           {/* Upsell Banner - Show when there are pending analysis candidates or credits running low */}
-          {(pendingAnalysis > 0 || !creditStatus.canAnalyze) && (
+          {(pendingAnalysis > 0 || !canAnalyze) && (
             <UpsellBanner
               totalCandidates={candidates.length}
               analyzedCount={analyzedCandidates}
-              planType={creditStatus.planType}
-              monthlyLimit={creditStatus.limit}
-              usedThisMonth={creditStatus.used}
+              planType={creditPlanType}
+              monthlyLimit={remaining}
+              usedThisMonth={used}
               onUpgrade={() => setUpgradeModalOpen(true)}
             />
           )}
@@ -836,7 +840,7 @@ export default function CandidatesDashboard() {
                       onClick={handleResumeScreening}
                       variant="default"
                       size="sm"
-                      disabled={isScreening || !creditStatus.canAnalyze}
+                      disabled={isScreening || !canAnalyze}
                       className="ml-2"
                     >
                       <RefreshCw className={`h-4 w-4 mr-2 ${isScreening ? 'animate-spin' : ''}`} />
@@ -918,7 +922,7 @@ export default function CandidatesDashboard() {
       <UpgradeModal
         isOpen={upgradeModalOpen}
         onClose={() => setUpgradeModalOpen(false)}
-        currentPlan={creditStatus.planType}
+        currentPlan={creditPlanType}
         onSelectPlan={handleSelectPlan}
       />
 

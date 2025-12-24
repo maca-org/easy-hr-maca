@@ -10,6 +10,8 @@ import NotFound from "./pages/NotFound";
 import { QuestionsReview } from "./pages/QuestionsReview";
 import CandidatesDashboard from "./pages/CandidatesDashboard";
 import Auth from "./pages/Auth";
+import CandidateAuthPage from "./pages/CandidateAuth";
+import ProfileSettings from "./pages/ProfileSettings";
 import AssessmentSettings from "./pages/AssessmentSettings";
 import Assessment from "./pages/Assessment";
 import JobApplication from "./pages/JobApplication";
@@ -32,6 +34,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/candidate-auth" element={<CandidateAuthPage />} />
+          <Route path="/profile" element={<ProfileSettings />} />
           <Route path="/jobs" element={<Index />} />
           <Route path="/questions-review" element={<QuestionsReview />} />
           <Route path="/candidates-dashboard" element={<CandidatesDashboard />} />

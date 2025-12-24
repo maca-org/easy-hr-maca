@@ -7,22 +7,21 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import logoImage from "@/assets/logo.png";
-import { Building2 } from "lucide-react";
+import { User } from "lucide-react";
 
-export default function Auth() {
+export default function CandidateAuthPage() {
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [companyName, setCompanyName] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/jobs");
+        navigate("/my-applications");
       }
     });
   }, [navigate]);
@@ -56,15 +55,15 @@ export default function Auth() {
       setLoading(false);
     } else {
       toast.success("Signed in successfully!");
-      navigate("/jobs");
+      navigate("/my-applications");
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!companyName.trim()) {
-      toast.error("Please enter your company name");
+    if (!name.trim()) {
+      toast.error("Please enter your full name");
       return;
     }
 
@@ -89,9 +88,10 @@ export default function Auth() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/jobs`,
+        emailRedirectTo: `${window.location.origin}/my-applications`,
         data: {
-          company_name: companyName,
+          full_name: name,
+          // No company_name = candidate account
         },
       },
     });
@@ -101,7 +101,6 @@ export default function Auth() {
       setLoading(false);
     } else {
       toast.success("Account created successfully!");
-      // Auto sign in after signup
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -111,7 +110,7 @@ export default function Auth() {
         toast.error("Please sign in with your new account");
         setIsSignUp(false);
       } else {
-        navigate("/jobs");
+        navigate("/my-applications");
       }
       setLoading(false);
     }
@@ -126,27 +125,27 @@ export default function Auth() {
             <span className="text-xl font-semibold text-foreground">Candidate Assess</span>
           </Link>
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Building2 className="w-5 h-5 text-primary" />
-            <span className="text-sm font-medium text-muted-foreground">For Employers</span>
+            <User className="w-5 h-5 text-primary" />
+            <span className="text-sm font-medium text-muted-foreground">For Candidates</span>
           </div>
-          <CardTitle>{isSignUp ? "Create Employer Account" : "Employer Sign In"}</CardTitle>
+          <CardTitle>{isSignUp ? "Create Candidate Account" : "Candidate Sign In"}</CardTitle>
           <CardDescription>
             {isSignUp
-              ? "Create an account to post jobs and manage candidates"
-              : "Sign in to manage your job postings and candidates"}
+              ? "Create an account to apply for jobs and track your applications"
+              : "Sign in to view your applications and assessment status"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
             {isSignUp && (
               <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name</Label>
+                <Label htmlFor="name">Full Name</Label>
                 <Input
-                  id="companyName"
+                  id="name"
                   type="text"
-                  placeholder="Your Company"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   required
                 />
               </div>
@@ -191,7 +190,7 @@ export default function Auth() {
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+              {loading ? "Loading..." : isSignUp ? "Create Account" : "Sign In"}
             </Button>
           </form>
 
@@ -222,9 +221,9 @@ export default function Auth() {
           </div>
 
           <div className="mt-6 pt-4 border-t text-center text-sm text-muted-foreground">
-            Are you a job seeker?{" "}
-            <Link to="/candidate-auth" className="text-primary underline hover:no-underline">
-              Sign in as Candidate
+            Are you an HR professional?{" "}
+            <Link to="/auth" className="text-primary underline hover:no-underline">
+              Sign in as Employer
             </Link>
           </div>
         </CardContent>

@@ -167,7 +167,7 @@ const Landing = () => {
                   Get Started Free
                 </Button>
               </Link>
-              <Link to="/my-applications">
+              <Link to="/candidate-auth">
                 <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-base font-medium">
                   <User className="w-4 h-4 mr-2" />
                   For Candidates
