@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sparkles, Calendar, ArrowLeft, Linkedin } from "lucide-react";
 import { format } from "date-fns";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Author {
   id: string;
@@ -174,7 +176,7 @@ const BlogPostPage = () => {
               </Badge>
             )}
 
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground leading-tight font-playfair">
               {post.title}
             </h1>
 
@@ -224,12 +226,25 @@ const BlogPostPage = () => {
           )}
 
           {/* Content */}
-          <div className="prose prose-lg max-w-none text-foreground prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-primary">
-            {post.content.split("\n").map((paragraph, index) => (
-              <p key={index} className="mb-4 text-muted-foreground leading-relaxed">
-                {paragraph}
-              </p>
-            ))}
+          <div className="prose prose-lg max-w-none font-inter
+            prose-headings:font-playfair prose-headings:text-foreground prose-headings:font-semibold
+            prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-h4:text-xl
+            prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-6
+            prose-strong:text-foreground prose-strong:font-semibold
+            prose-em:italic prose-em:text-muted-foreground
+            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+            prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:text-muted-foreground
+            prose-ul:list-disc prose-ul:pl-6 prose-ul:text-muted-foreground
+            prose-ol:list-decimal prose-ol:pl-6 prose-ol:text-muted-foreground
+            prose-li:mb-2
+            prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono
+            prose-pre:bg-muted prose-pre:rounded-xl prose-pre:p-4
+            prose-img:rounded-2xl prose-img:shadow-lg
+            prose-hr:border-border"
+          >
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {post.content}
+            </ReactMarkdown>
           </div>
 
           {/* Author Bio */}
