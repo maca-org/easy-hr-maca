@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import AssessmentSettings from "./pages/AssessmentSettings";
 import Assessment from "./pages/Assessment";
 import JobApplication from "./pages/JobApplication";
+import MyApplications from "./pages/MyApplications";
 import SubscriptionSettings from "./pages/SubscriptionSettings";
 import Blog from "./pages/Blog";
 import BlogPostPage from "./pages/BlogPost";
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/assessment-settings" element={<AssessmentSettings />} />
           <Route path="/assessment/:candidateId" element={<Assessment />} />
           <Route path="/apply/:jobId" element={<JobApplication />} />
+          <Route path="/my-applications" element={<MyApplications />} />
           <Route path="/settings/subscription" element={<SubscriptionSettings />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, CheckCircle, Loader2, FileText, Briefcase, LogOut } from "lucide-react";
+import { Upload, CheckCircle, Loader2, FileText, Briefcase, LogOut, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
@@ -212,9 +212,15 @@ const JobApplication = () => {
             <p className="text-muted-foreground mb-2">
               Your CV has been submitted successfully.
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-6">
               We will review your application and get back to you soon.
             </p>
+            <Button asChild>
+              <Link to="/my-applications">
+                <ClipboardList className="w-4 h-4 mr-2" />
+                View My Applications
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
