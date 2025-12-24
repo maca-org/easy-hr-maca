@@ -11,9 +11,10 @@ import { ViewAnswersModal } from "@/components/ViewAnswersModal";
 import { CandidateRow } from "@/components/CandidateRow";
 import { UpsellBanner } from "@/components/UpsellBanner";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { OfferLetterDrawer } from "@/components/OfferLetterDrawer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, CreditCard, Star } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, CreditCard, Star, FileText } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Job } from "./Index";
@@ -71,6 +72,9 @@ export default function CandidatesDashboard() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [isScreening, setIsScreening] = useState(false);
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [offerDrawerOpen, setOfferDrawerOpen] = useState(false);
+  const [offerPreselectedCandidateId, setOfferPreselectedCandidateId] = useState<string | undefined>(undefined);
+  const [companyName, setCompanyName] = useState("");
   
   // Callback for when credit limit is reached
   const handleLimitReached = useCallback(() => {
@@ -118,6 +122,19 @@ export default function CandidatesDashboard() {
         }
       } = await supabase.auth.getUser();
       setUser(user);
+      
+      // Fetch company name from profile
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("company_name")
+          .eq("id", user.id)
+          .maybeSingle();
+        
+        if (profile?.company_name) {
+          setCompanyName(profile.company_name);
+        }
+      }
     };
     fetchUser();
   }, []);
@@ -661,6 +678,12 @@ export default function CandidatesDashboard() {
     }
   };
 
+  // Handle prepare offer - opens drawer with preselected candidate
+  const handlePrepareOffer = (candidateId?: string) => {
+    setOfferPreselectedCandidateId(candidateId);
+    setOfferDrawerOpen(true);
+  };
+
   // Filter by favorites first, then sort
   const filteredCandidates = showOnlyFavorites 
     ? candidates.filter(c => c.is_favorite)
@@ -763,26 +786,24 @@ export default function CandidatesDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">AI Pre-Interview</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Offer Letter
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Completed:</span>
-                    <span className="text-2xl font-bold text-green-600">{completedTests}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Pending:</span>
-                    <span className="text-2xl font-bold text-red-600">{pendingTests}</span>
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Prepare and send offer letters to selected candidates
+                  </p>
                 </div>
                 <Button 
-                  onClick={() => document.getElementById('candidates-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} 
+                  onClick={() => handlePrepareOffer()}
                   variant="outline" 
                   size="sm" 
                   className="w-full"
                 >
-                  View Candidates
+                  Prepare Offer Letter
                 </Button>
               </CardContent>
             </Card>
@@ -916,7 +937,7 @@ export default function CandidatesDashboard() {
                     <div>Candidate</div>
                     <div>CV Rate</div>
                     <div>Test Result</div>
-                    <div>AI Interview</div>
+                    <div>Offer</div>
                     <div className="text-center">Answers</div>
                     <div className="text-center">Contact</div>
                     <div className="text-center">CV</div>
@@ -939,6 +960,7 @@ export default function CandidatesDashboard() {
                         onDelete={handleDeleteSingle}
                         onUpgrade={() => setUpgradeModalOpen(true)}
                         onToggleFavorite={handleToggleFavorite}
+                        onPrepareOffer={handlePrepareOffer}
                       />
                     );
                   })}
@@ -974,6 +996,21 @@ export default function CandidatesDashboard() {
         onClose={() => setUpgradeModalOpen(false)}
         currentPlan={creditPlanType}
         onSelectPlan={handleSelectPlan}
+      />
+
+      {/* Offer Letter Drawer */}
+      <OfferLetterDrawer
+        isOpen={offerDrawerOpen}
+        onClose={() => {
+          setOfferDrawerOpen(false);
+          setOfferPreselectedCandidateId(undefined);
+        }}
+        candidates={candidates.map(c => ({ id: c.id, name: c.name, email: c.email }))}
+        preselectedCandidateId={offerPreselectedCandidateId}
+        jobId={jobId || ""}
+        jobTitle={jobTitle}
+        companyName={companyName}
+        hrName={user?.email?.split("@")[0] || "HR Manager"}
       />
 
       {/* Delete Confirmation Dialog */}

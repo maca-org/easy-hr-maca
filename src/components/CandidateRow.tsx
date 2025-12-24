@@ -45,6 +45,7 @@ interface CandidateRowProps {
   onDelete: (id: string) => void;
   onUpgrade?: () => void;
   onToggleFavorite: (id: string, newValue: boolean) => void;
+  onPrepareOffer: (candidateId: string) => void;
 }
 
 export function CandidateRow({
@@ -57,7 +58,8 @@ export function CandidateRow({
   onExpand,
   onDelete,
   onUpgrade,
-  onToggleFavorite
+  onToggleFavorite,
+  onPrepareOffer
 }: CandidateRowProps) {
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
@@ -170,13 +172,19 @@ export function CandidateRow({
           )}
         </div>
 
-        {/* AI Interview */}
+        {/* Offer */}
         <div className="text-center">
-          {candidate.ai_interview_score !== null ? (
-            <span className="font-semibold">{candidate.ai_interview_score}%</span>
-          ) : (
-            <span className="text-muted-foreground text-sm">Coming Soon</span>
-          )}
+          <Button
+            variant="link"
+            size="sm"
+            className="text-primary p-0 h-auto"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPrepareOffer(candidate.id);
+            }}
+          >
+            Offer
+          </Button>
         </div>
 
         {/* View Answers */}

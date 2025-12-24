@@ -281,6 +281,81 @@ export type Database = {
           },
         ]
       }
+      offer_letters: {
+        Row: {
+          candidate_id: string
+          company_name: string
+          contract_duration_unit: string | null
+          contract_duration_value: number | null
+          created_at: string | null
+          currency: string
+          employment_type: string
+          hr_user_id: string
+          id: string
+          is_contracted: boolean | null
+          job_id: string
+          job_title: string
+          pay_period: string
+          salary_amount: number
+          updated_at: string | null
+          valid_until: string | null
+          work_model: string
+        }
+        Insert: {
+          candidate_id: string
+          company_name: string
+          contract_duration_unit?: string | null
+          contract_duration_value?: number | null
+          created_at?: string | null
+          currency?: string
+          employment_type?: string
+          hr_user_id: string
+          id?: string
+          is_contracted?: boolean | null
+          job_id: string
+          job_title: string
+          pay_period?: string
+          salary_amount: number
+          updated_at?: string | null
+          valid_until?: string | null
+          work_model?: string
+        }
+        Update: {
+          candidate_id?: string
+          company_name?: string
+          contract_duration_unit?: string | null
+          contract_duration_value?: number | null
+          created_at?: string | null
+          currency?: string
+          employment_type?: string
+          hr_user_id?: string
+          id?: string
+          is_contracted?: boolean | null
+          job_id?: string
+          job_title?: string
+          pay_period?: string
+          salary_amount?: number
+          updated_at?: string | null
+          valid_until?: string | null
+          work_model?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_letters_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_letters_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "job_openings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_type: string | null
