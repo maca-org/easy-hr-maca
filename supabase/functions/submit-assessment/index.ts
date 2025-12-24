@@ -8,6 +8,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting: candidateId -> { count, resetTime }
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 3; // 3 submissions per minute per candidate
+const RATE_WINDOW = 60 * 1000; // 1 minute in ms
+
+function checkRateLimit(candidateId: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(candidateId);
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(candidateId, { count: 1, resetTime: now + RATE_WINDOW });
+    return true;
+  }
+
+  if (record.count >= RATE_LIMIT) {
+    return false;
+  }
+
+  record.count++;
+  return true;
+}
+
+// Cleanup old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, record] of rateLimitMap.entries()) {
+    if (now > record.resetTime) {
+      rateLimitMap.delete(id);
+    }
+  }
+}, 60000);
+
 interface Answer {
   question_id: string;
   question_type: string;
@@ -128,6 +160,24 @@ Deno.serve(async (req) => {
     if (!candidateId || !answers || !Array.isArray(answers)) {
       return new Response(
         JSON.stringify({ error: 'Invalid request: candidateId and answers are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Rate limiting per candidateId
+    if (!checkRateLimit(candidateId)) {
+      console.warn(`Rate limit exceeded for candidate: ${candidateId}`);
+      return new Response(
+        JSON.stringify({ error: 'Too many submission attempts. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(candidateId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid candidateId format' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
