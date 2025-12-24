@@ -280,6 +280,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: string | null
           billing_period_start: string | null
           company_name: string | null
           created_at: string
@@ -293,6 +294,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_type?: string | null
           billing_period_start?: string | null
           company_name?: string | null
           created_at?: string
@@ -306,6 +308,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_type?: string | null
           billing_period_start?: string | null
           company_name?: string | null
           created_at?: string

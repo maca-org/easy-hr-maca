@@ -55,13 +55,27 @@ const MyApplications = () => {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Check account type - redirect HR to jobs
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("account_type")
+          .eq("id", session.user.id)
+          .single();
+        
+        if (profile?.account_type === 'hr') {
+          navigate('/jobs');
+          return;
+        }
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   // Fetch applications when user is authenticated
   useEffect(() => {

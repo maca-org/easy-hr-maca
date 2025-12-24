@@ -29,6 +29,7 @@ const rotatingWords = ["Assess", "Screen", "Evaluate", "Shortlist", "Rank", "Dec
 const Landing = () => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [latestPosts, setLatestPosts] = useState<BlogPost[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const featuresRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -40,6 +41,19 @@ const Landing = () => {
 
   useEffect(() => {
     fetchLatestPosts();
+  }, []);
+
+  // Check login state
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const fetchLatestPosts = async () => {
@@ -86,16 +100,26 @@ const Landing = () => {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link to="/auth">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                Sign In
-              </Button>
-            </Link>
-            <Link to="/auth">
-              <Button size="sm" className="btn-glow bg-primary hover:bg-primary/90 rounded-full px-5">
-                Get Started
-              </Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link to="/jobs">
+                <Button size="sm" className="btn-glow bg-primary hover:bg-primary/90 rounded-full px-5">
+                  Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button size="sm" className="btn-glow bg-primary hover:bg-primary/90 rounded-full px-5">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -141,6 +165,12 @@ const Landing = () => {
               <Link to="/auth">
                 <Button size="lg" className="btn-glow bg-primary hover:bg-primary/90 rounded-full px-8 h-12 text-base font-medium shadow-lg shadow-primary/25">
                   Get Started Free
+                </Button>
+              </Link>
+              <Link to="/my-applications">
+                <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-base font-medium">
+                  <User className="w-4 h-4 mr-2" />
+                  For Candidates
                 </Button>
               </Link>
               <Button 
