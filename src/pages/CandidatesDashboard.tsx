@@ -939,7 +939,7 @@ export default function CandidatesDashboard() {
                     <div>Test Result</div>
                     <div className="text-center">Answers</div>
                     <div className="text-center">Contact</div>
-                    <div className="text-center">CV</div>
+                    <div className="text-center">Report</div>
                     <div className="text-center">Actions</div>
                   </div>
 
