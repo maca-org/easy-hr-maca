@@ -97,7 +97,7 @@ const JobApplication = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!cvFile || !name || !email || !jobId) {
+    if (!cvFile || !name || !email || !job) {
       toast.error("Please fill all fields and upload your CV");
       return;
     }
@@ -114,7 +114,7 @@ const JobApplication = () => {
     try {
       const formData = new FormData();
       formData.append("cv", cvFile);
-      formData.append("job_id", jobId);
+      formData.append("job_id", job.id); // Always send the actual UUID
       formData.append("name", name.trim());
       formData.append("email", email.trim().toLowerCase());
 
@@ -129,6 +129,14 @@ const JobApplication = () => {
       const result = await response.json();
 
       if (!response.ok) {
+        // Handle specific error cases
+        if (response.status === 429) {
+          const retryAfter = result.retryAfter || 60;
+          throw new Error(`Too many requests. Please try again in ${retryAfter} seconds.`);
+        }
+        if (response.status === 404) {
+          throw new Error("This job opening is no longer available.");
+        }
         throw new Error(result.error || "Failed to submit application");
       }
 
