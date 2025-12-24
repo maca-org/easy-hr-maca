@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { Sparkles, Plus, Edit, Trash2, ArrowLeft, Users, FileText, CreditCard, Upload, Image } from "lucide-react";
 import { format } from "date-fns";
-import { useRef } from "react";
+import { UserSubscriptionManager } from "@/components/admin/UserSubscriptionManager";
 
 interface Author {
   id: string;
@@ -805,23 +805,7 @@ const Admin = () => {
 
           {/* Subscriptions Tab */}
           <TabsContent value="subscriptions">
-            <Card>
-              <CardHeader>
-                <CardTitle>Subscription Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Subscription management will be available here. Navigate to user settings to manage individual subscriptions.
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="mt-4"
-                  onClick={() => navigate("/settings/subscription")}
-                >
-                  Go to Subscription Settings
-                </Button>
-              </CardContent>
-            </Card>
+            <UserSubscriptionManager />
           </TabsContent>
         </Tabs>
       </main>
