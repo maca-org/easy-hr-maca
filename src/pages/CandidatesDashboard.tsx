@@ -926,7 +926,7 @@ export default function CandidatesDashboard() {
                   </p>
                 </div> : <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {/* Table Header */}
-                  <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_100px_80px_80px_50px] gap-4 px-4 py-2 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground sticky top-0 z-10">
+                  <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_80px_80px_50px] gap-4 px-4 py-2 bg-muted/50 rounded-lg text-sm font-medium text-muted-foreground sticky top-0 z-10">
                     <div className="flex items-center justify-center">
                       <Checkbox 
                         checked={selectedCandidates.length === candidates.length && candidates.length > 0}
@@ -937,7 +937,6 @@ export default function CandidatesDashboard() {
                     <div>Candidate</div>
                     <div>CV Rate</div>
                     <div>Test Result</div>
-                    <div>Offer</div>
                     <div className="text-center">Answers</div>
                     <div className="text-center">Contact</div>
                     <div className="text-center">CV</div>

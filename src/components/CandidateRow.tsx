@@ -85,7 +85,7 @@ export function CandidateRow({
   };
   return (
     <div className="border rounded-lg overflow-hidden">
-      <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_100px_80px_80px_50px] gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center">
+      <div className="grid grid-cols-[40px_80px_200px_100px_100px_100px_80px_80px_50px] gap-4 px-4 py-4 hover:bg-muted/30 transition-colors items-center">
         {/* Checkbox */}
         <div className="flex items-center justify-center">
           <Checkbox 
@@ -170,21 +170,6 @@ export function CandidateRow({
           ) : (
             <span className="text-muted-foreground text-sm">-</span>
           )}
-        </div>
-
-        {/* Offer */}
-        <div className="text-center">
-          <Button
-            variant="link"
-            size="sm"
-            className="text-primary p-0 h-auto"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrepareOffer(candidate.id);
-            }}
-          >
-            Offer
-          </Button>
         </div>
 
         {/* View Answers */}
