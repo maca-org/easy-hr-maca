@@ -16,6 +16,8 @@ const MAX_EMAIL_LENGTH = 255;
 const sanitizeText = (text: string, maxLength: number): string => {
   if (!text || typeof text !== 'string') return '';
   return text
+    .replace(/\u0000/g, '') // Remove NULL bytes that PostgreSQL can't handle
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '') // Remove control characters
     .replace(/<[^>]*>/g, '') // Remove HTML tags
     .replace(/[<>"']/g, '') // Remove potentially dangerous chars
     .trim()
