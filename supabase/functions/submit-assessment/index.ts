@@ -1,4 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { Resend } from 'https://esm.sh/resend@4.0.0';
+import * as React from 'https://esm.sh/react@18.3.1';
+import { renderAsync, Html, Head, Body, Container, Section, Heading, Text, Preview } from 'https://esm.sh/@react-email/components@0.0.22';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,18 +20,111 @@ interface RequestBody {
   answers: Answer[];
 }
 
+// Inline email template component
+const AssessmentSubmittedEmail = ({
+  candidateName,
+  jobTitle,
+  companyName,
+}: {
+  candidateName: string;
+  jobTitle: string;
+  companyName: string;
+}) => {
+  const main = {
+    backgroundColor: '#f6f9fc',
+    fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
+  };
+  const container = {
+    backgroundColor: '#ffffff',
+    margin: '0 auto',
+    padding: '20px 0 48px',
+    marginBottom: '64px',
+  };
+  const header = {
+    padding: '32px 24px',
+    backgroundColor: '#0F172A',
+  };
+  const h1 = {
+    color: '#ffffff',
+    fontSize: '24px',
+    fontWeight: '600',
+    lineHeight: '32px',
+    margin: '0',
+    textAlign: 'center' as const,
+  };
+  const content = {
+    padding: '0 48px',
+  };
+  const paragraph = {
+    fontSize: '16px',
+    lineHeight: '26px',
+    color: '#334155',
+    marginBottom: '16px',
+  };
+  const successBox = {
+    backgroundColor: '#DCFCE7',
+    border: '2px solid #22C55E',
+    borderRadius: '12px',
+    padding: '24px',
+    margin: '24px 0',
+    textAlign: 'center' as const,
+  };
+  const successEmoji = {
+    fontSize: '48px',
+    margin: '0 0 8px 0',
+    color: '#16A34A',
+  };
+  const successText = {
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#166534',
+    margin: '0',
+  };
+  const footerText = {
+    fontSize: '14px',
+    lineHeight: '24px',
+    color: '#64748B',
+    marginTop: '32px',
+  };
+
+  return React.createElement(Html, null,
+    React.createElement(Head),
+    React.createElement(Preview, null, `Your assessment for ${jobTitle} has been received`),
+    React.createElement(Body, { style: main },
+      React.createElement(Container, { style: container },
+        React.createElement(Section, { style: header },
+          React.createElement(Heading, { style: h1 }, companyName)
+        ),
+        React.createElement(Section, { style: content },
+          React.createElement(Text, { style: { fontSize: '18px', fontWeight: '600', color: '#0F172A', marginBottom: '16px' } }, `Hi ${candidateName},`),
+          React.createElement(Section, { style: successBox },
+            React.createElement(Text, { style: successEmoji }, '✓'),
+            React.createElement(Text, { style: successText }, 'Assessment Received!')
+          ),
+          React.createElement(Text, { style: paragraph },
+            `Thank you for completing the assessment for the ${jobTitle} position at ${companyName}.`
+          ),
+          React.createElement(Text, { style: paragraph },
+            'Your responses have been recorded and will be reviewed by our team. We appreciate the time and effort you put into this assessment.'
+          ),
+          React.createElement(Text, { style: footerText },
+            `Best regards,\n${companyName} Team`
+          )
+        )
+      )
+    )
+  );
+};
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { candidateId, answers }: RequestBody = await req.json();
-
     console.log('Received assessment submission:', { candidateId, answerCount: answers.length });
 
-    // Validate input
     if (!candidateId || !answers || !Array.isArray(answers)) {
       return new Response(
         JSON.stringify({ error: 'Invalid request: candidateId and answers are required' }),
@@ -36,12 +132,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch candidate to verify it exists and get job info
     const { data: candidate, error: candidateError } = await supabase
       .from('candidates')
       .select('id, job_id, name, email, completed_test')
@@ -56,7 +150,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if already completed
     if (candidate.completed_test) {
       console.log('Assessment already completed for candidate:', candidateId);
       return new Response(
@@ -65,10 +158,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch job questions for validation and scoring
     const { data: job, error: jobError } = await supabase
       .from('job_openings')
-      .select('id, title, description, questions')
+      .select('id, title, description, questions, user_id')
       .eq('id', candidate.job_id)
       .single();
 
@@ -80,7 +172,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Save answers to database
+    let companyName = 'The Company';
+    if (job.user_id) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_name')
+        .eq('id', job.user_id)
+        .single();
+      if (profile?.company_name) {
+        companyName = profile.company_name;
+      }
+    }
+
     const { error: updateError } = await supabase
       .from('candidates')
       .update({
@@ -100,35 +203,53 @@ Deno.serve(async (req) => {
 
     console.log('Assessment answers saved successfully for candidate:', candidateId);
 
-    // Prepare payload for N8N scoring workflow
+    // Send confirmation email
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    if (resendApiKey && candidate.email) {
+      try {
+        const resend = new Resend(resendApiKey);
+        const html = await renderAsync(
+          React.createElement(AssessmentSubmittedEmail, {
+            candidateName: candidate.name,
+            jobTitle: job.title || 'the position',
+            companyName: companyName,
+          })
+        );
+
+        const { error: emailError } = await resend.emails.send({
+          from: `${companyName} <onboarding@resend.dev>`,
+          to: [candidate.email],
+          subject: `Assessment Received - ${job.title || 'Application'}`,
+          html,
+        });
+
+        if (emailError) {
+          console.error('Error sending confirmation email:', emailError);
+        } else {
+          console.log('Confirmation email sent to:', candidate.email);
+        }
+      } catch (emailErr) {
+        console.error('Failed to send confirmation email:', emailErr);
+      }
+    }
+
+    // Send to N8N for scoring
     const n8nWebhookUrl = Deno.env.get('TEST_SCORING_WEBHOOK_URL');
-    
     if (n8nWebhookUrl) {
       try {
         const scoringPayload = {
-          candidate: {
-            id: candidate.id,
-            name: candidate.name,
-            email: candidate.email,
-          },
-          job: {
-            id: job.id,
-            title: job.title,
-            description: job.description,
-          },
+          candidate: { id: candidate.id, name: candidate.name, email: candidate.email },
+          job: { id: job.id, title: job.title, description: job.description },
           questions: job.questions,
           answers: answers,
           callback_url: `${supabaseUrl}/functions/v1/receive-test-scores`,
         };
-
-        console.log('Sending to N8N for scoring:', { webhookUrl: n8nWebhookUrl });
-
+        console.log('Sending to N8N for scoring');
         const n8nResponse = await fetch(n8nWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(scoringPayload),
         });
-
         if (!n8nResponse.ok) {
           console.error('N8N webhook call failed:', await n8nResponse.text());
         } else {
@@ -136,18 +257,11 @@ Deno.serve(async (req) => {
         }
       } catch (n8nError) {
         console.error('Error calling N8N webhook:', n8nError);
-        // Don't fail the request if N8N call fails
       }
-    } else {
-      console.log('TEST_SCORING_WEBHOOK_URL not configured, skipping N8N integration');
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Assessment submitted successfully',
-        candidateId: candidateId,
-      }),
+      JSON.stringify({ success: true, message: 'Assessment submitted successfully', candidateId }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

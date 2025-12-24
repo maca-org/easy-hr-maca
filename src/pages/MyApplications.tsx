@@ -13,7 +13,8 @@ import {
   AlertCircle,
   LogOut,
   ExternalLink,
-  User
+  User,
+  Play
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -258,6 +259,7 @@ const MyApplications = () => {
             {applications.map((app) => {
               const status = getApplicationStatus(app);
               const StatusIcon = status.icon;
+              const canStartAssessment = app.assessment_sent && !app.completed_test;
 
               return (
                 <Card key={app.id} className="hover:shadow-md transition-shadow">
@@ -299,6 +301,24 @@ const MyApplications = () => {
                             </div>
                           )}
                         </div>
+
+                        {/* Assessment Button */}
+                        {canStartAssessment && (
+                          <div className="mt-4">
+                            <Button 
+                              onClick={() => navigate(`/assessment/${app.id}`)}
+                              className="gap-2"
+                            >
+                              <Play className="w-4 h-4" />
+                              Start Assessment
+                            </Button>
+                            {app.assessment_due_date && (
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Due by: {formatDate(app.assessment_due_date)}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Status Badge */}
@@ -308,9 +328,9 @@ const MyApplications = () => {
                           {status.label}
                         </Badge>
                         
-                        {app.assessment_sent && !app.completed_test && app.assessment_due_date && (
+                        {app.completed_test && app.test_completed_at && (
                           <p className="text-xs text-muted-foreground">
-                            Due: {formatDate(app.assessment_due_date)}
+                            Completed: {formatDate(app.test_completed_at)}
                           </p>
                         )}
                       </div>
