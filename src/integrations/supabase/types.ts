@@ -118,6 +118,7 @@ export type Database = {
           id: string
           improvement_tips: Json | null
           insights: Json | null
+          is_favorite: boolean | null
           is_unlocked: boolean | null
           job_id: string
           name: string
@@ -152,6 +153,7 @@ export type Database = {
           id?: string
           improvement_tips?: Json | null
           insights?: Json | null
+          is_favorite?: boolean | null
           is_unlocked?: boolean | null
           job_id: string
           name: string
@@ -186,6 +188,7 @@ export type Database = {
           id?: string
           improvement_tips?: Json | null
           insights?: Json | null
+          is_favorite?: boolean | null
           is_unlocked?: boolean | null
           job_id?: string
           name?: string

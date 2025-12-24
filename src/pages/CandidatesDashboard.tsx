@@ -13,7 +13,7 @@ import { UpsellBanner } from "@/components/UpsellBanner";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, CreditCard } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, CreditCard, Star } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Job } from "./Index";
@@ -45,6 +45,7 @@ interface Candidate {
   test_detailed_scores?: any;
   is_unlocked?: boolean;
   cv_file_path?: string | null;
+  is_favorite?: boolean;
 }
 
 export default function CandidatesDashboard() {
@@ -69,6 +70,7 @@ export default function CandidatesDashboard() {
   const [deletingCandidates, setDeletingCandidates] = useState<string[]>([]);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [isScreening, setIsScreening] = useState(false);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   
   // Callback for when credit limit is reached
   const handleLimitReached = useCallback(() => {
@@ -634,7 +636,37 @@ export default function CandidatesDashboard() {
     setUpgradeModalOpen(false);
   };
 
-  const sortedCandidates = [...candidates].sort((a, b) => {
+  // Toggle favorite handler with optimistic update
+  const handleToggleFavorite = async (candidateId: string, newValue: boolean) => {
+    // Optimistic update
+    setCandidates(prev => prev.map(c => 
+      c.id === candidateId ? { ...c, is_favorite: newValue } : c
+    ));
+    
+    try {
+      const { error } = await supabase
+        .from('candidates')
+        .update({ is_favorite: newValue })
+        .eq('id', candidateId);
+        
+      if (error) throw error;
+      
+      toast.success(newValue ? 'Added to favorites' : 'Removed from favorites');
+    } catch (error) {
+      // Revert on error
+      setCandidates(prev => prev.map(c => 
+        c.id === candidateId ? { ...c, is_favorite: !newValue } : c
+      ));
+      toast.error('Failed to update favorite');
+    }
+  };
+
+  // Filter by favorites first, then sort
+  const filteredCandidates = showOnlyFavorites 
+    ? candidates.filter(c => c.is_favorite)
+    : candidates;
+
+  const sortedCandidates = [...filteredCandidates].sort((a, b) => {
     switch (sortBy) {
       case "score":
         return calculateOverallScore(b) - calculateOverallScore(a);
@@ -834,6 +866,22 @@ export default function CandidatesDashboard() {
                     </SelectContent>
                   </Select>
                   
+                  {/* Favorites Filter */}
+                  <div className="flex items-center gap-2 ml-4">
+                    <Checkbox 
+                      id="show-favorites"
+                      checked={showOnlyFavorites}
+                      onCheckedChange={(checked) => setShowOnlyFavorites(checked === true)}
+                    />
+                    <label 
+                      htmlFor="show-favorites" 
+                      className="text-sm text-muted-foreground cursor-pointer flex items-center gap-1"
+                    >
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      Show only favorites
+                    </label>
+                  </div>
+                  
                   {/* Resume Screening Button - shows when pending candidates are selected */}
                   {selectedPendingCandidates.length > 0 && (
                     <Button 
@@ -885,10 +933,12 @@ export default function CandidatesDashboard() {
                         overallScore={overallScore}
                         isExpanded={expandedCandidateId === candidate.id}
                         isSelected={selectedCandidates.includes(candidate.id)}
+                        isFavorite={candidate.is_favorite || false}
                         onSelect={handleSelectCandidate}
                         onExpand={setExpandedCandidateId}
                         onDelete={handleDeleteSingle}
                         onUpgrade={() => setUpgradeModalOpen(true)}
+                        onToggleFavorite={handleToggleFavorite}
                       />
                     );
                   })}
