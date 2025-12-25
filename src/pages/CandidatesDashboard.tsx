@@ -415,15 +415,6 @@ export default function CandidatesDashboard() {
           throw new Error(`Storage upload failed: ${storageError.message}`);
         }
 
-        // Generate signed URL for n8n to download (1 hour expiry)
-        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-          .from('cvs')
-          .createSignedUrl(cvFilePath, 3600);
-
-        if (signedUrlError || !signedUrlData?.signedUrl) {
-          throw new Error('Failed to generate signed URL for CV');
-        }
-
         // Update queue: extracted
         uploadQueue.updateQueueItem(queueItem.id, { 
           progress: 45 
@@ -433,7 +424,7 @@ export default function CandidatesDashboard() {
         const creditResult = await useCredit();
         const canAnalyze = creditResult.canAnalyze;
 
-        // Insert candidate into database with cv_file_path
+        // INSERT CANDIDATE FIRST (so RLS policy passes for signed URL)
         const { data: newCandidate, error } = await supabase
           .from("candidates")
           .insert({
@@ -450,6 +441,16 @@ export default function CandidatesDashboard() {
           .single();
 
         if (error) throw error;
+
+        // NOW generate signed URL (RLS policy will pass since candidate exists)
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+          .from('cvs')
+          .createSignedUrl(cvFilePath, 3600);
+
+        if (signedUrlError || !signedUrlData?.signedUrl) {
+          console.error('Signed URL error:', signedUrlError);
+          throw new Error('Failed to generate signed URL for CV');
+        }
 
         // Add to UI
         setCandidates(prev => [{
