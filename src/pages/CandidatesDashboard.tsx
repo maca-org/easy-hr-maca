@@ -412,7 +412,16 @@ export default function CandidatesDashboard() {
 
         if (storageError) {
           console.error("Storage upload error:", storageError);
-          // Continue without storage - CV text is still saved
+          throw new Error(`Storage upload failed: ${storageError.message}`);
+        }
+
+        // Generate signed URL for n8n to download (1 hour expiry)
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+          .from('cvs')
+          .createSignedUrl(cvFilePath, 3600);
+
+        if (signedUrlError || !signedUrlData?.signedUrl) {
+          throw new Error('Failed to generate signed URL for CV');
         }
 
         // Update queue: extracted
@@ -433,8 +442,8 @@ export default function CandidatesDashboard() {
             name: candidateName,
             email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
             cv_rate: 0,
-            cv_text: cvText,
-            cv_file_path: storageError ? null : cvFilePath,
+            cv_text: cvText, // Keep for backward compatibility
+            cv_file_path: cvFilePath,
             is_unlocked: true // All candidates are now automatically unlocked
           })
           .select()
@@ -456,12 +465,13 @@ export default function CandidatesDashboard() {
             progress: 60 
           });
 
-          // Call analyze-cv edge function
+          // Call analyze-cv edge function with cv_url (unified format)
           const { error: analyzeError } = await supabase.functions.invoke('analyze-cv', {
             body: {
               candidate_id: newCandidate.id,
               job_id: jobId,
-              cv_text: cvText,
+              cv_url: signedUrlData.signedUrl,
+              cv_file_path: cvFilePath,
               job_description: jobData.description,
               job_title: jobData.title
             }
