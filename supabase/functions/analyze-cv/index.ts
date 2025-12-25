@@ -11,7 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { candidate_id, job_id, cv_text, job_description, job_title } = await req.json();
+    // Accept cv_url instead of cv_text (normalized flow)
+    const { candidate_id, job_id, cv_url, cv_file_path, job_description, job_title } = await req.json();
 
     const CV_ANALYSIS_WEBHOOK_URL = Deno.env.get('CV_ANALYSIS_WEBHOOK_URL');
     if (!CV_ANALYSIS_WEBHOOK_URL) {
@@ -24,11 +25,13 @@ serve(async (req) => {
     console.log('Sending CV to n8n for analysis:', {
       candidate_id,
       job_id,
-      cv_text_length: cv_text?.length || 0,
+      cv_url: cv_url ? 'provided' : 'missing',
+      cv_file_path,
       job_description_length: job_description?.length || 0,
       callback_url
     });
 
+    // Send cv_url to n8n - unified format for both manual upload and link apply
     const response = await fetch(CV_ANALYSIS_WEBHOOK_URL, {
       method: 'POST',
       headers: {
@@ -37,7 +40,9 @@ serve(async (req) => {
       body: JSON.stringify({
         candidate_id,
         job_id,
-        cv: cv_text,
+        cv: '', // Empty - n8n will parse from cv_url
+        cv_url,
+        cv_file_path,
         job_description,
         job_title,
         callback_url
