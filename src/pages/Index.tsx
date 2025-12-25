@@ -448,12 +448,30 @@ const Index = () => {
           progress: 20 
         });
 
-        const cvText = await extractTextFromPDF(file);
+        // Upload CV file to Supabase Storage
+        const fileName = `${activeJobId}/${Date.now()}_${file.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('cvs')
+          .upload(fileName, file, { contentType: 'application/pdf' });
+
+        if (uploadError) {
+          throw new Error(`Storage upload failed: ${uploadError.message}`);
+        }
 
         uploadQueue.updateQueueItem(queueItem.id, { 
           progress: 40 
         });
 
+        // Generate signed URL for n8n to download (1 hour expiry)
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+          .from('cvs')
+          .createSignedUrl(uploadData.path, 3600);
+
+        if (signedUrlError || !signedUrlData?.signedUrl) {
+          throw new Error('Failed to generate signed URL');
+        }
+
+        // Insert candidate with cv_file_path
         const { data: newCandidate, error } = await supabase
           .from("candidates")
           .insert({
@@ -462,7 +480,8 @@ const Index = () => {
             name: candidateName,
             email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
             cv_rate: 0,
-            cv_text: cvText
+            cv_file_path: uploadData.path,
+            cv_text: '' // n8n will parse from cv_url
           })
           .select()
           .single();
@@ -474,11 +493,13 @@ const Index = () => {
           progress: 60 
         });
 
+        // Call analyze-cv with cv_url instead of cv_text
         const { error: analyzeError } = await supabase.functions.invoke('analyze-cv', {
           body: {
             candidate_id: newCandidate.id,
             job_id: activeJobId,
-            cv_text: cvText,
+            cv_url: signedUrlData.signedUrl,
+            cv_file_path: uploadData.path,
             job_description: jobData.description,
             job_title: jobData.title
           }
