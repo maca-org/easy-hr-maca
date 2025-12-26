@@ -388,7 +388,6 @@ const Index = () => {
       ));
       
       toast.success("Job saved successfully!");
-      setCurrentView("detail");
       
       // Send job to Rubric n8n webhook (fire and forget)
       sendJobToRubicWebhook(activeJobId, title, description);
