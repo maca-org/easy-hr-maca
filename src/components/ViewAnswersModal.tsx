@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 interface Answer {
   question_id: string;
   question_text?: string;
+  question_type?: string;
   answer: string;
   time_spent?: number;
 }
@@ -19,12 +20,12 @@ interface DetailedScore {
   feedback?: string;
 }
 
-interface Question {
+interface JobQuestion {
   id: string;
-  text: string;
+  question: string;
   type: 'mcq' | 'open';
   options?: string[];
-  correctAnswer?: string;
+  correct_answer?: string;
 }
 
 interface ViewAnswersModalProps {
@@ -32,7 +33,7 @@ interface ViewAnswersModalProps {
   testResult: number | null;
   assessmentAnswers: Answer[] | null;
   detailedScores: DetailedScore[] | null;
-  questions?: Question[];
+  jobQuestions?: JobQuestion[];
 }
 
 export function ViewAnswersModal({
@@ -40,7 +41,7 @@ export function ViewAnswersModal({
   testResult,
   assessmentAnswers,
   detailedScores,
-  questions = [],
+  jobQuestions = [],
 }: ViewAnswersModalProps) {
   if (!assessmentAnswers || assessmentAnswers.length === 0) {
     return null;
@@ -54,9 +55,38 @@ export function ViewAnswersModal({
     // First check if question text is in the answer itself
     if (answer.question_text) return answer.question_text;
     
-    // Otherwise try to find it in the questions array
-    const question = questions.find((q) => q.id === answer.question_id);
-    return question?.text || `Question ${answer.question_id}`;
+    // Otherwise try to find it in the jobQuestions array
+    const question = jobQuestions.find((q) => q.id === answer.question_id);
+    return question?.question || `Question ${answer.question_id}`;
+  };
+
+  // Determine if answer is correct by comparing with job questions
+  const getIsCorrect = (answer: Answer): boolean | undefined => {
+    // First check detailed_scores if available
+    const score = getScoreForQuestion(answer.question_id);
+    if (score?.is_correct !== undefined) return score.is_correct;
+    
+    // Find the corresponding job question
+    const jobQuestion = jobQuestions.find((q) => q.id === answer.question_id);
+    
+    // Only evaluate MCQ questions
+    if (!jobQuestion || jobQuestion.type !== 'mcq' || !jobQuestion.correct_answer) {
+      return undefined;
+    }
+    
+    // Compare answer - extract first letter/option for comparison
+    const candidateAnswer = answer.answer.trim();
+    const correctAnswer = jobQuestion.correct_answer.trim();
+    
+    // Check if answer starts with same letter (A, B, C, D)
+    const candidateLetter = candidateAnswer.charAt(0).toUpperCase();
+    const correctLetter = correctAnswer.charAt(0).toUpperCase();
+    
+    // Also handle full answer comparison
+    if (candidateLetter === correctLetter) return true;
+    if (candidateAnswer === correctAnswer) return true;
+    
+    return false;
   };
 
   return (
@@ -86,8 +116,8 @@ export function ViewAnswersModal({
           <div className="space-y-4">
             {assessmentAnswers.map((answer, index) => {
               const score = getScoreForQuestion(answer.question_id);
-              const isCorrect = score?.is_correct;
-              const hasScoreData = score !== undefined;
+              const isCorrect = getIsCorrect(answer);
+              const hasScoreData = score !== undefined || isCorrect !== undefined;
               
               return (
                 <div 

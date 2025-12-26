@@ -34,6 +34,14 @@ interface Candidate {
   is_favorite?: boolean;
 }
 
+interface JobQuestion {
+  id: string;
+  question: string;
+  type: 'mcq' | 'open';
+  options?: string[];
+  correct_answer?: string;
+}
+
 interface CandidateRowProps {
   candidate: Candidate;
   overallScore: number;
@@ -46,6 +54,7 @@ interface CandidateRowProps {
   onUpgrade?: () => void;
   onToggleFavorite: (id: string, newValue: boolean) => void;
   onPrepareOffer: (candidateId: string) => void;
+  jobQuestions?: JobQuestion[];
 }
 
 export function CandidateRow({
@@ -59,7 +68,8 @@ export function CandidateRow({
   onDelete,
   onUpgrade,
   onToggleFavorite,
-  onPrepareOffer
+  onPrepareOffer,
+  jobQuestions = []
 }: CandidateRowProps) {
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
@@ -180,6 +190,7 @@ export function CandidateRow({
               testResult={candidate.test_result}
               assessmentAnswers={Array.isArray(candidate.assessment_answers) ? candidate.assessment_answers : null}
               detailedScores={Array.isArray(candidate.test_detailed_scores) ? candidate.test_detailed_scores : null}
+              jobQuestions={jobQuestions}
             />
           ) : (
             <span className="text-muted-foreground text-sm">-</span>
