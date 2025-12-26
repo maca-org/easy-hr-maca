@@ -442,34 +442,6 @@ export default function CandidatesDashboard() {
 
         if (error) throw error;
 
-        // NOW generate signed URL (RLS policy will pass since candidate exists)
-        // NOTE: Storage object metadata can be slightly delayed; retry a few times if we get 404.
-        let signedUrlData: { signedUrl: string } | null = null;
-        let signedUrlError: unknown = null;
-
-        for (let attempt = 1; attempt <= 5; attempt++) {
-          const res = await supabase.storage
-            .from('cvs')
-            .createSignedUrl(cvFilePath, 3600);
-
-          signedUrlData = (res.data as any) ?? null;
-          signedUrlError = res.error;
-
-          if (!signedUrlError && signedUrlData?.signedUrl) break;
-
-          // If it's not found yet, wait briefly and retry
-          await new Promise((r) => setTimeout(r, 250 * attempt));
-        }
-
-        if (!signedUrlData?.signedUrl) {
-          console.error('Signed URL error:', signedUrlError);
-          const msg =
-            signedUrlError && typeof signedUrlError === 'object' && 'message' in signedUrlError
-              ? String((signedUrlError as any).message)
-              : 'Unknown error';
-          throw new Error(`Failed to generate signed URL for CV: ${msg}`);
-        }
-
         // Add to UI
         setCandidates(prev => [{
           ...newCandidate,
@@ -484,12 +456,13 @@ export default function CandidatesDashboard() {
             progress: 60 
           });
 
-          // Call analyze-cv edge function with cv_url (unified format)
+          // Call analyze-cv edge function with cv_text (text-based for manual uploads)
+          // No signed URL needed - we send the parsed text directly
           const { error: analyzeError } = await supabase.functions.invoke('analyze-cv', {
             body: {
               candidate_id: newCandidate.id,
               job_id: jobId,
-              cv_url: signedUrlData.signedUrl,
+              cv_text: cvText, // Send parsed text for manual uploads
               cv_file_path: cvFilePath,
               job_description: jobData.description,
               job_title: jobData.title

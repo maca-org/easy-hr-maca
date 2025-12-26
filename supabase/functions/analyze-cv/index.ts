@@ -11,12 +11,19 @@ serve(async (req) => {
   }
 
   try {
-    // Accept cv_url instead of cv_text (normalized flow)
-    const { candidate_id, job_id, cv_url, cv_file_path, job_description, job_title } = await req.json();
+    const { candidate_id, job_id, cv_text, cv_url, cv_file_path, job_description, job_title } = await req.json();
 
+    // Determine which webhook to use based on whether we have cv_text or cv_url
+    const isTextBased = cv_text && cv_text.length > 0;
+    
+    const CV_ANALYSIS_TEXT_WEBHOOK_URL = Deno.env.get('CV_ANALYSIS_TEXT_WEBHOOK_URL');
     const CV_ANALYSIS_WEBHOOK_URL = Deno.env.get('CV_ANALYSIS_WEBHOOK_URL');
-    if (!CV_ANALYSIS_WEBHOOK_URL) {
-      throw new Error('CV_ANALYSIS_WEBHOOK_URL not configured');
+    
+    const webhookUrl = isTextBased ? CV_ANALYSIS_TEXT_WEBHOOK_URL : CV_ANALYSIS_WEBHOOK_URL;
+    
+    if (!webhookUrl) {
+      const missingEnv = isTextBased ? 'CV_ANALYSIS_TEXT_WEBHOOK_URL' : 'CV_ANALYSIS_WEBHOOK_URL';
+      throw new Error(`${missingEnv} not configured`);
     }
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -25,28 +32,33 @@ serve(async (req) => {
     console.log('Sending CV to n8n for analysis:', {
       candidate_id,
       job_id,
+      mode: isTextBased ? 'TEXT_BASED (manual upload)' : 'URL_BASED (link apply)',
+      cv_text_length: cv_text?.length || 0,
       cv_url: cv_url ? 'provided' : 'missing',
       cv_file_path,
       job_description_length: job_description?.length || 0,
+      webhook: isTextBased ? 'CV_ANALYSIS_TEXT_WEBHOOK_URL' : 'CV_ANALYSIS_WEBHOOK_URL',
       callback_url
     });
 
-    // Send cv_url to n8n - unified format for both manual upload and link apply
-    const response = await fetch(CV_ANALYSIS_WEBHOOK_URL, {
+    // Build payload based on the mode
+    const payload = {
+      candidate_id,
+      job_id,
+      cv: isTextBased ? cv_text : '', // Text for manual uploads
+      cv_url: isTextBased ? '' : cv_url, // URL for link applies
+      cv_file_path,
+      job_description,
+      job_title,
+      callback_url
+    };
+
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        candidate_id,
-        job_id,
-        cv: '', // Empty - n8n will parse from cv_url
-        cv_url,
-        cv_file_path,
-        job_description,
-        job_title,
-        callback_url
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -59,7 +71,7 @@ serve(async (req) => {
     console.log('CV sent to n8n successfully:', result);
 
     return new Response(
-      JSON.stringify({ success: true, message: 'CV analysis started' }),
+      JSON.stringify({ success: true, message: 'CV analysis started', mode: isTextBased ? 'text' : 'url' }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
