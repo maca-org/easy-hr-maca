@@ -62,7 +62,7 @@ export const JobDetailView = ({
       return;
     }
     onSave(editTitle.trim(), editDescription.trim());
-    setIsEditing(false);
+    // Edit modunda kalmaya devam et - kullanıcı isterse manuel kapatır
   };
 
   const handleOpenShareModal = () => {
