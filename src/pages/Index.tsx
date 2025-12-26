@@ -344,44 +344,34 @@ const Index = () => {
     if (!activeJobId || !user) return;
 
     try {
-      // Generate slug from title
-      const generateSlug = (text: string): string => {
-        return text
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-|-$/g, '')
-          || activeJobId;
-      };
+      // Use DB function to generate unique slug
+      const { data: generatedSlug } = await supabase.rpc('generate_job_slug', { 
+        title, 
+        job_id: activeJobId 
+      });
 
-      const baseSlug = generateSlug(title);
-      
-      // Check if slug already exists for other jobs
-      const { data: existingSlugs } = await supabase
-        .from('job_openings')
-        .select('slug')
-        .neq('id', activeJobId)
-        .like('slug', `${baseSlug}%`);
+      const finalSlug = generatedSlug || activeJobId;
 
-      let finalSlug = baseSlug;
-      if (existingSlugs && existingSlugs.length > 0) {
-        const slugSet = new Set(existingSlugs.map(s => s.slug));
-        let counter = 2;
-        while (slugSet.has(finalSlug)) {
-          finalSlug = `${baseSlug}-${counter}`;
-          counter++;
-        }
-      }
-
-      const { error } = await supabase
+      // Update with select to verify the row was actually updated
+      const { data: updatedJob, error } = await supabase
         .from('job_openings')
         .update({
           title,
           description,
           slug: finalSlug,
         })
-        .eq('id', activeJobId);
+        .eq('id', activeJobId)
+        .select('id, title, description, slug')
+        .maybeSingle();
 
       if (error) throw error;
+      
+      // Check if no rows were updated (RLS or job not found)
+      if (!updatedJob) {
+        console.error('Save failed: No rows updated. Possible RLS issue or job not found.');
+        toast.error("Save failed - please try again");
+        return;
+      }
       
       setJobs(jobs.map((job) =>
         job.id === activeJobId ? { ...job, title, requirements: description, slug: finalSlug } : job

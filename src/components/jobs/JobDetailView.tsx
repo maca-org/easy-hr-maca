@@ -22,7 +22,7 @@ import {
 interface JobDetailViewProps {
   job: Job & { slug?: string | null };
   onBack: () => void;
-  onSave: (title: string, description: string) => void;
+  onSave: (title: string, description: string) => Promise<void>;
   onUploadResumes: (files: File[]) => void;
   onDeleteResume: (id: string) => void;
   onGenerateQuestions: () => void;
@@ -48,21 +48,27 @@ export const JobDetailView = ({
   const [editTitle, setEditTitle] = useState(job.title || "");
   const [editDescription, setEditDescription] = useState(job.requirements || "");
   const [shareLinkModalOpen, setShareLinkModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Sync state when job changes
+  // Only sync when job.id changes (switching to different job)
   useEffect(() => {
     setEditTitle(job.title || "");
     setEditDescription(job.requirements || "");
+    // Only auto-enter edit mode on initial load of incomplete job
     setIsEditing(!job.title || job.title === "Untitled Job" || !job.requirements);
-  }, [job.id, job.title, job.requirements]);
+  }, [job.id]); // Only depend on job.id
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editTitle.trim()) {
       toast.error("Please enter a job title");
       return;
     }
-    onSave(editTitle.trim(), editDescription.trim());
-    // Edit modunda kalmaya devam et - kullanıcı isterse manuel kapatır
+    setIsSaving(true);
+    try {
+      await onSave(editTitle.trim(), editDescription.trim());
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleOpenShareModal = () => {
@@ -138,9 +144,9 @@ export const JobDetailView = ({
                 rows={12}
                 className="text-base min-h-[300px] p-4"
               />
-              <Button onClick={handleSave} size="lg" className="h-12 px-6">
+              <Button onClick={handleSave} size="lg" className="h-12 px-6" disabled={isSaving}>
                 <Save className="w-5 h-5 mr-2" />
-                Save
+                {isSaving ? "Saving..." : "Save"}
               </Button>
             </div>
           ) : (
