@@ -57,12 +57,9 @@ serve(async (req) => {
       .eq('id', user.id)
       .maybeSingle();
 
+    // Log error but don't fail - use defaults for resilience
     if (profileError) {
-      console.error('Profile fetch error:', profileError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch profile' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.error('Profile fetch error (using defaults):', profileError.message, profileError.code);
     }
 
     // Default values if profile doesn't exist or fields are null
