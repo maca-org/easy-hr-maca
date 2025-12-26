@@ -318,6 +318,28 @@ const Index = () => {
     }
   };
 
+  // Send job data to Rubric n8n webhook
+  const sendJobToRubicWebhook = async (jobId: string, title: string, description: string) => {
+    try {
+      console.log(`Sending job ${jobId} to Rubric webhook...`);
+      const { error } = await supabase.functions.invoke('send-job-to-rubic', {
+        body: {
+          job_id: jobId,
+          job_title: title,
+          job_description: description
+        }
+      });
+      
+      if (error) {
+        console.error('Failed to send job to Rubric webhook:', error);
+      } else {
+        console.log('Job sent to Rubric webhook successfully');
+      }
+    } catch (error) {
+      console.error('Error sending to Rubric webhook:', error);
+    }
+  };
+
   const handleSaveJob = async (title: string, description: string) => {
     if (!activeJobId || !user) return;
 
@@ -367,6 +389,9 @@ const Index = () => {
       
       toast.success("Job saved successfully!");
       setCurrentView("detail");
+      
+      // Send job to Rubric n8n webhook (fire and forget)
+      sendJobToRubicWebhook(activeJobId, title, description);
       
       // Automatically trigger question generation in background
       triggerQuestionGeneration(activeJobId, title, description);
