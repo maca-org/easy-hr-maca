@@ -948,6 +948,12 @@ export default function CandidatesDashboard() {
                   {/* Table Rows - Using CandidateRow component */}
                   {sortedCandidates.map(candidate => {
                     const overallScore = calculateOverallScore(candidate);
+                    const currentJob = jobs.find(j => j.id === jobId);
+                    // Handle both array format and {mcq: [], open: []} format
+                    const rawQuestions = currentJob?.questions;
+                    const jobQuestions = Array.isArray(rawQuestions) 
+                      ? rawQuestions.filter(q => q.type === 'mcq')
+                      : (rawQuestions as any)?.mcq || [];
                     return (
                       <CandidateRow
                         key={candidate.id}
@@ -962,6 +968,7 @@ export default function CandidatesDashboard() {
                         onUpgrade={() => setUpgradeModalOpen(true)}
                         onToggleFavorite={handleToggleFavorite}
                         onPrepareOffer={handlePrepareOffer}
+                        jobQuestions={jobQuestions}
                       />
                     );
                   })}
