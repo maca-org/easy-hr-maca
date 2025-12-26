@@ -107,7 +107,7 @@ export const Header = () => {
   return <header className="border-b border-border bg-background px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src={logoImage} alt="Candidate Assess Logo" className="w-12 h-12 object-contain" />
+          <img src={logoImage} alt="Candidate Assess Logo" className="w-10 h-10 object-contain" />
           <div className="flex flex-col">
             <h1 className="text-xl font-bold text-foreground">Candidate Assess
             </h1>
