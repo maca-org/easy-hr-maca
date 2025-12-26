@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, CheckCircle, XCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface Answer {
   question_id: string;
@@ -125,7 +126,14 @@ export function ViewAnswersModal({
                   </div>
 
                   {/* Candidate's Answer */}
-                  <div className="bg-muted/50 rounded-md p-3">
+                  <div className={cn(
+                    "rounded-md p-3 border",
+                    isCorrect === true 
+                      ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800" 
+                      : isCorrect === false 
+                        ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800"
+                        : "bg-muted/50 border-transparent"
+                  )}>
                     <p className="text-sm text-muted-foreground mb-1">Answer:</p>
                     <p className="text-foreground">{answer.answer || "No answer provided"}</p>
                   </div>
