@@ -63,3 +63,6 @@ verify_jwt = false
 
 [functions.analyze-pending-cvs]
 verify_jwt = false
+
+[functions.og-renderer]
+verify_jwt = false
