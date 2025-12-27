@@ -81,33 +81,40 @@ const Index = () => {
 
   // Check authentication and account type
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) {
-        navigate("/");
-        return;
-      }
-      setUser(session.user);
-      
-      // Check account type
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("account_type")
-        .eq("id", session.user.id)
-        .single();
-      
-      if (profile?.account_type === 'candidate') {
-        navigate('/my-applications');
-        return;
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Set up auth state listener FIRST (prevents deadlock)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate("/");
       } else {
+        // Set user synchronously first
         setUser(session.user);
         
-        // Check account type on auth change
+        // Defer profile check with setTimeout to avoid deadlock
+        setTimeout(async () => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("account_type")
+            .eq("id", session.user.id)
+            .single();
+          
+          if (profile?.account_type === 'candidate') {
+            navigate('/my-applications');
+          }
+        }, 0);
+      }
+    });
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/");
+        return;
+      }
+      // Set user synchronously
+      setUser(session.user);
+      
+      // Defer profile check
+      setTimeout(async () => {
         const { data: profile } = await supabase
           .from("profiles")
           .select("account_type")
@@ -117,7 +124,7 @@ const Index = () => {
         if (profile?.account_type === 'candidate') {
           navigate('/my-applications');
         }
-      }
+      }, 0);
     });
 
     return () => subscription.unsubscribe();
