@@ -26,6 +26,7 @@ serve(async (req) => {
     }
 
     const webhookUrl = Deno.env.get('RUBIC_JOB_DESC_WEBHOOK_URL');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
     
     if (!webhookUrl) {
       console.error('[send-job-to-rubic] RUBIC_JOB_DESC_WEBHOOK_URL not configured');
@@ -35,7 +36,11 @@ serve(async (req) => {
       );
     }
 
-    // Construct webhook payload
+    // Construct callback URL for n8n to send rubric back
+    const callbackUrl = `${supabaseUrl}/functions/v1/receive-rubric`;
+    console.log(`[send-job-to-rubic] Callback URL: ${callbackUrl}`);
+
+    // Construct webhook payload with callback_url
     const payload = {
       event: "job_desc_upserted",
       job: {
@@ -44,7 +49,8 @@ serve(async (req) => {
         job_description: job_description,
         source: "rubic",
         created_at: new Date().toISOString()
-      }
+      },
+      callback_url: callbackUrl
     };
 
     console.log(`[send-job-to-rubic] Sending payload to webhook for job: ${job_id}`);
