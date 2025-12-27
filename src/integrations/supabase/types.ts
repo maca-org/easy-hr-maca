@@ -211,6 +211,7 @@ export type Database = {
           description: string
           id: string
           questions: Json | null
+          rubric: Json | null
           slug: string | null
           title: string | null
           updated_at: string | null
@@ -221,6 +222,7 @@ export type Database = {
           description: string
           id?: string
           questions?: Json | null
+          rubric?: Json | null
           slug?: string | null
           title?: string | null
           updated_at?: string | null
@@ -231,6 +233,7 @@ export type Database = {
           description?: string
           id?: string
           questions?: Json | null
+          rubric?: Json | null
           slug?: string | null
           title?: string | null
           updated_at?: string | null
