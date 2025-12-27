@@ -66,6 +66,7 @@ export const JobDetailView = ({
     setIsSaving(true);
     try {
       await onSave(editTitle.trim(), editDescription.trim());
+      setIsEditing(false);
     } finally {
       setIsSaving(false);
     }
