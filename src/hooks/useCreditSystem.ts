@@ -115,12 +115,23 @@ export function useCreditSystem(userId: string | null, options?: UseCreditSystem
   useEffect(() => {
     isMounted.current = true;
 
-    // Only fetch if no cache or cache is stale
-    if (!creditCache || Date.now() - cacheTimestamp >= CACHE_DURATION_MS) {
-      fetchCreditStatus();
-    } else {
-      setStatus(creditCache);
-    }
+    // Check if user is authenticated before fetching
+    const initFetch = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setStatus(prev => ({ ...prev, loading: false }));
+        return;
+      }
+
+      // Only fetch if no cache or cache is stale
+      if (!creditCache || Date.now() - cacheTimestamp >= CACHE_DURATION_MS) {
+        fetchCreditStatus();
+      } else {
+        setStatus(creditCache);
+      }
+    };
+
+    initFetch();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') {
