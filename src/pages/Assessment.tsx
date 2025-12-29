@@ -33,7 +33,7 @@ const Assessment = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [candidate, setCandidate] = useState<any>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -42,6 +42,8 @@ const Assessment = () => {
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [questionStartTimes, setQuestionStartTimes] = useState<Record<string, number>>({});
   const [completed, setCompleted] = useState(false);
+  const [jobTitle, setJobTitle] = useState("");
+  const [companyName, setCompanyName] = useState("");
 
   useEffect(() => {
     fetchAssessmentData();
@@ -94,6 +96,8 @@ const Assessment = () => {
       }
 
       setCandidate(data.candidate);
+      setJobTitle(data.jobTitle || "Assessment");
+      setCompanyName(data.companyName || "");
 
       const questionsArray = Array.isArray(data.questions) 
         ? (data.questions as Question[])
@@ -242,7 +246,10 @@ const Assessment = () => {
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Assessment</h1>
+          {companyName && (
+            <p className="text-sm text-muted-foreground font-medium">{companyName}</p>
+          )}
+          <h1 className="text-3xl font-bold">{jobTitle} Assessment</h1>
           <p className="text-muted-foreground">
             Candidate: <span className="font-medium text-foreground">{candidate.name}</span>
           </p>
@@ -326,7 +333,10 @@ const Assessment = () => {
                 <Button variant="ghost" onClick={handleNext} className="text-muted-foreground">
                   Skip
                 </Button>
-                <Button onClick={handleNext}>
+                <Button 
+                  onClick={handleNext}
+                  disabled={!answers[currentQuestion.id]}
+                >
                   Next
                 </Button>
               </>

@@ -334,6 +334,125 @@ export const QuestionsReview = () => {
         <div className="flex gap-6 px-8 py-6">
           {/* Left Section - Questions List */}
           <div className="flex-1 pr-4 space-y-4">
+            {/* Add New Question Button - At the top */}
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New Question
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Add New Question</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Question Type</Label>
+                    <RadioGroup value={newQuestionType} onValueChange={(v) => setNewQuestionType(v as "mcq" | "open")} className="mt-2">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="mcq" id="mcq-top" />
+                        <Label htmlFor="mcq-top">Multiple Choice (MCQ)</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="open" id="open-top" />
+                        <Label htmlFor="open-top">Open-Ended</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div>
+                    <Label>Question Text</Label>
+                    <Textarea
+                      value={newQuestionText}
+                      onChange={(e) => setNewQuestionText(e.target.value)}
+                      placeholder="Enter your question..."
+                      className="min-h-[100px] mt-2"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Skill (Optional)</Label>
+                      <Input
+                        value={newSkill}
+                        onChange={(e) => setNewSkill(e.target.value)}
+                        placeholder="e.g., Process analysis"
+                        className="mt-2"
+                      />
+                    </div>
+                    {newQuestionType === "mcq" && (
+                      <div>
+                        <Label>Difficulty</Label>
+                        <Select value={newDifficulty} onValueChange={(v: "easy" | "medium" | "hard") => setNewDifficulty(v)}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="easy">Easy</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="hard">Hard</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+
+                  {newQuestionType === "mcq" && (
+                    <div>
+                      <Label>Options</Label>
+                      <div className="space-y-2 mt-2">
+                        {newOptions.map((option, idx) => (
+                          <Input
+                            key={idx}
+                            value={option}
+                            onChange={(e) => {
+                              const updated = [...newOptions];
+                              updated[idx] = e.target.value;
+                              setNewOptions(updated);
+                            }}
+                            placeholder={`Option ${idx + 1}`}
+                          />
+                        ))}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setNewOptions([...newOptions, ""])}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Option
+                        </Button>
+                      </div>
+
+                      <div className="mt-4">
+                        <Label>Correct Answer</Label>
+                        <Select value={newCorrectAnswer} onValueChange={setNewCorrectAnswer}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select correct answer" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {newOptions.filter(o => o.trim()).map((option, idx) => (
+                              <SelectItem key={idx} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleAddQuestion}
+                    disabled={!newQuestionText.trim() || (newQuestionType === "mcq" && newOptions.filter(o => o.trim()).length < 2)}
+                    className="w-full"
+                  >
+                    Add Question
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             {questions.map((question) => (
               <Card key={question.id} className="p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -508,123 +627,6 @@ export const QuestionsReview = () => {
               </Card>
             ))}
 
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add New Question
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Add New Question</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Question Type</Label>
-                    <RadioGroup value={newQuestionType} onValueChange={(v) => setNewQuestionType(v as "mcq" | "open")} className="mt-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="mcq" id="mcq" />
-                        <Label htmlFor="mcq">Multiple Choice (MCQ)</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="open" id="open" />
-                        <Label htmlFor="open">Open-Ended</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  <div>
-                    <Label>Question Text</Label>
-                    <Textarea
-                      value={newQuestionText}
-                      onChange={(e) => setNewQuestionText(e.target.value)}
-                      placeholder="Enter your question..."
-                      className="min-h-[100px] mt-2"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Skill (Optional)</Label>
-                      <Input
-                        value={newSkill}
-                        onChange={(e) => setNewSkill(e.target.value)}
-                        placeholder="e.g., Process analysis"
-                        className="mt-2"
-                      />
-                    </div>
-                    {newQuestionType === "mcq" && (
-                      <div>
-                        <Label>Difficulty</Label>
-                        <Select value={newDifficulty} onValueChange={(v: "easy" | "medium" | "hard") => setNewDifficulty(v)}>
-                          <SelectTrigger className="mt-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="easy">Easy</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="hard">Hard</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                  </div>
-
-                  {newQuestionType === "mcq" && (
-                    <div>
-                      <Label>Options</Label>
-                      <div className="space-y-2 mt-2">
-                        {newOptions.map((option, idx) => (
-                          <Input
-                            key={idx}
-                            value={option}
-                            onChange={(e) => {
-                              const updated = [...newOptions];
-                              updated[idx] = e.target.value;
-                              setNewOptions(updated);
-                            }}
-                            placeholder={`Option ${idx + 1}`}
-                          />
-                        ))}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setNewOptions([...newOptions, ""])}
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Option
-                        </Button>
-                      </div>
-
-                      <div className="mt-4">
-                        <Label>Correct Answer</Label>
-                        <Select value={newCorrectAnswer} onValueChange={setNewCorrectAnswer}>
-                          <SelectTrigger className="mt-2">
-                            <SelectValue placeholder="Select correct answer" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {newOptions.filter(o => o.trim()).map((option, idx) => (
-                              <SelectItem key={idx} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
-
-                  <Button
-                    onClick={handleAddQuestion}
-                    disabled={!newQuestionText.trim() || (newQuestionType === "mcq" && newOptions.filter(o => o.trim()).length < 2)}
-                    className="w-full"
-                  >
-                    Add Question
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
 
           {/* Right Section - Summary */}
@@ -638,7 +640,7 @@ export const QuestionsReview = () => {
                     <span className="font-semibold text-foreground">{questions.length}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">MCQ:</span>
+                    <span className="text-muted-foreground">Multiple Choice Questions:</span>
                     <span className="font-semibold text-foreground">{mcqCount}</span>
                   </div>
                   <div className="flex justify-between">
