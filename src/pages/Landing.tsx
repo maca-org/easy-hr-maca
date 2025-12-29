@@ -1,13 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, CheckCircle, Mail, HelpCircle, Zap, Send, ClipboardCheck, Target, ArrowDown, Calendar, User, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Sparkles, CheckCircle, Mail, HelpCircle, Zap, Send, ClipboardCheck, Target, ArrowDown, Calendar, User, ArrowRight, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import logoImage from "@/assets/logo.png";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 interface BlogPost {
   id: string;
@@ -27,10 +29,17 @@ interface BlogPost {
 const rotatingWords = ["Assess", "Screen", "Evaluate", "Shortlist", "Rank", "Decide"];
 
 const Landing = () => {
+  const navigate = useNavigate();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [latestPosts, setLatestPosts] = useState<BlogPost[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const featuresRef = useRef<HTMLElement>(null);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setIsLoggedIn(false);
+    toast.success("Signed out successfully");
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -101,11 +110,23 @@ const Landing = () => {
 
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
-              <Link to="/jobs">
-                <Button size="sm" className="btn-glow bg-primary hover:bg-primary/90 rounded-full px-5">
-                  Dashboard
-                </Button>
-              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => navigate("/jobs")}>
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <>
                 <Link to="/auth">

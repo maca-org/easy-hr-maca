@@ -47,6 +47,7 @@ interface Candidate {
   is_unlocked?: boolean;
   cv_file_path?: string | null;
   is_favorite?: boolean;
+  assessment_sent?: boolean;
 }
 
 export default function CandidatesDashboard() {
@@ -75,6 +76,7 @@ export default function CandidatesDashboard() {
   const [offerDrawerOpen, setOfferDrawerOpen] = useState(false);
   const [offerPreselectedCandidateId, setOfferPreselectedCandidateId] = useState<string | undefined>(undefined);
   const [companyName, setCompanyName] = useState("");
+  const [offerLetterCount, setOfferLetterCount] = useState(0);
   
   // Callback for when credit limit is reached
   const handleLimitReached = useCallback(() => {
@@ -207,6 +209,13 @@ export default function CandidatesDashboard() {
             improvement_tips: c.improvement_tips || undefined
           })));
         }
+
+        // Fetch offer letter count
+        const { count } = await supabase
+          .from("offer_letters")
+          .select("*", { count: 'exact', head: true })
+          .eq("job_id", jobId);
+        setOfferLetterCount(count || 0);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -767,17 +776,21 @@ export default function CandidatesDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Test Results</CardTitle>
+                <CardTitle className="text-lg">Assessment Status</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Above 80%:</span>
-                    <span className="text-2xl font-bold text-green-600">{testAbove80}</span>
+                    <span className="text-sm text-muted-foreground">Sent:</span>
+                    <span className="text-2xl font-bold text-blue-600">{candidates.filter(c => c.assessment_sent).length}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Below 80%:</span>
-                    <span className="text-2xl font-bold text-red-600">{testBelow80}</span>
+                    <span className="text-sm text-muted-foreground">Completed:</span>
+                    <span className="text-2xl font-bold text-green-600">{completedTests}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Pending:</span>
+                    <span className="text-2xl font-bold text-yellow-600">{candidates.filter(c => c.assessment_sent && !c.completed_test).length}</span>
                   </div>
                 </div>
                 <Button onClick={() => navigate(`/questions-review?id=${jobId}`)} variant="outline" size="sm" className="w-full">
@@ -795,9 +808,10 @@ export default function CandidatesDashboard() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    Prepare and send offer letters to selected candidates
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Offers Prepared:</span>
+                    <span className="text-2xl font-bold text-primary">{offerLetterCount}</span>
+                  </div>
                 </div>
                 <Button 
                   onClick={() => handlePrepareOffer()}
@@ -839,9 +853,31 @@ export default function CandidatesDashboard() {
           <Card id="candidates-table" onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave} className={`transition-colors scroll-mt-6 ${isDragging ? 'border-primary bg-primary/5' : ''}`}>
             <CardHeader className="space-y-4 pb-4">
               <div className="flex flex-row items-center justify-between">
-                <div className="space-y-1">
+              <div className="flex items-center gap-2">
                   <CardTitle className="text-xl text-foreground font-semibold">Candidates</CardTitle>
-                  <p className="text-sm text-muted-foreground font-normal">upload cv</p>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => {
+                      setLoading(true);
+                      supabase.from("candidates").select("*").eq("job_id", jobId).order("created_at", { ascending: false }).then(({ data }) => {
+                        if (data) {
+                          setCandidates(data.map(c => ({
+                            ...c,
+                            insights: c.insights as any || { matching: [], not_matching: [] },
+                            extracted_data: c.extracted_data || undefined,
+                            relevance_analysis: c.relevance_analysis || undefined,
+                            improvement_tips: c.improvement_tips || undefined
+                          })));
+                        }
+                        setLoading(false);
+                        toast.success("Candidates refreshed");
+                      });
+                    }}
+                    className="h-8 w-8"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
                 </div>
                 <div className="flex gap-2">
                   {selectedCandidates.length > 0 && (
@@ -857,22 +893,8 @@ export default function CandidatesDashboard() {
                   <input ref={fileInputRef} type="file" accept="application/pdf" multiple onChange={e => handleFileUpload(e.target.files)} className="hidden" />
                   <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="sm" disabled={uploading}>
                     <Upload className="h-4 w-4 mr-2" />
-                    {uploading ? "Uploading..." : "Choose Files"}
+                    {uploading ? "Uploading..." : "Upload Resume"}
                   </Button>
-                  {uploadQueue.queue.length > 0 && (
-                    <Button 
-                      onClick={() => uploadQueue.setIsQueueOpen(true)} 
-                      variant="outline" 
-                      size="sm"
-                      className="relative"
-                    >
-                      <ListOrdered className="h-4 w-4 mr-2" />
-                      Queue ({uploadQueue.queue.length})
-                      {uploadQueue.queue.some(item => item.status === 'analyzing' || item.status === 'extracting') && (
-                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-blue-500 animate-pulse" />
-                      )}
-                    </Button>
-                  )}
                 </div>
               </div>
               

@@ -174,6 +174,34 @@ export default function Auth() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!email) {
+                      toast.error("Please enter your email first");
+                      return;
+                    }
+                    if (!validateEmail(email)) {
+                      toast.error("Please enter a valid email address");
+                      return;
+                    }
+                    setLoading(true);
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: `${window.location.origin}/reset-password`,
+                    });
+                    setLoading(false);
+                    if (error) {
+                      toast.error(error.message);
+                    } else {
+                      toast.success("Password reset email sent! Check your inbox.");
+                    }
+                  }}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              )}
             </div>
 
             {isSignUp && (

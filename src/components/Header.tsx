@@ -131,14 +131,13 @@ export const Header = () => {
   const billingDate = formatBillingDate();
   return <header className="border-b border-border bg-background px-6 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <button onClick={() => navigate("/")} className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
           <img src={logoImage} alt="Candidate Assess Logo" className="w-10 h-10 object-contain" />
-          <div className="flex flex-col">
-            <h1 className="text-xl font-bold text-foreground">Candidate Assess
-            </h1>
+          <div className="flex flex-col text-left">
+            <h1 className="text-xl font-bold text-foreground">Candidate Assess</h1>
             {companyName && <span className="text-sm text-muted-foreground">{companyName}</span>}
           </div>
-        </div>
+        </button>
         
         <nav className="flex items-center gap-6">
           <button onClick={() => navigate("/")} className="text-foreground flex flex-col items-center hover:after:w-full after:w-0 after:h-0.5 after:bg-foreground/60 after:transition-all after:duration-200">

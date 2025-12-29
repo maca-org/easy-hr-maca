@@ -22,6 +22,7 @@ import BlogPostPage from "./pages/BlogPost";
 import Authors from "./pages/Authors";
 import AuthorProfile from "./pages/AuthorProfile";
 import Admin from "./pages/Admin";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/candidate-auth" element={<CandidateAuthPage />} />
           <Route path="/profile" element={<ProfileSettings />} />
           <Route path="/jobs" element={<Index />} />
