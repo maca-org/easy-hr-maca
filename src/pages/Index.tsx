@@ -227,7 +227,19 @@ const Index = () => {
     checkQuestions();
   }, [activeJobId]);
 
-  const handleCreateJob = async () => {
+  // Just open the create form - no DB insert yet
+  const handleCreateJob = () => {
+    if (!user) {
+      toast.error("You must be logged in to create jobs");
+      return;
+    }
+    setActiveJobId(""); // No job yet
+    setCurrentView("create");
+    setSearchParams({});
+  };
+
+  // Create new job in DB when user saves the form
+  const handleSaveNewJob = async (title: string, description: string) => {
     if (!user) {
       toast.error("You must be logged in to create jobs");
       return;
@@ -237,14 +249,27 @@ const Index = () => {
       const { data: newJob, error } = await supabase
         .from('job_openings')
         .insert({
-          title: "",
-          description: "",
+          title,
+          description,
           user_id: user.id,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Generate slug
+      const { data: generatedSlug } = await supabase.rpc('generate_job_slug', { 
+        title, 
+        job_id: newJob.id 
+      });
+
+      if (generatedSlug) {
+        await supabase
+          .from('job_openings')
+          .update({ slug: generatedSlug })
+          .eq('id', newJob.id);
+      }
 
       const jobObj: Job = {
         id: newJob.id,
@@ -253,18 +278,23 @@ const Index = () => {
           month: "short",
           year: "numeric",
         }),
-        title: "",
-        requirements: "",
+        title,
+        requirements: description,
         resumes: [],
         questions: [],
-        slug: (newJob as any).slug || null,
+        slug: generatedSlug || null,
         candidateCount: 0,
       };
 
       setJobs([jobObj, ...jobs]);
       setActiveJobId(newJob.id);
-      setCurrentView("create");
+      setCurrentView("detail");
       setSearchParams({ id: newJob.id });
+      toast.success("Job created successfully!");
+
+      // Send to Rubric and generate questions
+      sendJobToRubicWebhook(newJob.id, title, description);
+      triggerQuestionGeneration(newJob.id, title, description);
     } catch (error) {
       console.error("Error creating job:", error);
       toast.error("Failed to create job");
@@ -705,11 +735,11 @@ const Index = () => {
           />
         )}
         
-        {currentView === "create" && activeJob && (
+        {currentView === "create" && (
           <JobCreateForm
-            initialTitle={activeJob.title}
-            initialDescription={activeJob.requirements}
-            onSave={handleSaveJob}
+            initialTitle={activeJob?.title || ""}
+            initialDescription={activeJob?.requirements || ""}
+            onSave={activeJob ? handleSaveJob : handleSaveNewJob}
             onBack={handleBackToList}
           />
         )}
