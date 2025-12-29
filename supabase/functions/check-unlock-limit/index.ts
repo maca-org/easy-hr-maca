@@ -53,7 +53,7 @@ serve(async (req) => {
     // Get user's profile with plan info
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('plan_type, monthly_unlocked_count, billing_period_start, limit_warning_sent')
+      .select('plan_type, monthly_unlocked_count, billing_period_start, limit_warning_sent, limit_exhausted_sent')
       .eq('id', user.id)
       .maybeSingle();
 
@@ -67,6 +67,7 @@ serve(async (req) => {
     const monthlyUnlockedCount = profile?.monthly_unlocked_count || 0;
     const billingPeriodStart = profile?.billing_period_start || new Date().toISOString();
     const limitWarningSent = profile?.limit_warning_sent || false;
+    const limitExhaustedSent = profile?.limit_exhausted_sent || false;
 
     // Get plan limit
     const limit = PLAN_LIMITS[planType] ?? 0;
@@ -98,6 +99,26 @@ serve(async (req) => {
             planType,
           }),
         }).catch(err => console.error('Failed to send limit warning:', err));
+      }
+
+      // Check if credits are fully exhausted (100%) and send exhausted email
+      if (remaining === 0 && !limitExhaustedSent && user.email) {
+        console.log(`User ${user.id} exhausted all credits, sending exhausted notification to ${user.email}`);
+        
+        // Send exhausted email (fire and forget)
+        fetch(`${supabaseUrl}/functions/v1/send-limit-exhausted`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            email: user.email,
+            limit,
+            planType,
+          }),
+        }).catch(err => console.error('Failed to send exhausted notification:', err));
       }
     }
 

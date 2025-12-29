@@ -367,6 +367,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          limit_exhausted_sent: boolean | null
           limit_warning_sent: boolean | null
           monthly_unlocked_count: number | null
           plan_type: string | null
@@ -381,6 +382,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          limit_exhausted_sent?: boolean | null
           limit_warning_sent?: boolean | null
           monthly_unlocked_count?: number | null
           plan_type?: string | null
@@ -395,6 +397,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          limit_exhausted_sent?: boolean | null
           limit_warning_sent?: boolean | null
           monthly_unlocked_count?: number | null
           plan_type?: string | null
