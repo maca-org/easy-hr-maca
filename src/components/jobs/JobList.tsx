@@ -83,41 +83,33 @@ export const JobList = ({ jobs, onSelectJob, onCreateJob, onDeleteJob }: JobList
 
   return (
     <div className="container mx-auto p-6 space-y-8">
-      {/* Create New Job Button */}
-      <div className="flex flex-col items-center gap-3">
-        <Button
-          onClick={onCreateJob}
-          size="lg"
-          className="group h-auto py-4 px-10 text-lg font-semibold bg-gradient-to-r from-primary via-primary/90 to-primary/80 hover:from-primary/90 hover:via-primary/80 hover:to-primary/70 shadow-xl hover:shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:-translate-y-1 animate-float btn-glow"
-        >
-          <Rocket className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />
-          <div className="flex flex-col items-start">
-            <span>Start Hiring</span>
-            <span className="text-xs font-normal opacity-80">Takes only 2 minutes</span>
-          </div>
-        </Button>
-        <p className="text-sm text-muted-foreground flex items-center gap-2">
-          <span className="text-green-500">✓</span> Free to start • No credit card required
-        </p>
-      </div>
-
       {/* Existing Jobs List */}
       {jobs.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-foreground">Your Open Positions</h2>
-            <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-              <SelectTrigger className="w-44">
-                <ArrowUpDown className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="a-z">A-Z</SelectItem>
-                <SelectItem value="z-a">Z-A</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={onCreateJob}
+                size="sm"
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Rocket className="w-4 h-4 mr-1.5" />
+                New Job
+              </Button>
+              <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
+                <SelectTrigger className="w-44">
+                  <ArrowUpDown className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="a-z">A-Z</SelectItem>
+                  <SelectItem value="z-a">Z-A</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           <div className="flex flex-col gap-4">
