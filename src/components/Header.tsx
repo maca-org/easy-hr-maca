@@ -11,15 +11,40 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSubscription } from "@/hooks/useSubscription";
 import { CreditProgressBar } from "@/components/CreditProgressBar";
+import { CreditWarningModal } from "@/components/CreditWarningModal";
+import { UpgradeModal } from "@/components/UpgradeModal";
+import { useCreditStatus } from "@/hooks/useCreditStatus";
 import { format } from "date-fns";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
+const CREDIT_WARNING_KEY = 'credit_warning_shown_session';
+
 export const Header = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showSupportDialog, setShowSupportDialog] = useState(false);
+  const [showCreditWarning, setShowCreditWarning] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  const { used, limit, remaining, planType: creditPlanType, isNearLimit, isAtLimit } = useCreditStatus({
+    onNearLimit: () => {
+      const hasShown = sessionStorage.getItem(CREDIT_WARNING_KEY);
+      if (!hasShown) {
+        setShowCreditWarning(true);
+        sessionStorage.setItem(CREDIT_WARNING_KEY, 'true');
+      }
+    },
+    onLimitReached: () => {
+      const hasShown = sessionStorage.getItem(CREDIT_WARNING_KEY);
+      if (!hasShown) {
+        setShowCreditWarning(true);
+        sessionStorage.setItem(CREDIT_WARNING_KEY, 'true');
+      }
+    },
+  });
   const {
     subscribed,
     planType,
@@ -219,5 +244,27 @@ export const Header = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Credit Warning Modal */}
+      <CreditWarningModal
+        isOpen={showCreditWarning}
+        onClose={() => setShowCreditWarning(false)}
+        used={typeof used === 'number' ? used : 0}
+        limit={typeof limit === 'number' ? limit : 25}
+        remaining={typeof remaining === 'number' ? remaining : 25}
+        planType={creditPlanType}
+        onUpgrade={() => {
+          setShowCreditWarning(false);
+          setShowUpgradeModal(true);
+        }}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentPlan={creditPlanType}
+        onSelectPlan={() => setShowUpgradeModal(false)}
+      />
     </header>;
 };
