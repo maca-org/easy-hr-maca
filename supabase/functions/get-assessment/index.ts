@@ -124,10 +124,10 @@ serve(async (req) => {
       }
     }
 
-    // Fetch job questions
+    // Fetch job questions and user_id
     const { data: job, error: jobError } = await supabase
       .from("job_openings")
-      .select("questions, title")
+      .select("questions, title, user_id")
       .eq("id", candidate.job_id)
       .single();
 
@@ -147,6 +147,20 @@ serve(async (req) => {
       );
     }
 
+    // Fetch company name from profiles
+    let companyName = "Company";
+    if (job.user_id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_name")
+        .eq("id", job.user_id)
+        .single();
+      
+      if (profile?.company_name) {
+        companyName = profile.company_name;
+      }
+    }
+
     console.log("Successfully fetched assessment data for candidate:", candidateId);
 
     return new Response(
@@ -159,6 +173,7 @@ serve(async (req) => {
         },
         questions: job.questions,
         jobTitle: job.title,
+        companyName: companyName,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

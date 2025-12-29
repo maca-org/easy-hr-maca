@@ -54,8 +54,9 @@ export default function AssessmentSettings() {
     setLoading(true);
     const { data, error } = await supabase
       .from("candidates")
-      .select("id, name, email, cv_rate")
+      .select("id, name, email, cv_rate, assessment_sent")
       .eq("job_id", jobId)
+      .eq("assessment_sent", false) // Only show candidates who haven't received assessment
       .order("cv_rate", { ascending: false });
 
     if (error) {
@@ -157,6 +158,39 @@ export default function AssessmentSettings() {
               <CardDescription>
                 Choose which candidates should receive the assessment
               </CardDescription>
+              <div className="flex flex-wrap gap-2 pt-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const above25 = new Set(
+                      candidates.filter(c => c.cv_rate >= 25).map(c => c.id)
+                    );
+                    setSelectedCandidates(above25);
+                  }}
+                >
+                  Above 25%
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const above80 = new Set(
+                      candidates.filter(c => c.cv_rate >= 80).map(c => c.id)
+                    );
+                    setSelectedCandidates(above80);
+                  }}
+                >
+                  Above 80%
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setSelectedCandidates(new Set())}
+                >
+                  Clear All
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -198,7 +232,7 @@ export default function AssessmentSettings() {
 
               {candidates.length === 0 && (
                 <p className="text-center text-muted-foreground py-8">
-                  No candidates found for this job
+                  All candidates have already received assessments for this job.
                 </p>
               )}
             </CardContent>
