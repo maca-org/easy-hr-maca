@@ -58,6 +58,9 @@ verify_jwt = false
 [functions.send-limit-warning]
 verify_jwt = false
 
+[functions.send-limit-exhausted]
+verify_jwt = false
+
 [functions.get-candidate-jobs]
 verify_jwt = false
 
