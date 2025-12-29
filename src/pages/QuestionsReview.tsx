@@ -29,6 +29,22 @@ export const QuestionsReview = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  
+  // Handle dialog close with unsaved changes warning
+  const handleAddDialogClose = (open: boolean) => {
+    if (!open && (newQuestionText.trim() || newOptions.some(o => o.trim()))) {
+      const confirmClose = window.confirm("You have unsaved changes. Are you sure you want to close?");
+      if (!confirmClose) return;
+      // Reset form
+      setNewQuestionText("");
+      setNewOptions(["", "", "", ""]);
+      setNewQuestionType("mcq");
+      setNewSkill("");
+      setNewDifficulty("medium");
+      setNewCorrectAnswer("");
+    }
+    setIsAddDialogOpen(open);
+  };
   const [newQuestionType, setNewQuestionType] = useState<"mcq" | "open">("mcq");
   const [newQuestionText, setNewQuestionText] = useState("");
   const [newOptions, setNewOptions] = useState<string[]>(["", "", "", ""]);
@@ -317,16 +333,17 @@ export const QuestionsReview = () => {
       <Header />
       <div className="flex flex-col">
         <div className="border-b border-border px-8 py-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(`/candidates-dashboard?id=${jobId}`)}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Review & Edit Generated Questions</h1>
-          <p className="text-muted-foreground">
+          <div className="flex items-center gap-4 mb-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(`/candidates-dashboard?id=${jobId}`)}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-2xl font-bold text-foreground">Review & Edit Generated Questions</h1>
+          </div>
+          <p className="text-muted-foreground ml-12">
             These questions were generated based on your Job Description. You can edit, delete, or add new questions.
           </p>
         </div>
@@ -335,7 +352,7 @@ export const QuestionsReview = () => {
           {/* Left Section - Questions List */}
           <div className="flex-1 pr-4 space-y-4">
             {/* Add New Question Button - At the top */}
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogClose}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full">
                   <Plus className="w-4 h-4 mr-2" />
@@ -483,7 +500,11 @@ export const QuestionsReview = () => {
                         <Button size="sm" variant="ghost" onClick={() => handleEdit(question)}>
                           <Edit2 className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete(question.id)}>
+                        <Button size="sm" variant="ghost" onClick={() => {
+                          if (window.confirm("Are you sure you want to delete this question? This action cannot be undone.")) {
+                            handleDelete(question.id);
+                          }
+                        }}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </>

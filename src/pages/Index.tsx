@@ -52,6 +52,7 @@ const Index = () => {
   const [activeJobId, setActiveJobId] = useState<string>("");
   const [currentView, setCurrentView] = useState<ViewState>("list");
   const [hasQuestions, setHasQuestions] = useState<boolean>(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const uploadQueue = useUploadQueue();
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
@@ -135,55 +136,59 @@ const Index = () => {
     if (!user) return;
 
     const fetchJobs = async () => {
-      const { data, error } = await supabase
-        .from("job_openings")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("job_openings")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching jobs:", error);
-        toast.error("Failed to load jobs");
-        return;
-      }
-
-      // Fetch candidate counts for all jobs
-      const { data: candidatesData } = await supabase
-        .from("candidates")
-        .select("job_id")
-        .eq("user_id", user.id);
-
-      // Count candidates per job
-      const countByJobId: Record<string, number> = {};
-      if (candidatesData) {
-        candidatesData.forEach((c) => {
-          countByJobId[c.job_id] = (countByJobId[c.job_id] || 0) + 1;
-        });
-      }
-
-      if (data) {
-        const mappedJobs: Job[] = data.map((row) => ({
-          id: row.id,
-          date: new Date(row.created_at).toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }),
-          title: row.title || "",
-          requirements: row.description,
-          resumes: [],
-          questions: [],
-          slug: (row as any).slug || null,
-          candidateCount: countByJobId[row.id] || 0,
-        }));
-        setJobs(mappedJobs);
-        
-        // Set active job from URL parameter if present
-        const jobIdFromUrl = searchParams.get("id");
-        if (jobIdFromUrl && mappedJobs.some(job => job.id === jobIdFromUrl)) {
-          setActiveJobId(jobIdFromUrl);
-          setCurrentView("detail");
+        if (error) {
+          console.error("Error fetching jobs:", error);
+          toast.error("Failed to load jobs");
+          return;
         }
+
+        // Fetch candidate counts for all jobs
+        const { data: candidatesData } = await supabase
+          .from("candidates")
+          .select("job_id")
+          .eq("user_id", user.id);
+
+        // Count candidates per job
+        const countByJobId: Record<string, number> = {};
+        if (candidatesData) {
+          candidatesData.forEach((c) => {
+            countByJobId[c.job_id] = (countByJobId[c.job_id] || 0) + 1;
+          });
+        }
+
+        if (data) {
+          const mappedJobs: Job[] = data.map((row) => ({
+            id: row.id,
+            date: new Date(row.created_at).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }),
+            title: row.title || "",
+            requirements: row.description,
+            resumes: [],
+            questions: [],
+            slug: (row as any).slug || null,
+            candidateCount: countByJobId[row.id] || 0,
+          }));
+          setJobs(mappedJobs);
+          
+          // Set active job from URL parameter if present
+          const jobIdFromUrl = searchParams.get("id");
+          if (jobIdFromUrl && mappedJobs.some(job => job.id === jobIdFromUrl)) {
+            setActiveJobId(jobIdFromUrl);
+            setCurrentView("detail");
+          }
+        }
+      } finally {
+        setInitialLoading(false);
       }
     };
 
@@ -726,7 +731,14 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1">
-        {currentView === "list" && (
+        {initialLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading jobs...</p>
+            </div>
+          </div>
+        ) : currentView === "list" && (
           <JobList
             jobs={jobs}
             onSelectJob={handleSelectJob}

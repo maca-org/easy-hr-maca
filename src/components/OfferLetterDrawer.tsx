@@ -521,6 +521,7 @@ ${formData.companyName}`;
                     mode="single"
                     selected={formData.validUntil}
                     onSelect={(date) => setFormData(prev => ({ ...prev, validUntil: date }))}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                     initialFocus
                     className="pointer-events-auto"
                   />
