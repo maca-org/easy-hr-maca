@@ -8,10 +8,12 @@ interface CreditStatus {
   planType: string;
   loading: boolean;
   isAtLimit: boolean;
+  isNearLimit: boolean;
 }
 
 interface UseCreditStatusOptions {
   onLimitReached?: () => void;
+  onNearLimit?: () => void;
 }
 
 export function useCreditStatus(options?: UseCreditStatusOptions) {
@@ -22,9 +24,11 @@ export function useCreditStatus(options?: UseCreditStatusOptions) {
     planType: "free",
     loading: true,
     isAtLimit: false,
+    isNearLimit: false,
   });
 
   const hasTriggeredLimitCallback = useRef(false);
+  const hasTriggeredNearLimitCallback = useRef(false);
 
   const checkCredits = useCallback(async () => {
     try {
@@ -47,15 +51,21 @@ export function useCreditStatus(options?: UseCreditStatusOptions) {
       }
 
       const isUnlimited = data?.limit === 'unlimited';
-      const isAtLimit = !isUnlimited && (data?.remaining ?? 25) <= 0;
+      const usedCount = data?.used ?? 0;
+      const limitCount = data?.limit ?? 25;
+      const remainingCount = data?.remaining ?? 25;
+      const percentage = isUnlimited ? 0 : (usedCount / limitCount) * 100;
+      const isAtLimit = !isUnlimited && remainingCount <= 0;
+      const isNearLimit = !isUnlimited && percentage >= 90 && !isAtLimit;
 
       setStatus({
-        used: data?.used ?? 0,
-        limit: data?.limit ?? 25,
-        remaining: data?.remaining ?? 25,
+        used: usedCount,
+        limit: limitCount,
+        remaining: remainingCount,
         planType: data?.plan_type ?? "free",
         loading: false,
         isAtLimit,
+        isNearLimit,
       });
 
       // Trigger callback only once when limit is first reached
@@ -64,10 +74,15 @@ export function useCreditStatus(options?: UseCreditStatusOptions) {
         options.onLimitReached();
       }
 
-      // Reset the flag if user is no longer at limit (e.g., after upgrade)
-      if (!isAtLimit) {
-        hasTriggeredLimitCallback.current = false;
+      // Trigger near limit callback once
+      if (isNearLimit && !hasTriggeredNearLimitCallback.current && options?.onNearLimit) {
+        hasTriggeredNearLimitCallback.current = true;
+        options.onNearLimit();
       }
+
+      // Reset flags if user is no longer at/near limit
+      if (!isAtLimit) hasTriggeredLimitCallback.current = false;
+      if (!isNearLimit) hasTriggeredNearLimitCallback.current = false;
     } catch (error) {
       console.error("Error checking credits:", error);
       setStatus(prev => ({ ...prev, loading: false }));

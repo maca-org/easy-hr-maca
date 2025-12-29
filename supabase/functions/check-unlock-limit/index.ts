@@ -83,23 +83,21 @@ serve(async (req) => {
       if (shouldSendWarning && user.email) {
         console.log(`User ${user.id} reached 90% usage, sending warning email to ${user.email}`);
         
-        // Send warning email as background task
-        EdgeRuntime.waitUntil(
-          fetch(`${supabaseUrl}/functions/v1/send-limit-warning`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseServiceKey}`,
-            },
-            body: JSON.stringify({
-              userId: user.id,
-              email: user.email,
-              remaining,
-              limit,
-              planType,
-            }),
-          }).catch(err => console.error('Failed to send limit warning:', err))
-        );
+        // Send warning email (fire and forget)
+        fetch(`${supabaseUrl}/functions/v1/send-limit-warning`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            email: user.email,
+            remaining,
+            limit,
+            planType,
+          }),
+        }).catch(err => console.error('Failed to send limit warning:', err));
       }
     }
 
