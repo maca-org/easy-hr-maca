@@ -497,14 +497,23 @@ const Landing = () => {
                   </li>
                 </ul>
 
-                <Link to="/auth" className="block pt-4">
+                <a href="mailto:sales@candidateassess.com" className="block pt-4">
                   <Button variant="outline" className="w-full rounded-full h-12">
                     Contact Sales
                   </Button>
-                </Link>
+                </a>
               </CardContent>
             </Card>
           </ScrollReveal>
+        </div>
+
+        <div className="text-center mt-8">
+          <p className="text-sm text-muted-foreground">
+            Questions about pricing? Contact us at{" "}
+            <a href="mailto:sales@candidateassess.com" className="text-primary hover:underline">
+              sales@candidateassess.com
+            </a>
+          </p>
         </div>
       </section>
 

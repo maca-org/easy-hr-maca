@@ -99,11 +99,15 @@ export default function AssessmentSettings() {
     setSending(true);
 
     try {
+      // Set due date to 23:59:59 of the selected day
+      const dueDateWithTime = new Date(dueDate);
+      dueDateWithTime.setHours(23, 59, 59, 999);
+
       const { data, error } = await supabase.functions.invoke("send-assessments", {
         body: {
           jobId,
           candidateIds: Array.from(selectedCandidates),
-          dueDate: dueDate.toISOString(),
+          dueDate: dueDateWithTime.toISOString(),
         },
       });
 

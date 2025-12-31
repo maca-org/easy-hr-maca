@@ -839,15 +839,6 @@ export default function CandidatesDashboard() {
             />
           )}
 
-          {/* Make Assessment Button */}
-          <div className="flex justify-center">
-            <Button onClick={handleMakeAssessment} size="lg" className="px-8 py-6 text-lg" disabled={generatingQuestions}>
-              {generatingQuestions ? <>
-                  <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
-                  Generating Questions...
-                </> : "Make an Assessment for Candidates"}
-            </Button>
-          </div>
 
           {/* Candidates Table */}
           <Card id="candidates-table" onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave} className={`transition-colors scroll-mt-6 ${isDragging ? 'border-primary bg-primary/5' : ''}`}>

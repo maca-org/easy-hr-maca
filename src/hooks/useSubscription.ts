@@ -54,13 +54,21 @@ export function useSubscription() {
       }
     });
 
-    // Check for payment success in URL
+    // Check for payment success in URL with retry mechanism
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('payment') === 'success') {
-      // Wait a bit for webhook to process, then check
-      setTimeout(() => {
-        checkSubscription();
-      }, 2000);
+      // Retry mechanism: check subscription multiple times with delays
+      const checkWithRetry = async (attempts = 0) => {
+        await checkSubscription();
+        // After first check, verify if subscription is now active
+        const { data } = await supabase.functions.invoke('check-subscription');
+        if (!data?.subscribed && attempts < 5) {
+          // Not subscribed yet, retry after 3 seconds
+          setTimeout(() => checkWithRetry(attempts + 1), 3000);
+        }
+      };
+      // Initial delay to allow Stripe webhook to process
+      setTimeout(() => checkWithRetry(), 2000);
       
       // Clean up URL
       window.history.replaceState({}, '', window.location.pathname);
