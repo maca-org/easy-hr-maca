@@ -27,8 +27,14 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Use ANON_KEY client for user authentication (properly validates tokens)
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
+    
+    // Use SERVICE_ROLE_KEY client for database operations (bypasses RLS)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get authorization header
     const authHeader = req.headers.get('Authorization');
@@ -39,9 +45,9 @@ serve(async (req) => {
       );
     }
 
-    // Verify the user
+    // Verify the user with ANON client
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
     
     if (userError || !user) {
       console.error('Auth error:', userError);
@@ -63,8 +69,8 @@ serve(async (req) => {
 
     console.log(`Unlock request: user=${user.id}, candidate=${candidate_id}`);
 
-    // Check if candidate exists and belongs to the user
-    const { data: candidate, error: candidateError } = await supabase
+    // Check if candidate exists and belongs to the user (using ADMIN client)
+    const { data: candidate, error: candidateError } = await supabaseAdmin
       .from('candidates')
       .select('id, user_id, is_unlocked, name')
       .eq('id', candidate_id)
@@ -98,8 +104,8 @@ serve(async (req) => {
       );
     }
 
-    // Get user's profile with plan info
-    const { data: profile, error: profileError } = await supabase
+    // Get user's profile with plan info (using ADMIN client)
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('plan_type, monthly_unlocked_count')
       .eq('id', user.id)
@@ -132,8 +138,8 @@ serve(async (req) => {
       );
     }
 
-    // Unlock the candidate
-    const { error: updateCandidateError } = await supabase
+    // Unlock the candidate (using ADMIN client)
+    const { error: updateCandidateError } = await supabaseAdmin
       .from('candidates')
       .update({
         is_unlocked: true,
@@ -150,8 +156,8 @@ serve(async (req) => {
       );
     }
 
-    // Increment user's monthly unlock count
-    const { error: updateProfileError } = await supabase
+    // Increment user's monthly unlock count (using ADMIN client)
+    const { error: updateProfileError } = await supabaseAdmin
       .from('profiles')
       .update({
         monthly_unlocked_count: monthlyUnlockedCount + 1

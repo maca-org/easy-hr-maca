@@ -24,8 +24,14 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Use ANON_KEY client for user authentication (properly validates tokens)
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
+    
+    // Use SERVICE_ROLE_KEY client for database operations (bypasses RLS)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get authorization header
     const authHeader = req.headers.get('Authorization');
@@ -36,9 +42,9 @@ serve(async (req) => {
       );
     }
 
-    // Verify the user
+    // Verify the user with ANON client
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
     
     if (userError || !user) {
       console.error('Auth error:', userError);
@@ -50,8 +56,8 @@ serve(async (req) => {
 
     console.log(`Checking unlock limit for user: ${user.id}`);
 
-    // Get user's profile with plan info
-    const { data: profile, error: profileError } = await supabase
+    // Get user's profile with plan info using ADMIN client
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('plan_type, monthly_unlocked_count, billing_period_start, limit_warning_sent, limit_exhausted_sent')
       .eq('id', user.id)
