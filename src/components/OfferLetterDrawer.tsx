@@ -1,5 +1,15 @@
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,6 +88,8 @@ export function OfferLetterDrawer({
 
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [hasSavedAction, setHasSavedAction] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   // Update form when props change
   useEffect(() => {
@@ -220,6 +232,7 @@ candidateassess.com`;
     try {
       await navigator.clipboard.writeText(fullText);
       setCopied(true);
+      setHasSavedAction(true);
       setTimeout(() => setCopied(false), 2000);
       toast.success("Email template copied to clipboard!");
     } catch {
@@ -324,6 +337,7 @@ candidateassess.com`;
       const fileName = `Offer_Letter_${candidateName.replace(/\s+/g, "_")}_${formData.jobTitle.replace(/\s+/g, "_")}.pdf`;
       doc.save(fileName);
 
+      setHasSavedAction(true);
       toast.success("Offer letter PDF downloaded!");
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -335,8 +349,36 @@ candidateassess.com`;
 
   const isFormValid = formData.candidateId && formData.salaryAmount && formData.companyName && formData.jobTitle;
 
+  const hasFormData = formData.candidateId && formData.salaryAmount;
+
+  const handleClose = () => {
+    if (hasSavedAction || !hasFormData) {
+      // Already saved or empty form - close directly
+      onClose();
+      setHasSavedAction(false);
+    } else {
+      // Has unsaved data - show confirmation
+      setShowSaveDialog(true);
+    }
+  };
+
+  const handleSaveAndClose = async () => {
+    await saveDraft();
+    setShowSaveDialog(false);
+    onClose();
+    setHasSavedAction(false);
+    toast.success("Offer letter saved!");
+  };
+
+  const handleDiscardAndClose = () => {
+    setShowSaveDialog(false);
+    onClose();
+    setHasSavedAction(false);
+  };
+
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
+    <>
+      <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
@@ -574,5 +616,26 @@ candidateassess.com`;
         </div>
       </SheetContent>
     </Sheet>
+
+    {/* Save Confirmation Dialog */}
+    <AlertDialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Save Offer Letter?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Do you want to save this offer letter before closing?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleDiscardAndClose}>
+            Don't Save
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={handleSaveAndClose}>
+            Save
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

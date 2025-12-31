@@ -45,44 +45,7 @@ export const ResumeUpload = ({
   return (
     <div className="w-full bg-background flex flex-col items-center">
       <div className="p-6 space-y-6 flex-1 overflow-y-auto flex flex-col items-center justify-center w-full max-w-md mx-auto">
-        <div
-          className={`border-2 border-dashed rounded-lg text-center transition-all cursor-pointer w-full ${
-            resumes.length > 0 ? "p-4" : "p-8"
-          } ${isDragging ? "border-primary bg-primary/5" : "border-border bg-muted/30"}`}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setIsDragging(false);
-            handleFiles(e.dataTransfer.files);
-          }}
-          onClick={() => document.getElementById("file-upload")?.click()}
-        >
-          <input
-            id="file-upload"
-            type="file"
-            multiple
-            accept=".pdf"
-            className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
-          />
-          <Upload
-            className={`text-primary mx-auto ${
-              resumes.length > 0 ? "w-8 h-8 mb-2" : "w-12 h-12 mb-4"
-            }`}
-          />
-          <h3
-            className={`font-semibold text-foreground ${
-              resumes.length > 0 ? "text-sm" : "mb-2"
-            }`}
-          >
-            Upload Candidate CVs
-          </h3>
-        </div>
-
+        {/* How does it work - shown when no resumes */}
         {resumes.length === 0 && (
           <>
             <div className="space-y-4 w-full">
@@ -112,11 +75,15 @@ export const ResumeUpload = ({
               </ol>
             </div>
 
+            {/* Get Application Link button */}
             {onGetApplicationLink && (
               <Button
                 variant="outline"
                 size="lg"
-                onClick={onGetApplicationLink}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onGetApplicationLink();
+                }}
                 className="h-14 w-full"
               >
                 <Link2 className="w-5 h-5 mr-2" />
@@ -125,6 +92,41 @@ export const ResumeUpload = ({
             )}
           </>
         )}
+
+        {/* Upload drop zone - without title */}
+        <div
+          className={`border-2 border-dashed rounded-lg text-center transition-all cursor-pointer w-full ${
+            resumes.length > 0 ? "p-4" : "p-8"
+          } ${isDragging ? "border-primary bg-primary/5" : "border-border bg-muted/30"}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+            handleFiles(e.dataTransfer.files);
+          }}
+          onClick={() => document.getElementById("file-upload")?.click()}
+        >
+          <input
+            id="file-upload"
+            type="file"
+            multiple
+            accept=".pdf"
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+          <Upload
+            className={`text-primary mx-auto ${
+              resumes.length > 0 ? "w-8 h-8 mb-2" : "w-12 h-12 mb-4"
+            }`}
+          />
+          {resumes.length > 0 && (
+            <p className="text-sm text-muted-foreground">Upload more CVs</p>
+          )}
+        </div>
 
         <div className="space-y-2 w-full">
           {[...resumes]
