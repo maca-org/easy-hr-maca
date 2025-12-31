@@ -155,13 +155,10 @@ export const JobDetailView = ({
               <div className="flex-1">
                 <CardTitle className="text-xl">{job.title}</CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">Created on {job.date}</p>
-                <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap line-clamp-3">
+                <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">
                   {job.requirements}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
-                <Edit2 className="w-4 h-4" />
-              </Button>
             </div>
           )}
         </CardHeader>
@@ -212,19 +209,6 @@ export const JobDetailView = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Action Buttons */}
-      <div className="flex justify-center">
-        <Button
-          variant={hasQuestions ? "outline" : "default"}
-          size="lg"
-          onClick={handlePublish}
-          className="h-14 w-full max-w-md"
-        >
-          <Send className="w-5 h-5 mr-2" />
-          {hasQuestions ? "Job Published" : "Publish Job Opening"}
-        </Button>
-      </div>
 
       {/* Go to Dashboard Button */}
       <Button

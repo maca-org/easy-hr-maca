@@ -14,7 +14,7 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { OfferLetterDrawer } from "@/components/OfferLetterDrawer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, CreditCard, Star, FileText } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, CreditCard, Star, FileText, Eye } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Job } from "./Index";
@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Candidate {
   id: string;
@@ -77,6 +78,9 @@ export default function CandidatesDashboard() {
   const [offerPreselectedCandidateId, setOfferPreselectedCandidateId] = useState<string | undefined>(undefined);
   const [companyName, setCompanyName] = useState("");
   const [offerLetterCount, setOfferLetterCount] = useState(0);
+  const [savedOffersModalOpen, setSavedOffersModalOpen] = useState(false);
+  const [savedOffers, setSavedOffers] = useState<any[]>([]);
+  const [loadingSavedOffers, setLoadingSavedOffers] = useState(false);
   
   // Callback for when credit limit is reached
   const handleLimitReached = useCallback(() => {
@@ -695,6 +699,39 @@ export default function CandidatesDashboard() {
     setOfferDrawerOpen(true);
   };
 
+  // Fetch saved offer letters
+  const fetchSavedOffers = async () => {
+    if (!jobId) return;
+    setLoadingSavedOffers(true);
+    try {
+      const { data, error } = await supabase
+        .from('offer_letters')
+        .select('id, candidate_id, company_name, job_title, salary_amount, currency, created_at')
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Map candidate names
+      const offersWithNames = (data || []).map(offer => {
+        const candidate = candidates.find(c => c.id === offer.candidate_id);
+        return { ...offer, candidate_name: candidate?.name || 'Unknown' };
+      });
+      
+      setSavedOffers(offersWithNames);
+    } catch (error) {
+      console.error('Error fetching saved offers:', error);
+      toast.error('Failed to load saved offers');
+    } finally {
+      setLoadingSavedOffers(false);
+    }
+  };
+
+  const handleViewSavedOffers = () => {
+    fetchSavedOffers();
+    setSavedOffersModalOpen(true);
+  };
+
   // Filter by favorites first, then sort
   const filteredCandidates = showOnlyFavorites 
     ? candidates.filter(c => c.is_favorite)
@@ -821,6 +858,17 @@ export default function CandidatesDashboard() {
                 >
                   Prepare Offer Letter
                 </Button>
+                {offerLetterCount > 0 && (
+                  <Button 
+                    onClick={handleViewSavedOffers}
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full text-xs"
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    View Saved Offers ({offerLetterCount})
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
@@ -1052,5 +1100,53 @@ export default function CandidatesDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Saved Offer Letters Modal */}
+      <Dialog open={savedOffersModalOpen} onOpenChange={setSavedOffersModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Saved Offer Letters
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            {loadingSavedOffers ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : savedOffers.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No saved offer letters</p>
+            ) : (
+              savedOffers.map(offer => (
+                <div 
+                  key={offer.id} 
+                  className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => {
+                    setSavedOffersModalOpen(false);
+                    handlePrepareOffer(offer.candidate_id);
+                  }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium">{offer.candidate_name}</p>
+                      <p className="text-sm text-muted-foreground">{offer.job_title}</p>
+                      <p className="text-sm text-muted-foreground">{offer.company_name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-primary">
+                        {offer.currency} {offer.salary_amount?.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(offer.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>;
 }

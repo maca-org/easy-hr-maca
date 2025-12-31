@@ -20,7 +20,7 @@ const plans = [
     price: 29,
     limit: 100,
     features: [
-      'Unlock up to 100 candidates/month',
+      'Unlock up to 100 candidates',
       'View candidate names & contacts',
       'CV match scores',
       'Assessment results',
@@ -34,7 +34,7 @@ const plans = [
     limit: 250,
     popular: true,
     features: [
-      'Unlock up to 250 candidates/month',
+      'Unlock up to 250 candidates',
       'Everything in Starter',
       'AI-powered rankings',
       'Detailed insights',
@@ -47,8 +47,9 @@ const plans = [
     price: 199,
     limit: 1000,
     features: [
-      'Unlock up to 1,000 candidates/month',
+      'Unlock up to 1,000 candidates',
       'Everything in Pro',
+      'Perfect unique assessment',
       'Team collaboration',
       'Advanced analytics',
       'Dedicated support'
@@ -76,13 +77,13 @@ export function UpgradeModal({ isOpen, onClose, currentPlan, onSelectPlan }: Upg
         // Open Stripe checkout in new tab
         window.open(data.url, '_blank');
         onClose();
-        toast.success("Stripe ödeme sayfası açıldı. Lütfen ödemeyi tamamlayın.");
+        toast.success("Stripe checkout page opened. Please complete the payment.");
       } else {
-        throw new Error("Checkout URL alınamadı");
+        throw new Error("Failed to get checkout URL");
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      toast.error("Ödeme sayfası açılırken bir hata oluştu");
+      toast.error("An error occurred while opening the payment page");
     } finally {
       setLoadingPlan(null);
     }
@@ -123,7 +124,7 @@ export function UpgradeModal({ isOpen, onClose, currentPlan, onSelectPlan }: Upg
                       <span className="text-muted-foreground">/month</span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {plan.limit} candidates/month
+                      {plan.limit} candidates
                     </p>
                   </div>
 
@@ -163,7 +164,11 @@ export function UpgradeModal({ isOpen, onClose, currentPlan, onSelectPlan }: Upg
 
         <div className="text-center mt-4">
           <p className="text-sm text-muted-foreground">
-            Need more? <a href="mailto:sales@example.com" className="text-primary hover:underline">Contact us for Enterprise pricing</a>
+            Need more? Contact us at{" "}
+            <a href="mailto:sales@candidateassess.com" className="text-primary hover:underline">
+              sales@candidateassess.com
+            </a>{" "}
+            for Enterprise pricing
           </p>
         </div>
       </DialogContent>
