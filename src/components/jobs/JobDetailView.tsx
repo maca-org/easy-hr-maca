@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Link2, Send, LayoutDashboard, Edit2, Save } from "lucide-react";
+import { ArrowLeft, Link2, Send, LayoutDashboard, Edit2, Save, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,7 @@ export const JobDetailView = ({
   const [isEditing, setIsEditing] = useState(
     !job.title || job.title === "Untitled Job" || !job.requirements
   );
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [editTitle, setEditTitle] = useState(job.title || "");
   const [editDescription, setEditDescription] = useState(job.requirements || "");
   const [shareLinkModalOpen, setShareLinkModalOpen] = useState(false);
@@ -152,35 +154,40 @@ export const JobDetailView = ({
             </div>
           ) : (
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
+            <div 
+              className="flex-1 cursor-pointer"
+              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+            >
+              <div className="flex items-center gap-2">
                 <CardTitle className="text-xl">{job.title}</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Created on {job.date}</p>
+                <ChevronDown className={cn(
+                  "h-5 w-5 text-muted-foreground transition-transform",
+                  isDescriptionExpanded && "rotate-180"
+                )} />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Created on {job.date}</p>
+              {isDescriptionExpanded ? (
                 <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">
                   {job.requirements}
                 </p>
-              </div>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                  {job.requirements}
+                </p>
+              )}
+            </div>
             </div>
           )}
         </CardHeader>
       </Card>
 
       {/* CV Upload Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Upload Candidate CVs</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Drag and drop PDF files to upload candidate resumes for AI analysis
-          </p>
-        </CardHeader>
-        <CardContent>
-          <ResumeUpload
-            resumes={job.resumes}
-            onUploadResumes={onUploadResumes}
-            onDeleteResume={onDeleteResume}
-            onGetApplicationLink={handleOpenShareModal}
-          />
-        </CardContent>
-      </Card>
+      <ResumeUpload
+        resumes={job.resumes}
+        onUploadResumes={onUploadResumes}
+        onDeleteResume={onDeleteResume}
+        onGetApplicationLink={handleOpenShareModal}
+      />
 
       {/* Action Buttons */}
       {/* Share Link Modal */}

@@ -49,6 +49,7 @@ interface Candidate {
   cv_file_path?: string | null;
   is_favorite?: boolean;
   assessment_sent?: boolean;
+  assessment_sent_at?: string | null;
 }
 
 export default function CandidatesDashboard() {
@@ -746,8 +747,18 @@ export default function CandidatesDashboard() {
       case "date":
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       case "assessment_sent":
+        // Put sent assessments first, then sort by sent date (newest first)
+        if (a.assessment_sent && b.assessment_sent) {
+          const dateA = a.assessment_sent_at ? new Date(a.assessment_sent_at).getTime() : 0;
+          const dateB = b.assessment_sent_at ? new Date(b.assessment_sent_at).getTime() : 0;
+          return dateB - dateA;
+        }
         return (b.assessment_sent ? 1 : 0) - (a.assessment_sent ? 1 : 0);
       case "assessment_not_sent":
+        // Put not sent first, then sort by overall score (best candidates first)
+        if (!a.assessment_sent && !b.assessment_sent) {
+          return calculateOverallScore(b) - calculateOverallScore(a);
+        }
         return (a.assessment_sent ? 1 : 0) - (b.assessment_sent ? 1 : 0);
       default:
         return 0;
