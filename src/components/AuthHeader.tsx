@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Settings } from "lucide-react";
 import { toast } from "sonner";
+import logoImage from "@/assets/logo.png";
 
 interface AuthHeaderProps {
   userEmail?: string;
@@ -56,9 +57,10 @@ export default function AuthHeader({ userEmail }: AuthHeaderProps) {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <button
           onClick={handleHomeClick}
-          className="flex items-center gap-2 text-xl font-bold hover:opacity-80 transition-opacity"
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
         >
-          <span>MyApp</span>
+          <img src={logoImage} alt="Candidate Assess Logo" className="w-10 h-10 object-contain" />
+          <span className="text-xl font-bold text-foreground">Candidate Assess</span>
         </button>
 
         <DropdownMenu>
