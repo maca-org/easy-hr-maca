@@ -79,7 +79,12 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      try {
+        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      } catch (e) {
+        logStep("Warning: Failed to parse subscription end date", { error: String(e) });
+        subscriptionEnd = null;
+      }
       stripeSubscriptionId = subscription.id;
       
       const productId = subscription.items.data[0].price.product as string;

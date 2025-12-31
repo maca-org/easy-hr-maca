@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Crown, Calendar, Users, ExternalLink, Loader2, Sparkles, Zap } from "lucide-react";
 import { format } from "date-fns";
+import confetti from "canvas-confetti";
 
 const PLAN_DETAILS: Record<string, { name: string; price: number; limit: number; features: string[] }> = {
   free: {
@@ -42,8 +43,71 @@ export default function SubscriptionSettings() {
   const { subscribed, planType, subscriptionEnd, loading, refreshSubscription } = useSubscription();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const currentPlan = PLAN_DETAILS[planType] || PLAN_DETAILS.free;
+
+  const triggerConfetti = useCallback(() => {
+    // First burst
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+
+    // Side bursts after a short delay
+    setTimeout(() => {
+      confetti({
+        particleCount: 50,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+      });
+      confetti({
+        particleCount: 50,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+      });
+    }, 250);
+  }, []);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.get("payment") === "success") {
+      // Clean URL immediately
+      window.history.replaceState({}, "", window.location.pathname);
+
+      // Retry mechanism for subscription check (Stripe webhook delay)
+      const checkWithRetry = async (attempts = 0) => {
+        await refreshSubscription();
+
+        // Check if we have an active subscription now
+        const { data } = await supabase.functions.invoke("check-subscription");
+
+        if (data?.subscribed) {
+          // Success! Show celebration
+          setShowSuccessMessage(true);
+          triggerConfetti();
+
+          // Hide message after 5 seconds
+          setTimeout(() => setShowSuccessMessage(false), 5000);
+        } else if (attempts < 5) {
+          // Not subscribed yet, retry after 2 seconds
+          setTimeout(() => checkWithRetry(attempts + 1), 2000);
+        } else {
+          // After 5 attempts, show success anyway (webhook might be delayed)
+          setShowSuccessMessage(true);
+          triggerConfetti();
+          setTimeout(() => setShowSuccessMessage(false), 5000);
+        }
+      };
+
+      // Initial delay to allow Stripe webhook to process
+      setTimeout(() => checkWithRetry(), 1000);
+    }
+  }, [refreshSubscription, triggerConfetti]);
 
   const handleManageSubscription = async () => {
     setIsLoadingPortal(true);
@@ -106,6 +170,22 @@ export default function SubscriptionSettings() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+
+      {/* Success Celebration Overlay */}
+      {showSuccessMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-background rounded-2xl p-8 text-center shadow-2xl animate-in zoom-in-95 duration-300 border border-border">
+            <div className="text-6xl mb-4">🎉</div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Your Plan Has Been Upgraded!
+            </h2>
+            <p className="text-muted-foreground">
+              Thank you for subscribing. Enjoy your new features!
+            </p>
+          </div>
+        </div>
+      )}
+
       <main className="container mx-auto px-6 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Subscription Settings</h1>
