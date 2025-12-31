@@ -75,3 +75,12 @@ verify_jwt = false
 
 [functions.receive-rubric]
 verify_jwt = false
+
+[functions.send-subscription-email]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = false

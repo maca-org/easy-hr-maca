@@ -12,7 +12,7 @@ interface SubscriptionEmailRequest {
   email: string;
   planName: string;
   previousPlan?: string;
-  action: "upgraded" | "downgraded" | "cancelled" | "renewed";
+  action: "upgraded" | "downgraded" | "cancelled" | "renewed" | "payment_failed";
 }
 
 const PLAN_DETAILS: Record<string, { name: string; price: number; limit: number }> = {
@@ -162,6 +162,59 @@ const getEmailContent = (action: string, planName: string, previousPlan?: string
                 <a href="https://candidateassess.com/settings/subscription" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; margin-top: 20px;">
                   Resubscribe Now
                 </a>
+              </div>
+              
+              <p style="color: #a1a1aa; font-size: 12px; text-align: center; margin-top: 30px;">
+                © ${new Date().getFullYear()} Candidate Assess. All rights reserved.
+              </p>
+            </div>
+          </body>
+          </html>
+        `,
+      };
+
+    case "payment_failed":
+      return {
+        subject: "⚠️ Payment Failed - Action Required",
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f4f4f5;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+              <div style="background: #f59e0b; border-radius: 16px 16px 0 0; padding: 40px 30px; text-align: center;">
+                <h1 style="color: white; font-size: 28px; margin: 0;">⚠️ Payment Failed</h1>
+              </div>
+              
+              <div style="background: white; border-radius: 0 0 16px 16px; padding: 40px 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h2 style="color: #18181b; font-size: 24px; margin: 0 0 20px;">We couldn't process your payment</h2>
+                
+                <p style="color: #52525b; font-size: 16px; line-height: 1.6;">
+                  Your recent payment for Candidate Assess subscription could not be processed. This could be due to:
+                </p>
+                
+                <ul style="color: #52525b; font-size: 14px; line-height: 1.8; margin: 20px 0;">
+                  <li>Expired credit card</li>
+                  <li>Insufficient funds</li>
+                  <li>Card declined by your bank</li>
+                </ul>
+                
+                <div style="background: #fef3c7; border-radius: 12px; padding: 16px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                  <p style="color: #92400e; font-size: 14px; margin: 0; font-weight: 500;">
+                    Please update your payment method within 7 days to avoid service interruption.
+                  </p>
+                </div>
+                
+                <a href="https://candidateassess.com/settings/subscription" style="display: inline-block; background: #f59e0b; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; margin-top: 20px;">
+                  Update Payment Method
+                </a>
+                
+                <p style="color: #71717a; font-size: 14px; margin-top: 24px; line-height: 1.6;">
+                  If you believe this is an error, please contact your bank or reply to this email for assistance.
+                </p>
               </div>
               
               <p style="color: #a1a1aa; font-size: 12px; text-align: center; margin-top: 30px;">
