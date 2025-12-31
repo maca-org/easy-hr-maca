@@ -93,7 +93,7 @@ export const ResumeUpload = ({
           </>
         )}
 
-        {/* Upload drop zone - without title */}
+        {/* Upload drop zone */}
         <div
           className={`border-2 border-dashed rounded-lg text-center transition-all cursor-pointer w-full ${
             resumes.length > 0 ? "p-4" : "p-8"
@@ -123,8 +123,18 @@ export const ResumeUpload = ({
               resumes.length > 0 ? "w-8 h-8 mb-2" : "w-12 h-12 mb-4"
             }`}
           />
-          {resumes.length > 0 && (
+          {resumes.length > 0 ? (
             <p className="text-sm text-muted-foreground">Upload more CVs</p>
+          ) : (
+            <>
+              <p className="font-semibold text-foreground mb-1">Upload Resumes</p>
+              <p className="text-sm text-muted-foreground mb-1">
+                Drag and drop resumes here or click to browse
+              </p>
+              <p className="text-xs text-muted-foreground/70">
+                Only PDF format is supported
+              </p>
+            </>
           )}
         </div>
 
