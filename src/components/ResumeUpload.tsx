@@ -79,22 +79,39 @@ export const ResumeUpload = ({
               resumes.length > 0 ? "text-sm" : "mb-2"
             }`}
           >
-            Upload Resumes
+            Upload Candidate CVs
           </h3>
-          {resumes.length === 0 && (
-            <>
-              <p className="text-sm text-muted-foreground mb-1">
-                Drag and drop resumes here or click to browse
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Only PDF format is supported
-              </p>
-            </>
-          )}
         </div>
 
         {resumes.length === 0 && (
           <>
+            <div className="space-y-4 w-full">
+              <h3 className="font-bold text-xl text-center text-foreground">
+                How does it work?
+              </h3>
+              <p className="text-sm text-center text-muted-foreground">
+                Once your job is ready:
+              </p>
+              <ol className="space-y-2 text-sm text-foreground">
+                <li className="flex gap-2">
+                  <span className="font-semibold">1.</span>
+                  <span>Share your application link anywhere</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-semibold">2.</span>
+                  <span>Print and use the QR code offline</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-semibold">3.</span>
+                  <span>Upload existing resumes in bulk</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-semibold">4.</span>
+                  <span>Instantly see the best-matching candidates</span>
+                </li>
+              </ol>
+            </div>
+
             {onGetApplicationLink && (
               <Button
                 variant="outline"
@@ -106,26 +123,6 @@ export const ResumeUpload = ({
                 Get Application Link
               </Button>
             )}
-
-            <div className="space-y-4">
-              <h3 className="font-bold text-xl text-center text-foreground">
-                How does it work?
-              </h3>
-              <ol className="space-y-2 text-sm text-foreground">
-                <li className="flex gap-2">
-                  <span className="font-semibold">1.</span>
-                  <span>Save the job description.</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-semibold">2.</span>
-                  <span>Use the application link or Upload resumes</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-semibold">3.</span>
-                  <span>Get top candidates instantly.</span>
-                </li>
-              </ol>
-            </div>
           </>
         )}
 
