@@ -7,10 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Search, RefreshCw, Users, CreditCard, RotateCcw, ChevronRight, ChevronDown, Download, FileSpreadsheet, Briefcase, FileText } from "lucide-react";
+import { Search, RefreshCw, Users, CreditCard, RotateCcw, ChevronRight, ChevronDown, Download, FileSpreadsheet, Briefcase, FileText, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface UserProfile {
   id: string;
@@ -54,6 +55,8 @@ export const UserSubscriptionManager = () => {
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [deletingUser, setDeletingUser] = useState(false);
 
   useEffect(() => {
     fetchUsersWithStats();
@@ -155,6 +158,27 @@ export const UserSubscriptionManager = () => {
       fetchUsersWithStats();
     }
     setUpdatingUserId(null);
+  };
+
+  const deleteUser = async (userId: string) => {
+    setDeletingUser(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success("User deleted successfully");
+      fetchUsersWithStats();
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      toast.error(error.message || "Failed to delete user");
+    } finally {
+      setDeletingUser(false);
+      setDeleteUserId(null);
+    }
   };
 
   const toggleExpanded = (userId: string) => {
@@ -517,16 +541,26 @@ export const UserSubscriptionManager = () => {
                               {format(new Date(user.created_at), "dd MMM yyyy", { locale: tr })}
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => resetUserCredits(user.id)}
-                                disabled={updatingUserId === user.id}
-                                className="gap-1"
-                              >
-                                <RotateCcw className="h-3 w-3" />
-                                Sıfırla
-                              </Button>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => resetUserCredits(user.id)}
+                                  disabled={updatingUserId === user.id}
+                                  className="gap-1"
+                                >
+                                  <RotateCcw className="h-3 w-3" />
+                                  Reset
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDeleteUserId(user.id)}
+                                  className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                           
@@ -571,10 +605,38 @@ export const UserSubscriptionManager = () => {
           </div>
 
           <p className="text-xs text-muted-foreground mt-4">
-            Toplam {filteredUsers.length} kullanıcı gösteriliyor
+            Showing {filteredUsers.length} users
           </p>
         </CardContent>
       </Card>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User Account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user's account and all associated data including:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>All job openings</li>
+                <li>All candidates and their data</li>
+                <li>All offer letters</li>
+                <li>Subscription history</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingUser}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteUserId && deleteUser(deleteUserId)}
+              disabled={deletingUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingUser ? "Deleting..." : "Delete User"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -163,6 +163,12 @@ serve(async (req) => {
 
     console.log("Successfully fetched assessment data for candidate:", candidateId);
 
+    // Sanitize questions to remove correct answers before sending to candidate
+    const sanitizedQuestions = (job.questions as any[]).map((q: any) => {
+      const { correct_answer, ...safeQuestion } = q;
+      return safeQuestion;
+    });
+
     return new Response(
       JSON.stringify({
         completed: false,
@@ -171,7 +177,7 @@ serve(async (req) => {
           name: candidate.name,
           assessment_due_date: candidate.assessment_due_date,
         },
-        questions: job.questions,
+        questions: sanitizedQuestions,
         jobTitle: job.title,
         companyName: companyName,
       }),

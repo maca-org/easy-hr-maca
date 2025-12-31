@@ -129,6 +129,10 @@ serve(async (req) => {
                 You received this email because you've exhausted all your monthly credits.
                 <br>This is a one-time notification per billing cycle.
               </p>
+              <p style="margin: 16px 0 0; color: #991b1b; font-size: 12px;">
+                If you have any questions, contact us at 
+                <a href="mailto:support@candidateassess.com" style="color: #6366f1;">support@candidateassess.com</a>
+              </p>
             </td>
           </tr>
           

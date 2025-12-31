@@ -11,10 +11,19 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit2, Trash2, Plus, X, CheckCircle2, Award, RefreshCw, ArrowLeft } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Question } from "./Index";
 import type { User } from "@supabase/supabase-js";
+import { useSubscription } from "@/hooks/useSubscription";
+
+const OPEN_QUESTION_LIMITS: Record<string, number> = {
+  free: 2,
+  starter: 5,
+  pro: 20,
+  business: 50
+};
 
 export const QuestionsReview = () => {
   const [searchParams] = useSearchParams();
@@ -22,6 +31,7 @@ export const QuestionsReview = () => {
   const jobId = searchParams.get("id");
   
   const [user, setUser] = useState<User | null>(null);
+  const { planType } = useSubscription();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPolling, setIsPolling] = useState(false);
@@ -29,12 +39,16 @@ export const QuestionsReview = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [pendingDialogClose, setPendingDialogClose] = useState(false);
   
   // Handle dialog close with unsaved changes warning
   const handleAddDialogClose = (open: boolean) => {
     if (!open && (newQuestionText.trim() || newOptions.some(o => o.trim()))) {
-      const confirmClose = window.confirm("You have unsaved changes. Are you sure you want to close?");
-      if (!confirmClose) return;
+      setPendingDialogClose(true);
+      return;
+    }
+    if (!open) {
       // Reset form
       setNewQuestionText("");
       setNewOptions(["", "", "", ""]);
@@ -44,6 +58,23 @@ export const QuestionsReview = () => {
       setNewCorrectAnswer("");
     }
     setIsAddDialogOpen(open);
+  };
+  
+  const confirmDialogClose = () => {
+    setNewQuestionText("");
+    setNewOptions(["", "", "", ""]);
+    setNewQuestionType("mcq");
+    setNewSkill("");
+    setNewDifficulty("medium");
+    setNewCorrectAnswer("");
+    setPendingDialogClose(false);
+    setIsAddDialogOpen(false);
+  };
+
+  const handleDeleteQuestion = (id: string) => {
+    setQuestions(questions.filter(q => q.id !== id));
+    setDeleteConfirmId(null);
+    toast.success("Question deleted");
   };
   const [newQuestionType, setNewQuestionType] = useState<"mcq" | "open">("mcq");
   const [newQuestionText, setNewQuestionText] = useState("");
@@ -269,12 +300,16 @@ export const QuestionsReview = () => {
     setEditingQuestion(null);
   };
 
-  const handleDelete = (id: string) => {
-    setQuestions(questions.filter(q => q.id !== id));
-    toast.success("Question deleted");
-  };
-
   const handleAddQuestion = () => {
+    // Check open question limits
+    const openQuestionCount = questions.filter(q => q.type === "open").length;
+    const maxOpenQuestions = OPEN_QUESTION_LIMITS[planType || 'free'] || 2;
+    
+    if (newQuestionType === "open" && openQuestionCount >= maxOpenQuestions) {
+      toast.error(`Your ${planType || 'free'} plan allows maximum ${maxOpenQuestions} open-ended questions. Upgrade to add more.`);
+      return;
+    }
+
     const newQuestion: Question = {
       id: `${newQuestionType}-${Date.now()}`,
       type: newQuestionType,
@@ -500,11 +535,7 @@ export const QuestionsReview = () => {
                         <Button size="sm" variant="ghost" onClick={() => handleEdit(question)}>
                           <Edit2 className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => {
-                          if (window.confirm("Are you sure you want to delete this question? This action cannot be undone.")) {
-                            handleDelete(question.id);
-                          }
-                        }}>
+                        <Button size="sm" variant="ghost" onClick={() => setDeleteConfirmId(question.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </>
@@ -717,6 +748,42 @@ export const QuestionsReview = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Question Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Question?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this question? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteConfirmId && handleDeleteQuestion(deleteConfirmId)}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Unsaved Changes Warning Dialog */}
+      <AlertDialog open={pendingDialogClose} onOpenChange={setPendingDialogClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to close without saving?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDialogClose}>
+              Close Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { Crown, LogOut, Settings, Mail, Clock } from "lucide-react";
+import { Crown, LogOut, Settings, Mail, Clock, User, CreditCard, Briefcase } from "lucide-react";
 import logoImage from "@/assets/logo.png";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
@@ -195,9 +195,17 @@ export const Header = () => {
                   <p className="text-sm font-medium truncate">{user.email}</p>
                 </div>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/jobs")}>
+                  <Briefcase className="mr-2 h-4 w-4" />
+                  <span>Dashboard</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/settings/subscription")}>
-                  <Settings className="mr-2 h-4 w-4" />
+                  <CreditCard className="mr-2 h-4 w-4" />
                   <span>Subscription Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/settings/profile")}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut} disabled={isLoggingOut}>
@@ -213,9 +221,9 @@ export const Header = () => {
       <Dialog open={showSupportDialog} onOpenChange={setShowSupportDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>İletişim</DialogTitle>
+            <DialogTitle>Contact Support</DialogTitle>
             <DialogDescription>
-              Sorularınız için bize ulaşın
+              Get in touch with our support team
             </DialogDescription>
           </DialogHeader>
           
@@ -223,7 +231,7 @@ export const Header = () => {
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
               <Mail className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">E-posta</p>
+                <p className="text-sm text-muted-foreground">Email</p>
                 <a 
                   href="mailto:support@candidateassess.com" 
                   className="text-foreground font-medium hover:text-primary transition-colors"
@@ -236,8 +244,8 @@ export const Header = () => {
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
               <Clock className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">Yanıt Süresi</p>
-                <p className="text-foreground font-medium">24 saat içinde</p>
+                <p className="text-sm text-muted-foreground">Response Time</p>
+                <p className="text-foreground font-medium">Within 24 hours</p>
               </div>
             </div>
           </div>

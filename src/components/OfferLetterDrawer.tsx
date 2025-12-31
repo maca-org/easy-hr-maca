@@ -197,7 +197,11 @@ Your offer letter is attached.
 
 Best regards,
 ${hrName}
-${formData.companyName}`;
+${formData.companyName}
+
+---
+Prepared with Candidate Assess
+candidateassess.com`;
 
     return { subject, body };
   };
@@ -302,6 +306,14 @@ ${formData.companyName}`;
       doc.text("_____________________________", 20, sigY + 15);
       doc.text(hrName, 20, sigY + 23);
       doc.text(formData.companyName, 20, sigY + 30);
+
+      // Add branding footer
+      const footerY = sigY + 50;
+      doc.setFontSize(9);
+      doc.setTextColor(128, 128, 128);
+      doc.text("Prepared with Candidate Assess", 105, footerY, { align: "center" });
+      doc.text("candidateassess.com", 105, footerY + 5, { align: "center" });
+      doc.setTextColor(0, 0, 0);
 
       doc.text("Accepted by:", 120, sigY);
       doc.text("_____________________________", 120, sigY + 15);
