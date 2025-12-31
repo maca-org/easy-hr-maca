@@ -91,6 +91,18 @@ export default function SubscriptionSettings() {
           setShowSuccessMessage(true);
           triggerConfetti();
 
+          // Send subscription upgrade email
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.email) {
+            supabase.functions.invoke("send-subscription-email", {
+              body: {
+                email: session.user.email,
+                planName: data.plan_type || "starter",
+                action: "upgraded",
+              },
+            }).catch(console.error);
+          }
+
           // Hide message after 5 seconds
           setTimeout(() => setShowSuccessMessage(false), 5000);
         } else if (attempts < 5) {
