@@ -64,7 +64,7 @@ export default function CandidatesDashboard() {
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [sortBy, setSortBy] = useState<"score" | "name" | "date">("score");
+  const [sortBy, setSortBy] = useState<"score" | "name" | "date" | "assessment_sent" | "assessment_not_sent">("score");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadQueue = useUploadQueue();
@@ -745,6 +745,10 @@ export default function CandidatesDashboard() {
         return a.name.localeCompare(b.name);
       case "date":
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      case "assessment_sent":
+        return (b.assessment_sent ? 1 : 0) - (a.assessment_sent ? 1 : 0);
+      case "assessment_not_sent":
+        return (a.assessment_sent ? 1 : 0) - (b.assessment_sent ? 1 : 0);
       default:
         return 0;
     }
@@ -939,7 +943,7 @@ export default function CandidatesDashboard() {
               
               {candidates.length > 0 && <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm text-muted-foreground">Sort by:</span>
-                  <Select value={sortBy} onValueChange={(value: "score" | "name" | "date") => setSortBy(value)}>
+                  <Select value={sortBy} onValueChange={(value: "score" | "name" | "date" | "assessment_sent" | "assessment_not_sent") => setSortBy(value)}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue />
                     </SelectTrigger>
@@ -947,6 +951,8 @@ export default function CandidatesDashboard() {
                       <SelectItem value="score">Overall Score</SelectItem>
                       <SelectItem value="name">Name (A-Z)</SelectItem>
                       <SelectItem value="date">Upload Date (Newest)</SelectItem>
+                      <SelectItem value="assessment_sent">Assessment Sent</SelectItem>
+                      <SelectItem value="assessment_not_sent">Assessment Not Sent</SelectItem>
                     </SelectContent>
                   </Select>
                   
