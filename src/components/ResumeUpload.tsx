@@ -1,4 +1,4 @@
-import { Upload, FileText, Trash2, Link2 } from "lucide-react";
+import { Upload, FileText, Trash2, Link2, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { Resume } from "@/pages/Index";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -47,50 +47,48 @@ export const ResumeUpload = ({
       <div className="p-6 space-y-6 flex-1 overflow-y-auto flex flex-col items-center justify-center w-full max-w-md mx-auto">
         {/* How does it work - shown when no resumes */}
         {resumes.length === 0 && (
-          <>
-            <div className="space-y-4 w-full">
-              <h3 className="font-bold text-xl text-center text-foreground">
-                How does it work?
-              </h3>
-              <p className="text-sm text-center text-muted-foreground">
-                Once your job is ready:
-              </p>
-              <ol className="space-y-2 text-sm text-foreground">
-                <li className="flex gap-2">
-                  <span className="font-semibold">1.</span>
-                  <span>Share your application link anywhere</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-semibold">2.</span>
-                  <span>Print and use the QR code offline</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-semibold">3.</span>
-                  <span>Upload existing resumes in bulk</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-semibold">4.</span>
-                  <span>Instantly see the best-matching candidates</span>
-                </li>
-              </ol>
-            </div>
+          <div className="space-y-4 w-full">
+            <h3 className="font-bold text-xl text-center text-foreground">
+              How does it work?
+            </h3>
+            <p className="text-sm text-center text-muted-foreground">
+              Once your job is ready:
+            </p>
+            <ol className="space-y-2 text-sm text-foreground">
+              <li className="flex gap-2">
+                <span className="font-semibold">1.</span>
+                <span>Share your application link anywhere</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold">2.</span>
+                <span>Print and use the QR code offline</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold">3.</span>
+                <span>Upload existing resumes in bulk</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold">4.</span>
+                <span>Instantly see the best-matching candidates</span>
+              </li>
+            </ol>
+          </div>
+        )}
 
-            {/* Get Application Link button */}
-            {onGetApplicationLink && (
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGetApplicationLink();
-                }}
-                className="h-14 w-full"
-              >
-                <Link2 className="w-5 h-5 mr-2" />
-                Get Application Link
-              </Button>
-            )}
-          </>
+        {/* Get Application Link button - always visible */}
+        {onGetApplicationLink && (
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={(e) => {
+              e.stopPropagation();
+              onGetApplicationLink();
+            }}
+            className="h-14 w-full"
+          >
+            <Link2 className="w-5 h-5 mr-2" />
+            Get Application Link
+          </Button>
         )}
 
         {/* Upload drop zone */}
@@ -162,9 +160,13 @@ export const ResumeUpload = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="text-success font-semibold text-sm">
-                    {resume.match}%
-                  </div>
+                  {resume.match === 0 ? (
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <div className="text-success font-semibold text-sm">
+                      {resume.match}%
+                    </div>
+                  )}
                   {onDeleteResume && (
                     <Button
                       variant="ghost"
