@@ -23,8 +23,14 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Use ANON_KEY client for user authentication (properly validates tokens)
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
+    
+    // Use SERVICE_ROLE_KEY client for database operations (bypasses RLS)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get authorization header
     const authHeader = req.headers.get('Authorization');
@@ -35,9 +41,9 @@ serve(async (req) => {
       );
     }
 
-    // Verify the user
+    // Verify the user with ANON client
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
     
     if (userError || !user) {
       console.error('Auth error:', userError);
@@ -49,8 +55,8 @@ serve(async (req) => {
 
     console.log(`Checking analysis credit for user: ${user.id}`);
 
-    // Get user's profile with plan info
-    const { data: profile, error: profileError } = await supabase
+    // Get user's profile with plan info (using ADMIN client)
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('plan_type, monthly_unlocked_count, billing_period_start')
       .eq('id', user.id)
@@ -76,9 +82,9 @@ serve(async (req) => {
 
     console.log(`User ${user.id}: plan=${planType}, used=${monthlyAnalyzedCount}, limit=${limit}, remaining=${remaining}, canAnalyze=${canAnalyze}`);
 
-    // If user can analyze, increment the count
+    // If user can analyze, increment the count (using ADMIN client)
     if (canAnalyze) {
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({
           monthly_unlocked_count: monthlyAnalyzedCount + 1
