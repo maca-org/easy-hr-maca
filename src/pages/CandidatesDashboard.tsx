@@ -774,16 +774,14 @@ export default function CandidatesDashboard() {
   const pendingTests = candidates.filter(c => !c.completed_test).length;
   const analyzedCandidates = candidates.filter(c => c.cv_rate > 0 || c.relevance_analysis).length;
   const pendingAnalysis = candidates.length - analyzedCandidates;
-  if (loading || uploading) {
+  if (loading) {
     return <div className="min-h-screen flex flex-col bg-background">
         <AuthHeader />
         <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">
-                {uploading ? "Processing PDF files..." : "Loading..."}
-              </p>
+              <p className="text-muted-foreground">Loading...</p>
             </div>
           </div>
         </main>
