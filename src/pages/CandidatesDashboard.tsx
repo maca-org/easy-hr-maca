@@ -14,7 +14,7 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { OfferLetterDrawer } from "@/components/OfferLetterDrawer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, CreditCard, Star, FileText, Eye } from "lucide-react";
+import { Mail, Phone, ChevronDown, ArrowLeft, RefreshCw, Upload, ArrowUp, ListOrdered, Trash2, Loader2, CreditCard, Star, FileText, Eye, FileSearch } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Job } from "./Index";
@@ -82,6 +82,7 @@ export default function CandidatesDashboard() {
   const [savedOffersModalOpen, setSavedOffersModalOpen] = useState(false);
   const [savedOffers, setSavedOffers] = useState<any[]>([]);
   const [loadingSavedOffers, setLoadingSavedOffers] = useState(false);
+  const [showScreeningConfirm, setShowScreeningConfirm] = useState(false);
   
   // Callback for when credit limit is reached
   const handleLimitReached = useCallback(() => {
@@ -733,6 +734,50 @@ export default function CandidatesDashboard() {
     setSavedOffersModalOpen(true);
   };
 
+  // Get unscreened candidates (no cv_rate and no relevance_analysis)
+  const unscreenedCandidates = candidates.filter(c => c.cv_rate === 0 && !c.relevance_analysis);
+
+  // Quick screening handlers
+  const handleQuickScreening = () => {
+    if (!canAnalyze) {
+      setUpgradeModalOpen(true);
+      return;
+    }
+    setShowScreeningConfirm(true);
+  };
+
+  const handleConfirmQuickScreening = async () => {
+    setShowScreeningConfirm(false);
+    
+    const unscreenedIds = unscreenedCandidates.map(c => c.id);
+    setSelectedCandidates(unscreenedIds);
+    setIsScreening(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please log in to continue");
+        return;
+      }
+      
+      const { data, error } = await supabase.functions.invoke('analyze-pending-cvs', {
+        body: { candidate_ids: unscreenedIds },
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+      
+      if (error) throw error;
+      
+      toast.success(`Started screening ${data?.processed || unscreenedIds.length} candidates`);
+      refreshCredits();
+    } catch (error) {
+      console.error('Screening error:', error);
+      toast.error("Failed to start screening");
+    } finally {
+      setIsScreening(false);
+      setSelectedCandidates([]);
+    }
+  };
+
   // Filter by favorites first, then sort
   const filteredCandidates = showOnlyFavorites 
     ? candidates.filter(c => c.is_favorite)
@@ -887,6 +932,43 @@ export default function CandidatesDashboard() {
 
             
           </div>
+
+          {/* Quick Resume Screening Button */}
+          {pendingAnalysis > 0 && (
+            <div className="flex justify-center">
+              {canAnalyze ? (
+                <Button
+                  onClick={handleQuickScreening}
+                  variant="default"
+                  size="lg"
+                  disabled={isScreening}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                >
+                  {isScreening ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Screening...
+                    </>
+                  ) : (
+                    <>
+                      <FileSearch className="h-5 w-5 mr-2" />
+                      Resume Screening ({pendingAnalysis})
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setUpgradeModalOpen(true)}
+                  variant="default"
+                  size="lg"
+                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                >
+                  <CreditCard className="h-5 w-5 mr-2" />
+                  Upgrade to Screen {pendingAnalysis} CVs
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Upsell Banner - Show when there are pending analysis candidates or credits running low */}
           {(pendingAnalysis > 0 || !canAnalyze) && (
@@ -1163,5 +1245,25 @@ export default function CandidatesDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Quick Screening Confirmation Dialog */}
+      <AlertDialog open={showScreeningConfirm} onOpenChange={setShowScreeningConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Screen {pendingAnalysis} Candidate{pendingAnalysis !== 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will analyze {pendingAnalysis} unscreened candidate{pendingAnalysis !== 1 ? 's' : ''} and use {pendingAnalysis} credit{pendingAnalysis !== 1 ? 's' : ''}.
+              <br /><br />
+              You have {remaining === 'unlimited' ? 'unlimited' : remaining} credit{remaining !== 1 && remaining !== 'unlimited' ? 's' : ''} remaining.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmQuickScreening}>
+              Proceed to Screening
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>;
 }
