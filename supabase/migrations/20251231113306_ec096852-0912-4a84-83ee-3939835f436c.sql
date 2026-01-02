@@ -8,7 +8,7 @@ AS $$
 BEGIN
   -- Use pg_net to call the welcome email edge function
   PERFORM net.http_post(
-    url := 'https://fkitunwtvwgmcyqfrdjo.supabase.co/functions/v1/send-welcome-email',
+    url := 'https://clcryzevpfoxntkczxrg.supabase.co/functions/v1/send-welcome-email',
     headers := '{"Content-Type": "application/json"}'::jsonb,
     body := jsonb_build_object(
       'email', NEW.email,
