@@ -14,7 +14,7 @@ import { useUploadQueue } from "@/hooks/useUploadQueue";
 import { debounce } from "@/lib/utils";
 
 export interface Resume {
-  id: string;
+  id: Null;
   name: string;
   filename: string;
   match: number;
@@ -46,7 +46,7 @@ type ViewState = "list" | "create" | "detail";
 const Index = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   const [user, setUser] = useState<User | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [activeJobId, setActiveJobId] = useState<string>("");
@@ -61,35 +61,37 @@ const Index = () => {
   const debouncedSaveJob = useCallback(
     debounce(async (jobId: string, title: string, requirements: string) => {
       if (!jobId || !user) return;
-      
+
       // UUID validation
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(jobId)) return;
-      
+
       try {
         const { error } = await supabase
           .from("job_openings")
           .update({ title, description: requirements })
           .eq("id", jobId);
-        
+
         if (error) throw error;
       } catch (error) {
         console.error("Auto-save failed:", error);
       }
     }, 1500),
-    [user]
+    [user],
   );
 
   // Check authentication and account type
   useEffect(() => {
     // Set up auth state listener FIRST (prevents deadlock)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate("/");
       } else {
         // Set user synchronously first
         setUser(session.user);
-        
+
         // Defer profile check with setTimeout to avoid deadlock
         setTimeout(async () => {
           const { data: profile } = await supabase
@@ -97,9 +99,9 @@ const Index = () => {
             .select("account_type")
             .eq("id", session.user.id)
             .single();
-          
-          if (profile?.account_type === 'candidate') {
-            navigate('/my-applications');
+
+          if (profile?.account_type === "candidate") {
+            navigate("/my-applications");
           }
         }, 0);
       }
@@ -113,7 +115,7 @@ const Index = () => {
       }
       // Set user synchronously
       setUser(session.user);
-      
+
       // Defer profile check
       setTimeout(async () => {
         const { data: profile } = await supabase
@@ -121,9 +123,9 @@ const Index = () => {
           .select("account_type")
           .eq("id", session.user.id)
           .single();
-        
-        if (profile?.account_type === 'candidate') {
-          navigate('/my-applications');
+
+        if (profile?.account_type === "candidate") {
+          navigate("/my-applications");
         }
       }, 0);
     });
@@ -150,10 +152,7 @@ const Index = () => {
         }
 
         // Fetch candidate counts for all jobs
-        const { data: candidatesData } = await supabase
-          .from("candidates")
-          .select("job_id")
-          .eq("user_id", user.id);
+        const { data: candidatesData } = await supabase.from("candidates").select("job_id").eq("user_id", user.id);
 
         // Count candidates per job
         const countByJobId: Record<string, number> = {};
@@ -179,10 +178,10 @@ const Index = () => {
             candidateCount: countByJobId[row.id] || 0,
           }));
           setJobs(mappedJobs);
-          
+
           // Set active job from URL parameter if present
           const jobIdFromUrl = searchParams.get("id");
-          if (jobIdFromUrl && mappedJobs.some(job => job.id === jobIdFromUrl)) {
+          if (jobIdFromUrl && mappedJobs.some((job) => job.id === jobIdFromUrl)) {
             setActiveJobId(jobIdFromUrl);
             setCurrentView("detail");
           }
@@ -221,9 +220,10 @@ const Index = () => {
         return;
       }
 
-      const questionsExist = data?.questions && 
-        typeof data.questions === 'object' && 
-        Array.isArray(data.questions) && 
+      const questionsExist =
+        data?.questions &&
+        typeof data.questions === "object" &&
+        Array.isArray(data.questions) &&
         data.questions.length > 0;
 
       setHasQuestions(questionsExist);
@@ -252,7 +252,7 @@ const Index = () => {
 
     try {
       const { data: newJob, error } = await supabase
-        .from('job_openings')
+        .from("job_openings")
         .insert({
           title,
           description,
@@ -264,16 +264,13 @@ const Index = () => {
       if (error) throw error;
 
       // Generate slug
-      const { data: generatedSlug } = await supabase.rpc('generate_job_slug', { 
-        title, 
-        job_id: newJob.id 
+      const { data: generatedSlug } = await supabase.rpc("generate_job_slug", {
+        title,
+        job_id: newJob.id,
       });
 
       if (generatedSlug) {
-        await supabase
-          .from('job_openings')
-          .update({ slug: generatedSlug })
-          .eq('id', newJob.id);
+        await supabase.from("job_openings").update({ slug: generatedSlug }).eq("id", newJob.id);
       }
 
       const jobObj: Job = {
@@ -311,10 +308,7 @@ const Index = () => {
   };
 
   const handleDeleteJob = async (id: string) => {
-    const { error } = await supabase
-      .from("job_openings")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("job_openings").delete().eq("id", id);
 
     if (error) {
       console.error("Error deleting job:", error);
@@ -334,17 +328,17 @@ const Index = () => {
   // Trigger question generation in background (no waiting)
   const triggerQuestionGeneration = async (jobId: string, title: string, description: string) => {
     if (!description.trim()) return;
-    
+
     try {
       const toastId = `generate-${jobId}`;
-      
+
       toast.loading("Generating interview questions...", {
         id: toastId,
         description: `${title || "Your job"} • This usually takes 20-60 seconds`,
         duration: Infinity,
       });
-      
-      const { error } = await supabase.functions.invoke('send-to-n8n', {
+
+      const { error } = await supabase.functions.invoke("send-to-n8n", {
         body: { job_id: jobId, title, description },
       });
 
@@ -352,11 +346,10 @@ const Index = () => {
         toast.error("Failed to start question generation", { id: toastId });
         return;
       }
-      
+
       startQuestionPolling(jobId, toastId, title || "Your job");
-      
     } catch (error) {
-      console.error('Error triggering question generation:', error);
+      console.error("Error triggering question generation:", error);
     }
   };
 
@@ -364,21 +357,21 @@ const Index = () => {
   const sendJobToRubicWebhook = async (jobId: string, title: string, description: string) => {
     try {
       console.log(`Sending job ${jobId} to Rubric webhook...`);
-      const { error } = await supabase.functions.invoke('send-job-to-rubic', {
+      const { error } = await supabase.functions.invoke("send-job-to-rubic", {
         body: {
           job_id: jobId,
           job_title: title,
-          job_description: description
-        }
+          job_description: description,
+        },
       });
-      
+
       if (error) {
-        console.error('Failed to send job to Rubric webhook:', error);
+        console.error("Failed to send job to Rubric webhook:", error);
       } else {
-        console.log('Job sent to Rubric webhook successfully');
+        console.log("Job sent to Rubric webhook successfully");
       }
     } catch (error) {
-      console.error('Error sending to Rubric webhook:', error);
+      console.error("Error sending to Rubric webhook:", error);
     }
   };
 
@@ -387,48 +380,49 @@ const Index = () => {
 
     try {
       // Use DB function to generate unique slug
-      const { data: generatedSlug } = await supabase.rpc('generate_job_slug', { 
-        title, 
-        job_id: activeJobId 
+      const { data: generatedSlug } = await supabase.rpc("generate_job_slug", {
+        title,
+        job_id: activeJobId,
       });
 
       const finalSlug = generatedSlug || activeJobId;
 
       // Update with select to verify the row was actually updated
       const { data: updatedJob, error } = await supabase
-        .from('job_openings')
+        .from("job_openings")
         .update({
           title,
           description,
           slug: finalSlug,
         })
-        .eq('id', activeJobId)
-        .select('id, title, description, slug')
+        .eq("id", activeJobId)
+        .select("id, title, description, slug")
         .maybeSingle();
 
       if (error) throw error;
-      
+
       // Check if no rows were updated (RLS or job not found)
       if (!updatedJob) {
-        console.error('Save failed: No rows updated. Possible RLS issue or job not found.');
+        console.error("Save failed: No rows updated. Possible RLS issue or job not found.");
         toast.error("Save failed - please try again");
         return;
       }
-      
-      setJobs(jobs.map((job) =>
-        job.id === activeJobId ? { ...job, title, requirements: description, slug: finalSlug } : job
-      ));
-      
+
+      setJobs(
+        jobs.map((job) =>
+          job.id === activeJobId ? { ...job, title, requirements: description, slug: finalSlug } : job,
+        ),
+      );
+
       toast.success("Job saved successfully!");
-      
+
       // Send job to Rubric n8n webhook (fire and forget)
       sendJobToRubicWebhook(activeJobId, title, description);
-      
+
       // Automatically trigger question generation in background
       triggerQuestionGeneration(activeJobId, title, description);
-      
     } catch (error) {
-      console.error('Error saving job:', error);
+      console.error("Error saving job:", error);
       toast.error("Failed to save job");
     }
   };
@@ -445,18 +439,13 @@ const Index = () => {
 
   const handleDeleteResume = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("candidates")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("candidates").delete().eq("id", id);
 
       if (error) throw error;
 
-      setJobs(jobs.map((job) =>
-        job.id === activeJobId
-          ? { ...job, resumes: job.resumes.filter((r) => r.id !== id) }
-          : job
-      ));
+      setJobs(
+        jobs.map((job) => (job.id === activeJobId ? { ...job, resumes: job.resumes.filter((r) => r.id !== id) } : job)),
+      );
 
       toast.success("Resume deleted successfully");
     } catch (error) {
@@ -471,7 +460,7 @@ const Index = () => {
       return;
     }
 
-    const pdfFiles = Array.from(files).filter(file => file.type === "application/pdf");
+    const pdfFiles = Array.from(files).filter((file) => file.type === "application/pdf");
     if (pdfFiles.length === 0) {
       toast.error("Please upload PDF files only");
       return;
@@ -487,42 +476,42 @@ const Index = () => {
 
     if (!jobData) {
       toast.error("Job not found");
-      queueItems.forEach(item => {
-        uploadQueue.updateQueueItem(item.id, { status: 'failed', error: 'Job not found' });
+      queueItems.forEach((item) => {
+        uploadQueue.updateQueueItem(item.id, { status: "failed", error: "Job not found" });
       });
       return;
     }
 
     const uploadPromises = pdfFiles.map(async (file, index) => {
       const queueItem = queueItems[index];
-      
-      try {
-        const candidateName = file.name.replace('.pdf', '');
 
-        uploadQueue.updateQueueItem(queueItem.id, { 
-          status: 'extracting', 
-          progress: 20 
+      try {
+        const candidateName = file.name.replace(".pdf", "");
+
+        uploadQueue.updateQueueItem(queueItem.id, {
+          status: "extracting",
+          progress: 20,
         });
 
         // Extract text from PDF first (same as CandidatesDashboard)
         const cvText = await extractTextFromPDF(file);
 
-        uploadQueue.updateQueueItem(queueItem.id, { 
-          progress: 35 
+        uploadQueue.updateQueueItem(queueItem.id, {
+          progress: 35,
         });
 
         // Upload CV file to Supabase Storage
         const fileName = `${activeJobId}/${Date.now()}_${file.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('cvs')
-          .upload(fileName, file, { contentType: 'application/pdf' });
+          .from("cvs")
+          .upload(fileName, file, { contentType: "application/pdf" });
 
         if (uploadError) {
           throw new Error(`Storage upload failed: ${uploadError.message}`);
         }
 
-        uploadQueue.updateQueueItem(queueItem.id, { 
-          progress: 45 
+        uploadQueue.updateQueueItem(queueItem.id, {
+          progress: 45,
         });
 
         // Insert candidate with cv_file_path and cv_text
@@ -532,51 +521,50 @@ const Index = () => {
             job_id: activeJobId,
             user_id: user.id,
             name: candidateName,
-            email: `${candidateName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            email: `${candidateName.toLowerCase().replace(/\s+/g, ".")}@example.com`,
             cv_rate: 0,
             cv_file_path: uploadData.path,
             cv_text: cvText,
-            is_unlocked: true
+            is_unlocked: true,
           })
           .select()
           .single();
 
         if (error) throw error;
 
-        uploadQueue.updateQueueItem(queueItem.id, { 
-          status: 'analyzing', 
-          progress: 60 
+        uploadQueue.updateQueueItem(queueItem.id, {
+          status: "analyzing",
+          progress: 60,
         });
 
         // Call analyze-cv with cv_text (same as CandidatesDashboard)
-        const { error: analyzeError } = await supabase.functions.invoke('analyze-cv', {
+        const { error: analyzeError } = await supabase.functions.invoke("analyze-cv", {
           body: {
             candidate_id: newCandidate.id,
             job_id: activeJobId,
             cv_text: cvText,
             cv_file_path: uploadData.path,
             job_description: jobData.description,
-            job_title: jobData.title
-          }
+            job_title: jobData.title,
+          },
         });
 
         if (analyzeError) {
           throw analyzeError;
         }
 
-        uploadQueue.updateQueueItem(queueItem.id, { 
-          status: 'completed', 
-          progress: 100 
+        uploadQueue.updateQueueItem(queueItem.id, {
+          status: "completed",
+          progress: 100,
         });
 
         return { success: true, fileName: file.name };
-
       } catch (error) {
         console.error("Error uploading CV:", error);
-        
-        uploadQueue.updateQueueItem(queueItem.id, { 
-          status: 'failed', 
-          error: error instanceof Error ? error.message : 'Upload failed' 
+
+        uploadQueue.updateQueueItem(queueItem.id, {
+          status: "failed",
+          error: error instanceof Error ? error.message : "Upload failed",
         });
 
         return { success: false, fileName: file.name, error };
@@ -584,12 +572,12 @@ const Index = () => {
     });
 
     const results = await Promise.allSettled(uploadPromises);
-    
-    const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+
+    const successCount = results.filter((r) => r.status === "fulfilled" && r.value.success).length;
     const failCount = results.length - successCount;
-    
+
     if (successCount > 0) {
-      toast.success(`${successCount} CV(s) uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ''}`);
+      toast.success(`${successCount} CV(s) uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ""}`);
     }
     if (failCount > 0 && successCount === 0) {
       toast.error(`Failed to upload ${failCount} CV(s)`);
@@ -597,36 +585,28 @@ const Index = () => {
 
     const newResumes: Resume[] = pdfFiles.map((file) => ({
       id: Date.now().toString() + Math.random(),
-      name: file.name.replace('.pdf', ''),
+      name: file.name.replace(".pdf", ""),
       filename: file.name,
       match: 0,
     }));
 
-    setJobs(jobs.map((job) =>
-      job.id === activeJobId
-        ? { ...job, resumes: [...job.resumes, ...newResumes] }
-        : job
-    ));
+    setJobs(jobs.map((job) => (job.id === activeJobId ? { ...job, resumes: [...job.resumes, ...newResumes] } : job)));
   };
 
   const startQuestionPolling = async (jobId: string, toastId: string, jobTitle: string) => {
     let pollCount = 0;
     const maxPolls = 60;
-    
+
     const poll = async () => {
       pollCount++;
-      
+
       try {
-        const { data, error } = await supabase
-          .from("job_openings")
-          .select("questions")
-          .eq("id", jobId)
-          .maybeSingle();
-        
+        const { data, error } = await supabase.from("job_openings").select("questions").eq("id", jobId).maybeSingle();
+
         if (error) throw error;
-        
+
         const hasQuestionsNow = data?.questions && Array.isArray(data.questions) && data.questions.length > 0;
-        
+
         if (hasQuestionsNow) {
           toast.success("Questions Generated!", {
             id: toastId,
@@ -637,26 +617,22 @@ const Index = () => {
             },
             duration: 10000,
           });
-          
+
           setHasQuestions(true);
-          
-          const { data: jobData } = await supabase
-            .from("job_openings")
-            .select("*")
-            .eq("id", jobId)
-            .maybeSingle();
-          
+
+          const { data: jobData } = await supabase.from("job_openings").select("*").eq("id", jobId).maybeSingle();
+
           if (jobData) {
-            setJobs(prevJobs => prevJobs.map(job => 
-              job.id === jobId 
-                ? { ...job, questions: (jobData.questions as unknown as Question[]) || [] }
-                : job
-            ));
+            setJobs((prevJobs) =>
+              prevJobs.map((job) =>
+                job.id === jobId ? { ...job, questions: (jobData.questions as unknown as Question[]) || [] } : job,
+              ),
+            );
           }
-          
+
           return;
         }
-        
+
         if (pollCount >= maxPolls) {
           toast.error("Generation timed out", {
             id: toastId,
@@ -665,9 +641,8 @@ const Index = () => {
           });
           return;
         }
-        
+
         setTimeout(poll, 3000);
-        
       } catch (error) {
         console.error("Error polling questions:", error);
         toast.error("Failed to check question status", {
@@ -676,7 +651,7 @@ const Index = () => {
         });
       }
     };
-    
+
     poll();
   };
 
@@ -687,7 +662,7 @@ const Index = () => {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-to-n8n', {
+      const { data, error } = await supabase.functions.invoke("send-to-n8n", {
         body: {
           job_id: activeJobId,
           title: activeJob.title,
@@ -703,19 +678,14 @@ const Index = () => {
         description: `${activeJob.title || "Your job"} • This usually takes 20-60 seconds`,
         duration: Infinity,
       });
-      
-      startQuestionPolling(activeJobId, toastId, activeJob.title || "Your job");
-      
-      const questions = generateQuestions(activeJob.requirements);
-      
-      setJobs(jobs.map((job) =>
-        job.id === activeJobId
-          ? { ...job, questions }
-          : job
-      ));
 
+      startQuestionPolling(activeJobId, toastId, activeJob.title || "Your job");
+
+      const questions = generateQuestions(activeJob.requirements);
+
+      setJobs(jobs.map((job) => (job.id === activeJobId ? { ...job, questions } : job)));
     } catch (error) {
-      console.error('Error sending to n8n:', error);
+      console.error("Error sending to n8n:", error);
       toast.error("Failed to start question generation");
     }
   };
@@ -737,15 +707,17 @@ const Index = () => {
               <p className="text-muted-foreground">Loading jobs...</p>
             </div>
           </div>
-        ) : currentView === "list" && (
-          <JobList
-            jobs={jobs}
-            onSelectJob={handleSelectJob}
-            onCreateJob={handleCreateJob}
-            onDeleteJob={handleDeleteJob}
-          />
+        ) : (
+          currentView === "list" && (
+            <JobList
+              jobs={jobs}
+              onSelectJob={handleSelectJob}
+              onCreateJob={handleCreateJob}
+              onDeleteJob={handleDeleteJob}
+            />
+          )
         )}
-        
+
         {currentView === "create" && (
           <JobCreateForm
             initialTitle={activeJob?.title || ""}
@@ -754,7 +726,7 @@ const Index = () => {
             onBack={handleBackToList}
           />
         )}
-        
+
         {currentView === "detail" && activeJob && (
           <JobDetailView
             job={activeJob}
