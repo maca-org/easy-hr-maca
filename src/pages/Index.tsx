@@ -14,7 +14,7 @@ import { useUploadQueue } from "@/hooks/useUploadQueue";
 import { debounce } from "@/lib/utils";
 
 export interface Resume {
-  id: Null;
+  id: string;
   name: string;
   filename: string;
   match: number;
