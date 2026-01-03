@@ -66,10 +66,11 @@ export const UserSubscriptionManager = () => {
     setLoading(true);
     
     try {
-      // 1. Tüm profilleri çek
+      // 1. Sadece HR profillerini çek (account_type = 'hr')
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
+        .eq("account_type", "hr")
         .order("created_at", { ascending: false });
 
       if (profilesError) throw profilesError;
