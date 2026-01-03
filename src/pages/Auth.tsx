@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import logoImage from "@/assets/logo.png";
 import { Building2 } from "lucide-react";
+import { useEnsureProfile } from "@/hooks/useEnsureProfile";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ export default function Auth() {
 
     setLoading(true);
     
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -55,6 +56,25 @@ export default function Auth() {
       toast.error(error.message);
       setLoading(false);
     } else {
+      // Ensure profile exists after login
+      if (data.user) {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        if (!existingProfile) {
+          const companyName = data.user.user_metadata?.company_name || null;
+          await supabase.from('profiles').insert({
+            id: data.user.id,
+            email: data.user.email || '',
+            company_name: companyName,
+            account_type: companyName ? 'hr' : 'candidate',
+            plan_type: 'free'
+          });
+        }
+      }
       toast.success("Signed in successfully!");
       navigate("/jobs");
     }
@@ -102,7 +122,7 @@ export default function Auth() {
     } else {
       toast.success("Account created successfully!");
       // Auto sign in after signup
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -110,7 +130,15 @@ export default function Auth() {
       if (signInError) {
         toast.error("Please sign in with your new account");
         setIsSignUp(false);
-      } else {
+      } else if (signInData.user) {
+        // Create profile for new user
+        await supabase.from('profiles').insert({
+          id: signInData.user.id,
+          email: signInData.user.email || '',
+          company_name: companyName,
+          account_type: 'hr',
+          plan_type: 'free'
+        });
         navigate("/jobs");
       }
       setLoading(false);

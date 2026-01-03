@@ -12,6 +12,7 @@ import type { User } from "@supabase/supabase-js";
 import { extractTextFromPDF } from "@/utils/pdfExtractor";
 import { useUploadQueue } from "@/hooks/useUploadQueue";
 import { debounce } from "@/lib/utils";
+import { useEnsureProfile } from "@/hooks/useEnsureProfile";
 
 export interface Resume {
   id: string;
@@ -54,6 +55,9 @@ const Index = () => {
   const [hasQuestions, setHasQuestions] = useState<boolean>(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const uploadQueue = useUploadQueue();
+  
+  // Ensure profile exists for logged in user
+  const { profile } = useEnsureProfile(user);
 
   const activeJob = jobs.find((job) => job.id === activeJobId);
 
@@ -80,7 +84,7 @@ const Index = () => {
     [user],
   );
 
-  // Check authentication and account type
+  // Check authentication
   useEffect(() => {
     // Set up auth state listener FIRST (prevents deadlock)
     const {
@@ -89,21 +93,7 @@ const Index = () => {
       if (!session) {
         navigate("/");
       } else {
-        // Set user synchronously first
         setUser(session.user);
-
-        // Defer profile check with setTimeout to avoid deadlock
-        setTimeout(async () => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("account_type")
-            .eq("id", session.user.id)
-            .single();
-
-          if (profile?.account_type === "candidate") {
-            navigate("/my-applications");
-          }
-        }, 0);
       }
     });
 
@@ -113,25 +103,18 @@ const Index = () => {
         navigate("/");
         return;
       }
-      // Set user synchronously
       setUser(session.user);
-
-      // Defer profile check
-      setTimeout(async () => {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("account_type")
-          .eq("id", session.user.id)
-          .single();
-
-        if (profile?.account_type === "candidate") {
-          navigate("/my-applications");
-        }
-      }, 0);
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Redirect candidates to their applications page
+  useEffect(() => {
+    if (profile?.account_type === "candidate") {
+      navigate("/my-applications");
+    }
+  }, [profile, navigate]);
 
   // Load jobs from Supabase on mount (filtered by user)
   useEffect(() => {
