@@ -12,9 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Sparkles, Plus, Edit, Trash2, ArrowLeft, Users, FileText, CreditCard, Upload, Image } from "lucide-react";
+import { Sparkles, Plus, Edit, Trash2, ArrowLeft, Users, FileText, CreditCard, Upload, Image, UserCircle } from "lucide-react";
 import { format } from "date-fns";
 import { UserSubscriptionManager } from "@/components/admin/UserSubscriptionManager";
+import { CandidateManager } from "@/components/admin/CandidateManager";
 
 interface Author {
   id: string;
@@ -416,7 +417,7 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="blogs" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-xl grid-cols-4">
             <TabsTrigger value="blogs" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Blogs
@@ -428,6 +429,10 @@ const Admin = () => {
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Subscriptions
+            </TabsTrigger>
+            <TabsTrigger value="candidates" className="flex items-center gap-2">
+              <UserCircle className="h-4 w-4" />
+              Candidates
             </TabsTrigger>
           </TabsList>
 
@@ -806,6 +811,11 @@ const Admin = () => {
           {/* Subscriptions Tab */}
           <TabsContent value="subscriptions">
             <UserSubscriptionManager />
+          </TabsContent>
+
+          {/* Candidates Tab */}
+          <TabsContent value="candidates">
+            <CandidateManager />
           </TabsContent>
         </Tabs>
       </main>
