@@ -14,7 +14,10 @@ import {
   LogOut,
   ExternalLink,
   User,
-  Play
+  Play,
+  Building2,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,12 +42,23 @@ interface Application {
   } | null;
 }
 
+interface RecommendedJob {
+  id: string;
+  title: string | null;
+  description: string;
+  slug: string | null;
+  company_name: string;
+  created_at: string;
+}
+
 const MyApplications = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [recommendedJobs, setRecommendedJobs] = useState<RecommendedJob[]>([]);
+  const [applyingToJob, setApplyingToJob] = useState<string | null>(null);
 
   // Auth state listener
   useEffect(() => {
@@ -154,8 +168,131 @@ const MyApplications = () => {
 
     if (user) {
       fetchApplications();
+      fetchRecommendedJobs();
     }
   }, [user]);
+
+  // Fetch recommended jobs
+  const fetchRecommendedJobs = async () => {
+    if (!user) return;
+    
+    try {
+      // Get user's existing applications to exclude
+      const { data: userApps } = await supabase
+        .from('candidates')
+        .select('job_id')
+        .eq('applicant_user_id', user.id);
+      
+      const excludeJobIds = userApps?.map(app => app.job_id) || [];
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-open-jobs`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ excludeJobIds }),
+        }
+      );
+      
+      if (response.ok) {
+        const jobs = await response.json();
+        setRecommendedJobs(jobs.slice(0, 5)); // Show max 5 recommendations
+      }
+    } catch (error) {
+      console.error('Error fetching recommended jobs:', error);
+    }
+  };
+
+  // Quick apply to a job
+  const handleQuickApply = async (job: RecommendedJob) => {
+    if (!user) return;
+    
+    setApplyingToJob(job.id);
+    
+    try {
+      // Get user's profile for name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_name')
+        .eq('id', user.id)
+        .single();
+      
+      // Create a candidate record for this job
+      const { error } = await supabase
+        .from('candidates')
+        .insert({
+          job_id: job.id,
+          applicant_user_id: user.id,
+          user_id: job.id, // This will be the job owner's user_id, we'll update it
+          name: user.user_metadata?.name || user.email?.split('@')[0] || 'Candidate',
+          email: user.email || '',
+          cv_rate: 0,
+          application_source: 'self_applied',
+          applied_at: new Date().toISOString()
+        });
+      
+      if (error) {
+        console.error('Apply error:', error);
+        toast.error('Failed to apply. Please try again.');
+      } else {
+        toast.success(`Applied to ${job.title || 'the job'}!`);
+        // Refresh both lists
+        fetchRecommendedJobs();
+        // Trigger applications refresh
+        const { data: candidatesData } = await supabase
+          .from('candidates')
+          .select(`
+            id,
+            name,
+            email,
+            cv_rate,
+            applied_at,
+            assessment_sent,
+            assessment_sent_at,
+            assessment_due_date,
+            completed_test,
+            test_completed_at,
+            test_result,
+            job_id
+          `)
+          .eq('applicant_user_id', user.id)
+          .order('applied_at', { ascending: false });
+        
+        if (candidatesData) {
+          const jobIds = [...new Set(candidatesData.map(c => c.job_id))];
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-candidate-jobs`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ jobIds }),
+            }
+          );
+          
+          let jobsMap: Record<string, any> = {};
+          if (response.ok) {
+            const jobsData = await response.json();
+            jobsMap = (jobsData || []).reduce((acc: Record<string, any>, job: any) => {
+              acc[job.id] = job;
+              return acc;
+            }, {});
+          }
+          
+          const applicationsWithJobs: Application[] = candidatesData.map(candidate => ({
+            ...candidate,
+            job_openings: jobsMap[candidate.job_id] || null
+          }));
+          
+          setApplications(applicationsWithJobs);
+        }
+      }
+    } catch (error) {
+      console.error('Quick apply error:', error);
+      toast.error('Failed to apply. Please try again.');
+    } finally {
+      setApplyingToJob(null);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -353,6 +490,59 @@ const MyApplications = () => {
                 </Card>
               );
             })}
+          </div>
+        )}
+
+        {/* Recommended Jobs Section */}
+        {recommendedJobs.length > 0 && (
+          <div className="space-y-4 pt-6 border-t border-border">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold">Recommended Jobs</h2>
+            </div>
+            <p className="text-sm text-muted-foreground -mt-2">
+              Explore more opportunities and apply with one click
+            </p>
+            
+            <div className="grid gap-3">
+              {recommendedJobs.map((job) => (
+                <Card key={job.id} className="hover:border-primary/50 transition-colors">
+                  <CardContent className="py-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm text-muted-foreground truncate">
+                            {job.company_name}
+                          </span>
+                        </div>
+                        <h3 className="font-medium mt-1 truncate">
+                          {job.title || 'Untitled Position'}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
+                          {job.description.substring(0, 100)}...
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleQuickApply(job)}
+                        disabled={applyingToJob === job.id}
+                        className="shrink-0 gap-1"
+                      >
+                        {applyingToJob === job.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            Apply
+                            <ArrowRight className="w-3 h-3" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         )}
 
