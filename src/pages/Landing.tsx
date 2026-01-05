@@ -86,6 +86,50 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Hidden SEO/AI Crawler Content - Not visible to users */}
+      <div style={{ display: 'none' }}>
+        <h1>CandidateAssess – AI-Powered Candidate Assessment Platform</h1>
+        <p>
+          CandidateAssess is an AI-powered hiring and candidate assessment platform designed for HR teams, 
+          recruiters, and hiring managers. It streamlines the recruitment process by enabling users to 
+          create job postings, automatically generate role-specific assessments, and evaluate candidates 
+          using AI-driven analysis.
+        </p>
+        <h2>Target Audience</h2>
+        <p>
+          HR professionals, recruiters, hiring managers, startups, small businesses, and enterprises 
+          looking to simplify and accelerate their hiring process.
+        </p>
+        <h2>Core Features</h2>
+        <ul>
+          <li>Create unlimited job postings with detailed role descriptions</li>
+          <li>AI-generated role-specific assessments and interview questions</li>
+          <li>Automated CV analysis and candidate scoring</li>
+          <li>Send assessments directly to candidates via email</li>
+          <li>Real-time candidate ranking and comparison</li>
+          <li>Offer letter generation and management</li>
+          <li>Candidate dashboard for application tracking</li>
+        </ul>
+        <h2>How It Works</h2>
+        <ol>
+          <li>Create a job posting with your requirements</li>
+          <li>Share the application link with candidates</li>
+          <li>Candidates apply and complete AI-generated assessments</li>
+          <li>Review ranked candidates and make data-driven hiring decisions</li>
+        </ol>
+        <h2>Pricing</h2>
+        <p>
+          Free plan includes 25 candidates per month. Paid plans start at $29/month for 100 candidates, 
+          $79/month for 250 candidates (Pro), and $199/month for 1000 candidates (Business).
+        </p>
+        <h2>Problem Solved</h2>
+        <p>
+          Traditional hiring is time-consuming, subjective, and often relies on gut feelings. 
+          CandidateAssess eliminates guesswork by providing objective, AI-powered candidate evaluations, 
+          saving time and improving hiring quality.
+        </p>
+      </div>
+
       {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -94,7 +138,7 @@ const Landing = () => {
             <span className="text-xl font-semibold text-foreground">Candidate Assess</span>
           </div>
           
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-8" aria-label="Main navigation">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
               Features
             </a>
@@ -149,8 +193,10 @@ const Landing = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 md:py-28 overflow-hidden">
+      {/* Main Content */}
+      <main>
+        {/* Hero Section */}
+        <section aria-label="Hero" className="container mx-auto px-4 py-20 md:py-28 overflow-hidden">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
             <div className="fade-in-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
@@ -221,8 +267,8 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" ref={featuresRef} className="container mx-auto px-4 py-24">
+        {/* Features Section */}
+        <section id="features" ref={featuresRef} aria-label="Features and how it works" className="container mx-auto px-4 py-24">
         <ScrollReveal direction="up">
           <div className="text-center space-y-4 mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground">
@@ -234,30 +280,30 @@ const Landing = () => {
           </div>
         </ScrollReveal>
 
-        <HowItWorks />
-      </section>
+          <HowItWorks />
+        </section>
 
-      {/* Customer Success Stories */}
-      <section className="container mx-auto px-4">
-        <ScrollReveal direction="up">
-          <CustomerStories />
-        </ScrollReveal>
-      </section>
+        {/* Customer Success Stories */}
+        <section aria-label="Customer testimonials" className="container mx-auto px-4">
+          <ScrollReveal direction="up">
+            <CustomerStories />
+          </ScrollReveal>
+        </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="container mx-auto px-4 py-24">
-        <ScrollReveal direction="up">
-          <div className="text-center space-y-4 mb-6">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-              Pricing that doesn't overthink.
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Start free. Upgrade only when you need more candidate analysis.
-            </p>
-          </div>
-        </ScrollReveal>
+        {/* Pricing Section */}
+        <section id="pricing" aria-label="Pricing plans" className="container mx-auto px-4 py-24">
+          <ScrollReveal direction="up">
+            <div className="text-center space-y-4 mb-6">
+              <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+                Pricing that doesn't overthink.
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                Start free. Upgrade only when you need more candidate analysis.
+              </p>
+            </div>
+          </ScrollReveal>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mt-16">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mt-16">
           {/* Free Plan */}
           <ScrollReveal direction="up" delay={0}>
             <Card className="group hover-glow border-border/50 rounded-3xl bg-card/50 hover:border-border h-full">
@@ -428,203 +474,204 @@ const Landing = () => {
               </CardContent>
             </Card>
           </ScrollReveal>
-        </div>
-
-        <div className="text-center mt-8">
-          <p className="text-sm text-muted-foreground">
-            Questions about pricing? Contact us at{" "}
-            <a href="mailto:sales@candidateassess.com" className="text-primary hover:underline">
-              sales@candidateassess.com
-            </a>
-          </p>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section id="about" className="container mx-auto px-4 py-24">
-        <ScrollReveal direction="scale">
-          <div className="max-w-3xl mx-auto text-center space-y-8">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-              About us
-            </h2>
-            
-            <div className="space-y-6 text-lg text-muted-foreground leading-relaxed">
-              <p>
-                We built Candidate Assess because hiring should be simple. 
-                Not spreadsheets. Not guesswork. Just clarity.
-              </p>
-              <p>
-                We're a small team obsessed with making hiring feel less like a chore 
-                and more like finding the perfect puzzle piece.
-              </p>
-            </div>
           </div>
-        </ScrollReveal>
 
-        <ScrollReveal direction="up" delay={0.2}>
-          <TeamSection />
-        </ScrollReveal>
-      </section>
-
-      {/* Support Section */}
-      <section id="support" className="container mx-auto px-4 py-24">
-        <ScrollReveal direction="up">
-          <div className="text-center space-y-4 mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-              We're here to help
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Get the support you need, when you need it.
+          <div className="text-center mt-8">
+            <p className="text-sm text-muted-foreground">
+              Questions about pricing? Contact us at{" "}
+              <a href="mailto:sales@candidateassess.com" className="text-primary hover:underline">
+                sales@candidateassess.com
+              </a>
             </p>
           </div>
-        </ScrollReveal>
+        </section>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          <ScrollReveal direction="left" delay={0.1}>
-            <Card className="hover-lift border-border/50 rounded-3xl bg-card/50 h-full">
-              <CardContent className="p-8 space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center">
-                  <Mail className="w-7 h-7 text-primary" />
-                </div>
-                
-                <h3 className="text-xl font-semibold text-foreground">Email Support</h3>
-                <p className="text-muted-foreground">
-                  Have a question? We're here to help.
+        {/* About Section */}
+        <section id="about" aria-label="About us" className="container mx-auto px-4 py-24">
+          <ScrollReveal direction="scale">
+            <div className="max-w-3xl mx-auto text-center space-y-8">
+              <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+                About us
+              </h2>
+              
+              <div className="space-y-6 text-lg text-muted-foreground leading-relaxed">
+                <p>
+                  We built Candidate Assess because hiring should be simple. 
+                  Not spreadsheets. Not guesswork. Just clarity.
                 </p>
-                <a href="mailto:support@candidateassess.com" className="text-primary hover:underline font-medium inline-block">
-                  support@candidateassess.com
-                </a>
-              </CardContent>
-            </Card>
+                <p>
+                  We're a small team obsessed with making hiring feel less like a chore 
+                  and more like finding the perfect puzzle piece.
+                </p>
+              </div>
+            </div>
           </ScrollReveal>
 
-          <ScrollReveal direction="right" delay={0.2}>
-            <Card className="hover-lift border-border/50 rounded-3xl bg-card/50 h-full">
-              <CardContent className="p-8 space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink/20 to-primary/20 flex items-center justify-center">
-                  <HelpCircle className="w-7 h-7 text-pink" />
-                </div>
-                
-                <h3 className="text-xl font-semibold text-foreground">Docs & FAQ</h3>
-                <p className="text-muted-foreground">
-                  Find answers to common questions.
-                </p>
-                <span className="text-muted-foreground/70 font-medium inline-block">
-                  Coming soon
-                </span>
-              </CardContent>
-            </Card>
+          <ScrollReveal direction="up" delay={0.2}>
+            <TeamSection />
           </ScrollReveal>
-        </div>
-      </section>
+        </section>
 
-      {/* Latest Blog Posts Section */}
-      {latestPosts.length > 0 && (
-        <section className="container mx-auto px-4 py-24">
+        {/* Support Section */}
+        <section id="support" aria-label="Support and contact" className="container mx-auto px-4 py-24">
           <ScrollReveal direction="up">
             <div className="text-center space-y-4 mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-                Latest from our Blog
+                We're here to help
               </h2>
               <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                Insights and tips to help you hire smarter.
+                Get the support you need, when you need it.
               </p>
             </div>
           </ScrollReveal>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {latestPosts.map((post, index) => (
-              <ScrollReveal key={post.id} direction="up" delay={index * 0.1}>
-                <Link to={`/blog/${post.slug}`}>
-                  <Card className="group hover-glow border-border/50 bg-card/50 rounded-3xl overflow-hidden h-full">
-                    {post.featured_image_url && (
-                      <div className="aspect-video overflow-hidden">
-                        <img
-                          src={post.featured_image_url}
-                          alt={post.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-                    )}
-                    <CardContent className="p-6 space-y-4">
-                      {post.category && (
-                        <Badge variant="secondary" className="rounded-full">
-                          {post.category}
-                        </Badge>
-                      )}
-                      
-                      <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                        {post.title}
-                      </h3>
-                      
-                      {post.excerpt && (
-                        <p className="text-muted-foreground text-sm line-clamp-2">
-                          {post.excerpt}
-                        </p>
-                      )}
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            <ScrollReveal direction="left" delay={0.1}>
+              <Card className="hover-lift border-border/50 rounded-3xl bg-card/50 h-full">
+                <CardContent className="p-8 space-y-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center">
+                    <Mail className="w-7 h-7 text-primary" />
+                  </div>
+                  
+                  <h3 className="text-xl font-semibold text-foreground">Email Support</h3>
+                  <p className="text-muted-foreground">
+                    Have a question? We're here to help.
+                  </p>
+                  <a href="mailto:support@candidateassess.com" className="text-primary hover:underline font-medium inline-block">
+                    support@candidateassess.com
+                  </a>
+                </CardContent>
+              </Card>
+            </ScrollReveal>
 
-                      <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground">
-                        {post.authors && (
-                          <div className="flex items-center gap-1">
-                            <User className="h-4 w-4" />
-                            <span>{post.authors.first_name} {post.authors.last_name}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{format(new Date(post.published_at || post.created_at), "MMM d")}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 text-primary text-sm font-medium group-hover:gap-2 transition-all">
-                        Read more
-                        <ArrowRight className="h-4 w-4" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </ScrollReveal>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link to="/blog">
-              <Button variant="outline" className="rounded-full px-8 gap-2">
-                View all articles
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
+            <ScrollReveal direction="right" delay={0.2}>
+              <Card className="hover-lift border-border/50 rounded-3xl bg-card/50 h-full">
+                <CardContent className="p-8 space-y-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink/20 to-primary/20 flex items-center justify-center">
+                    <HelpCircle className="w-7 h-7 text-pink" />
+                  </div>
+                  
+                  <h3 className="text-xl font-semibold text-foreground">Docs & FAQ</h3>
+                  <p className="text-muted-foreground">
+                    Find answers to common questions.
+                  </p>
+                  <span className="text-muted-foreground/70 font-medium inline-block">
+                    Coming soon
+                  </span>
+                </CardContent>
+              </Card>
+            </ScrollReveal>
           </div>
         </section>
-      )}
 
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-24">
-        <ScrollReveal direction="scale">
-          <div className="max-w-4xl mx-auto">
-            <Card className="bg-gradient-to-r from-primary via-primary/95 to-pink border-0 overflow-hidden rounded-3xl">
-              <CardContent className="p-12 md:p-16 text-center space-y-6">
-                <h2 className="text-3xl md:text-5xl font-bold text-primary-foreground">
-                  Ready to hire smarter?
+        {/* Latest Blog Posts Section */}
+        {latestPosts.length > 0 && (
+          <section aria-label="Latest blog posts" className="container mx-auto px-4 py-24">
+            <ScrollReveal direction="up">
+              <div className="text-center space-y-4 mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+                  Latest from our Blog
                 </h2>
-                <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto">
-                  Join hundreds of teams who trust Candidate Assess for their hiring.
+                <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                  Insights and tips to help you hire smarter.
                 </p>
-                <div className="flex flex-wrap gap-4 justify-center pt-4">
-                  <Link to="/auth">
-                    <Button size="lg" variant="secondary" className="btn-glow bg-background text-foreground hover:bg-background/90 rounded-full px-8 h-12 font-medium shadow-lg">
-                      Get Started Free
-                    </Button>
+              </div>
+            </ScrollReveal>
+
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {latestPosts.map((post, index) => (
+                <ScrollReveal key={post.id} direction="up" delay={index * 0.1}>
+                  <Link to={`/blog/${post.slug}`}>
+                    <Card className="group hover-glow border-border/50 bg-card/50 rounded-3xl overflow-hidden h-full">
+                      {post.featured_image_url && (
+                        <div className="aspect-video overflow-hidden">
+                          <img
+                            src={post.featured_image_url}
+                            alt={post.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                      )}
+                      <CardContent className="p-6 space-y-4">
+                        {post.category && (
+                          <Badge variant="secondary" className="rounded-full">
+                            {post.category}
+                          </Badge>
+                        )}
+                        
+                        <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                          {post.title}
+                        </h3>
+                        
+                        {post.excerpt && (
+                          <p className="text-muted-foreground text-sm line-clamp-2">
+                            {post.excerpt}
+                          </p>
+                        )}
+
+                        <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground">
+                          {post.authors && (
+                            <div className="flex items-center gap-1">
+                              <User className="h-4 w-4" />
+                              <span>{post.authors.first_name} {post.authors.last_name}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>{format(new Date(post.published_at || post.created_at), "MMM d")}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 text-primary text-sm font-medium group-hover:gap-2 transition-all">
+                          Read more
+                          <ArrowRight className="h-4 w-4" />
+                        </div>
+                      </CardContent>
+                    </Card>
                   </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </ScrollReveal>
-      </section>
+                </ScrollReveal>
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <Link to="/blog">
+                <Button variant="outline" className="rounded-full px-8 gap-2">
+                  View all articles
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {/* CTA Section */}
+        <section aria-label="Call to action" className="container mx-auto px-4 py-24">
+          <ScrollReveal direction="scale">
+            <div className="max-w-4xl mx-auto">
+              <Card className="bg-gradient-to-r from-primary via-primary/95 to-pink border-0 overflow-hidden rounded-3xl">
+                <CardContent className="p-12 md:p-16 text-center space-y-6">
+                  <h2 className="text-3xl md:text-5xl font-bold text-primary-foreground">
+                    Ready to hire smarter?
+                  </h2>
+                  <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto">
+                    Join hundreds of teams who trust Candidate Assess for their hiring.
+                  </p>
+                  <div className="flex flex-wrap gap-4 justify-center pt-4">
+                    <Link to="/auth">
+                      <Button size="lg" variant="secondary" className="btn-glow bg-background text-foreground hover:bg-background/90 rounded-full px-8 h-12 font-medium shadow-lg">
+                        Get Started Free
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </ScrollReveal>
+        </section>
+      </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 bg-background/50">
+      <footer className="border-t border-border/50 bg-background/50" role="contentinfo">
         <div className="container mx-auto px-4 py-12">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
@@ -634,7 +681,7 @@ const Landing = () => {
               <span className="text-lg font-semibold text-foreground">Candidate Assess</span>
             </div>
 
-            <nav className="flex items-center gap-8 text-sm">
+            <nav className="flex items-center gap-8 text-sm" aria-label="Footer navigation">
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
                 Features
               </a>
