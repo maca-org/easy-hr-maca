@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Quote, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRef } from "react";
+import { Quote } from "lucide-react";
 
 const testimonials = [
   {
@@ -35,39 +35,13 @@ const testimonials = [
 ];
 
 export const CustomerStories = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  // Auto-slide every 5 seconds
-  useEffect(() => {
-    if (isPaused) return;
-    
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [isPaused]);
-
-  const goToPrev = () => {
-    setActiveIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-  };
-
-  const goToNext = () => {
-    setActiveIndex((prev) => (prev + 1) % testimonials.length);
-  };
-
-  const current = testimonials[activeIndex];
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div 
-      className="relative py-16 px-4"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
-      <div className="max-w-4xl mx-auto">
+    <div className="relative py-16">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-10 px-4">
           <p className="text-sm font-medium text-primary uppercase tracking-wider mb-2">
             Customer Success Stories
           </p>
@@ -76,61 +50,45 @@ export const CustomerStories = () => {
           </h3>
         </div>
 
-        {/* Testimonial Card */}
-        <div className="relative">
-          {/* Navigation Arrows */}
-          <button
-            onClick={goToPrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 w-10 h-10 rounded-full bg-muted/80 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors z-10"
-            aria-label="Previous testimonial"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          
-          <button
-            onClick={goToNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 w-10 h-10 rounded-full bg-muted/80 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors z-10"
-            aria-label="Next testimonial"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-
-          {/* Card */}
-          <div 
-            key={activeIndex}
-            className="bg-gradient-to-br from-muted/30 to-muted/10 border border-border/50 rounded-3xl p-8 md:p-12 text-center animate-fade-in"
-          >
-            <Quote className="w-10 h-10 text-primary/30 mx-auto mb-6" />
-            
-            <blockquote className="text-xl md:text-2xl text-foreground font-medium leading-relaxed mb-8 max-w-2xl mx-auto">
-              "{current.quote}"
-            </blockquote>
-            
-            <div className="space-y-1">
-              <p className="text-lg font-semibold text-foreground">
-                {current.name}
-              </p>
-              <p className="text-muted-foreground">
-                {current.title} at <span className="text-primary">{current.company}</span>
-              </p>
+        {/* Horizontal Scroll Container */}
+        <div 
+          ref={scrollContainerRef}
+          className="flex gap-6 overflow-x-auto pb-6 px-4 snap-x snap-mandatory scrollbar-hide"
+          style={{
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
+          {testimonials.map((testimonial, index) => (
+            <div
+              key={index}
+              className="flex-shrink-0 w-[320px] md:w-[400px] snap-center"
+            >
+              <div className="bg-gradient-to-br from-muted/30 to-muted/10 border border-border/50 rounded-3xl p-6 md:p-8 h-full flex flex-col">
+                <Quote className="w-8 h-8 text-primary/30 mb-4 flex-shrink-0" />
+                
+                <blockquote className="text-lg text-foreground font-medium leading-relaxed mb-6 flex-1">
+                  "{testimonial.quote}"
+                </blockquote>
+                
+                <div className="space-y-1 mt-auto">
+                  <p className="text-base font-semibold text-foreground">
+                    {testimonial.name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {testimonial.title} at <span className="text-primary">{testimonial.company}</span>
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
 
-        {/* Dots Navigation */}
-        <div className="flex items-center justify-center gap-2 mt-8">
-          {testimonials.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setActiveIndex(index)}
-              className={`transition-all duration-300 rounded-full ${
-                index === activeIndex 
-                  ? "w-8 h-2 bg-primary" 
-                  : "w-2 h-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-              }`}
-              aria-label={`Go to testimonial ${index + 1}`}
-            />
-          ))}
+        {/* Scroll Hint */}
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <div className="text-xs text-muted-foreground">
+            ← Scroll to see more →
+          </div>
         </div>
       </div>
     </div>
