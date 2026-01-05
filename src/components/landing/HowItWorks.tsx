@@ -38,116 +38,148 @@ const steps = [
 
 export const HowItWorks = () => {
   const [activeStep, setActiveStep] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Auto-slide every 2.5 seconds
+  // Scroll-based step change using Intersection Observer
   useEffect(() => {
-    if (isPaused) return;
-    
-    const interval = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % steps.length);
-    }, 2500);
-    
-    return () => clearInterval(interval);
-  }, [isPaused]);
+    const observers: IntersectionObserver[] = [];
 
-  const currentStep = steps[activeStep];
-  const StepIcon = currentStep.icon;
+    stepRefs.current.forEach((ref, index) => {
+      if (!ref) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+              setActiveStep(index);
+            }
+          });
+        },
+        {
+          threshold: 0.6,
+          rootMargin: "-20% 0px -20% 0px",
+        }
+      );
+
+      observer.observe(ref);
+      observers.push(observer);
+    });
+
+    return () => {
+      observers.forEach((observer) => observer.disconnect());
+    };
+  }, []);
+
+  const scrollToStep = (index: number) => {
+    stepRefs.current[index]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  };
 
   return (
-    <div 
-      ref={sectionRef}
-      className="relative"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
+    <div ref={containerRef} className="relative">
       {/* Sticky Toolbar */}
-      <div className="flex items-center justify-center gap-2 md:gap-4 mb-12">
-        {steps.map((step, index) => (
-          <button
-            key={step.id}
-            onClick={() => setActiveStep(index)}
-            className={`
-              relative px-4 md:px-6 py-3 rounded-full font-medium text-sm md:text-base
-              transition-all duration-300 ease-out overflow-hidden
-              ${activeStep === index 
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105" 
-                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-              }
-            `}
-          >
-            {activeStep === index && (
-              <span className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-pink opacity-20 animate-pulse" style={{ animationDuration: "2s" }} />
-            )}
-            <span className="relative z-10">{step.title}</span>
-          </button>
-        ))}
+      <div className="sticky top-20 z-30 bg-background/80 backdrop-blur-md py-4 -mx-4 px-4 mb-8">
+        <div className="flex items-center justify-center gap-2 md:gap-4">
+          {steps.map((step, index) => (
+            <button
+              key={step.id}
+              onClick={() => scrollToStep(index)}
+              className={`
+                relative px-4 md:px-6 py-3 rounded-full font-medium text-sm md:text-base
+                transition-all duration-300 ease-out overflow-hidden
+                ${activeStep === index 
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105" 
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }
+              `}
+            >
+              {activeStep === index && (
+                <span className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-pink opacity-20 animate-pulse" style={{ animationDuration: "2s" }} />
+              )}
+              <span className="relative z-10">{step.title}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Progress Bar */}
+        <div className="flex items-center justify-center gap-2 mt-4">
+          {steps.map((_, index) => (
+            <div
+              key={index}
+              className={`h-1 rounded-full transition-all duration-500 ${
+                index === activeStep 
+                  ? "w-8 bg-primary" 
+                  : index < activeStep 
+                    ? "w-4 bg-primary/50" 
+                    : "w-4 bg-muted"
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="flex items-center justify-center gap-2 mb-8">
-        {steps.map((_, index) => (
-          <div
-            key={index}
-            className={`h-1 rounded-full transition-all duration-500 ${
-              index === activeStep 
-                ? "w-8 bg-primary" 
-                : index < activeStep 
-                  ? "w-4 bg-primary/50" 
-                  : "w-4 bg-muted"
-            }`}
-          />
-        ))}
-      </div>
+      {/* Scrollable Steps */}
+      <div className="space-y-24 md:space-y-32">
+        {steps.map((step, index) => {
+          const StepIcon = step.icon;
+          return (
+            <div
+              key={step.id}
+              ref={(el) => (stepRefs.current[index] = el)}
+              className="scroll-mt-40"
+            >
+              <div className="max-w-5xl mx-auto">
+                <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+                  {/* Visual Mockup */}
+                  <div className={`${index % 2 === 0 ? "md:order-1" : "md:order-2"}`}>
+                    <div className={`
+                      relative aspect-[4/3] rounded-3xl overflow-hidden
+                      bg-gradient-to-br ${step.color}
+                      p-1 shadow-2xl shadow-primary/20
+                      transition-all duration-500
+                      ${activeStep === index ? "scale-100 opacity-100" : "scale-95 opacity-70"}
+                    `}>
+                      <div className="absolute inset-1 rounded-[20px] bg-background/95 backdrop-blur-sm p-6 md:p-8">
+                        {index === 0 && <CreateMockup />}
+                        {index === 1 && <ShareMockup />}
+                        {index === 2 && <AssessMockup />}
+                        {index === 3 && <HireMockup />}
+                      </div>
+                    </div>
+                  </div>
 
-      {/* Content Area */}
-      <div className="max-w-5xl mx-auto">
-        <div 
-          key={activeStep}
-          className="grid md:grid-cols-2 gap-8 md:gap-12 items-center animate-fade-in"
-        >
-          {/* Visual Mockup */}
-          <div className="order-2 md:order-1">
-            <div className={`
-              relative aspect-[4/3] rounded-3xl overflow-hidden
-              bg-gradient-to-br ${currentStep.color}
-              p-1 shadow-2xl shadow-primary/20
-            `}>
-              <div className="absolute inset-1 rounded-[20px] bg-background/95 backdrop-blur-sm p-6 md:p-8">
-                {/* Mockup Content based on step */}
-                {activeStep === 0 && <CreateMockup />}
-                {activeStep === 1 && <ShareMockup />}
-                {activeStep === 2 && <AssessMockup />}
-                {activeStep === 3 && <HireMockup />}
+                  {/* Text Content */}
+                  <div className={`space-y-6 text-center md:text-left ${index % 2 === 0 ? "md:order-2" : "md:order-1"}`}>
+                    <div className={`
+                      inline-flex items-center justify-center w-16 h-16 rounded-2xl
+                      bg-gradient-to-br ${step.color}
+                      shadow-lg transition-transform duration-500
+                      ${activeStep === index ? "scale-100" : "scale-90"}
+                    `}>
+                      <StepIcon className="w-8 h-8 text-primary-foreground" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-primary uppercase tracking-wider">
+                        Step {index + 1} of {steps.length}
+                      </p>
+                      <h3 className="text-3xl md:text-4xl font-bold text-foreground">
+                        {step.subtitle}
+                      </h3>
+                    </div>
+                    
+                    <p className="text-lg text-muted-foreground leading-relaxed max-w-md mx-auto md:mx-0">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Text Content */}
-          <div className="order-1 md:order-2 space-y-6 text-center md:text-left">
-            <div className={`
-              inline-flex items-center justify-center w-16 h-16 rounded-2xl
-              bg-gradient-to-br ${currentStep.color}
-              shadow-lg
-            `}>
-              <StepIcon className="w-8 h-8 text-primary-foreground" />
-            </div>
-            
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-primary uppercase tracking-wider">
-                Step {activeStep + 1} of {steps.length}
-              </p>
-              <h3 className="text-3xl md:text-4xl font-bold text-foreground">
-                {currentStep.subtitle}
-              </h3>
-            </div>
-            
-            <p className="text-lg text-muted-foreground leading-relaxed max-w-md mx-auto md:mx-0">
-              {currentStep.description}
-            </p>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );
