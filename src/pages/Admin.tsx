@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Sparkles, Plus, Edit, Trash2, ArrowLeft, Users, FileText, CreditCard, Upload, Image, UserCircle } from "lucide-react";
+import { Sparkles, Plus, Edit, Trash2, ArrowLeft, Users, FileText, CreditCard, Upload, Image, UserCircle, Bold, Italic, Link2, Heading2, List } from "lucide-react";
 import { format } from "date-fns";
 import { UserSubscriptionManager } from "@/components/admin/UserSubscriptionManager";
 import { CandidateManager } from "@/components/admin/CandidateManager";
@@ -79,6 +79,7 @@ const Admin = () => {
   const [uploadingAuthorAvatar, setUploadingAuthorAvatar] = useState(false);
   const featuredImageInputRef = useRef<HTMLInputElement>(null);
   const authorAvatarInputRef = useRef<HTMLInputElement>(null);
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     checkAdminStatus();
@@ -384,6 +385,27 @@ const Admin = () => {
     setBlogDialogOpen(true);
   };
 
+  // Markdown toolbar helper
+  const insertMarkdown = (before: string, after: string) => {
+    const textarea = contentTextareaRef.current;
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = blogForm.content;
+    const selectedText = text.substring(start, end) || 'text';
+    const newText = text.substring(0, start) + before + selectedText + after + text.substring(end);
+    
+    setBlogForm({ ...blogForm, content: newText });
+    
+    // Restore focus and selection after state update
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + before.length + selectedText.length + after.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -521,8 +543,61 @@ const Admin = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="content">Content *</Label>
+                      <div className="flex gap-1 mb-2 p-1 bg-muted/50 rounded-md w-fit">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => insertMarkdown('**', '**')}
+                          className="h-8 w-8 p-0"
+                          title="Bold"
+                        >
+                          <Bold className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => insertMarkdown('*', '*')}
+                          className="h-8 w-8 p-0"
+                          title="Italic"
+                        >
+                          <Italic className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => insertMarkdown('[', '](url)')}
+                          className="h-8 w-8 p-0"
+                          title="Link"
+                        >
+                          <Link2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => insertMarkdown('\n## ', '\n')}
+                          className="h-8 w-8 p-0"
+                          title="Heading"
+                        >
+                          <Heading2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => insertMarkdown('\n- ', '\n')}
+                          className="h-8 w-8 p-0"
+                          title="List"
+                        >
+                          <List className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <Textarea
                         id="content"
+                        ref={contentTextareaRef}
                         value={blogForm.content}
                         onChange={(e) => setBlogForm({ ...blogForm, content: e.target.value })}
                         placeholder="Blog content (supports markdown)"

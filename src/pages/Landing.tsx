@@ -5,6 +5,7 @@ import { Sparkles, CheckCircle, Mail, HelpCircle, Zap, Send, ClipboardCheck, Tar
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { InteractiveDemo } from "@/components/landing/InteractiveDemo";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import logoImage from "@/assets/logo.png";
@@ -210,84 +211,9 @@ const Landing = () => {
             </p>
           </div>
 
-          {/* Hero Visual - Glassmorphism UI Mockup */}
-          {/* Hero Visual - Glassmorphism UI Mockup */}
+          {/* Hero Visual - Interactive Demo */}
           <div className="relative slide-in-right">
-            <div className="absolute inset-0 gradient-bg rounded-[2.5rem] blur-3xl opacity-60" />
-            <div className="relative glass rounded-[2rem] p-8 animate-float">
-              <div className="space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse-soft" />
-                    <span className="text-foreground font-semibold">Senior Frontend Developer</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">Active</span>
-                </div>
-
-                {/* Assessment Status */}
-                <div className="flex items-center gap-2 text-sm">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  <span className="text-muted-foreground">Assessment generated</span>
-                  <span className="text-primary">✨</span>
-                </div>
-
-                {/* Candidate Scores */}
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-pink flex items-center justify-center text-primary-foreground text-sm font-medium">
-                      JD
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-foreground">John Doe</span>
-                        <span className="text-sm font-semibold text-primary">92%</span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-primary to-pink rounded-full" style={{ width: "92%" }} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink to-primary/70 flex items-center justify-center text-primary-foreground text-sm font-medium">
-                      SA
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-foreground">Sarah Anderson</span>
-                        <span className="text-sm font-semibold text-primary">87%</span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-primary to-pink rounded-full" style={{ width: "87%" }} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/60 to-pink/60 flex items-center justify-center text-primary-foreground text-sm font-medium">
-                      MK
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-foreground">Mike Kim</span>
-                        <span className="text-sm font-semibold text-muted-foreground">74%</span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-muted-foreground/50 to-muted-foreground/30 rounded-full" style={{ width: "74%" }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action hint */}
-                <div className="pt-4 border-t border-border/50">
-                  <p className="text-xs text-muted-foreground text-center">
-                    3 candidates assessed • 1 ready to interview
-                  </p>
-                </div>
-              </div>
-            </div>
+            <InteractiveDemo />
           </div>
         </div>
       </section>

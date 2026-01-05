@@ -31,7 +31,7 @@ function isCrawler(userAgent: string): boolean {
 function generateOGHtml(job: { title: string; description: string; id: string; slug?: string }, baseUrl: string): string {
   const jobTitle = job.title || 'Job Opening'
   const ogTitle = `Apply Now: ${jobTitle} | Candidate Assess`
-  const ogDescription = `Submit your CV for ${jobTitle}. Apply now through Candidate Assess - AI-Powered Hiring Platform.`
+  const ogDescription = `🚀 We're hiring: ${jobTitle}! Upload your CV and grab this career opportunity.`
   const ogImage = `${baseUrl}/og-image.png`
   const canonicalUrl = job.slug 
     ? `${baseUrl}/apply/${job.slug}` 

@@ -102,13 +102,14 @@ serve(async (req) => {
         break;
       }
 
-      // Fetch candidate with job details
+      // Fetch candidate with job details including cv_file_path
       const { data: candidate, error: candidateError } = await supabaseAdmin
         .from('candidates')
         .select(`
           id, 
           cv_text, 
           cv_rate, 
+          cv_file_path,
           job_id,
           user_id,
           job_openings!inner(title, description)
@@ -133,9 +134,9 @@ serve(async (req) => {
         continue;
       }
 
-      // Skip if no CV text
-      if (!candidate.cv_text) {
-        console.log('No CV text for candidate:', candidateId);
+      // Skip if no CV text AND no cv_file_path
+      if (!candidate.cv_text && !candidate.cv_file_path) {
+        console.log('No CV text or file for candidate:', candidateId);
         continue;
       }
 
@@ -158,18 +159,12 @@ serve(async (req) => {
         const jobData = candidate.job_openings as any;
         const callback_url = `${SUPABASE_URL}/functions/v1/receive-cv-analysis`;
 
-        // Get cv_file_path for signed URL generation
-        const { data: candidateFull } = await supabaseAdmin
-          .from('candidates')
-          .select('cv_file_path')
-          .eq('id', candidateId)
-          .single();
-
+        // Generate signed URL if cv_file_path exists
         let cvSignedUrl = '';
-        if (candidateFull?.cv_file_path) {
+        if (candidate.cv_file_path) {
           const { data: signedUrlData } = await supabaseAdmin.storage
             .from('cvs')
-            .createSignedUrl(candidateFull.cv_file_path, 3600);
+            .createSignedUrl(candidate.cv_file_path, 3600);
           cvSignedUrl = signedUrlData?.signedUrl || '';
         }
 
@@ -180,9 +175,9 @@ serve(async (req) => {
             body: JSON.stringify({
               candidate_id: candidateId,
               job_id: candidate.job_id,
-              cv: '', // Boş - n8n cv_url'den parse edecek
+              cv: candidate.cv_text || '', // Send cv_text if available
               cv_url: cvSignedUrl,
-              cv_file_path: candidateFull?.cv_file_path || '',
+              cv_file_path: candidate.cv_file_path || '',
               job_description: jobData.description,
               job_title: jobData.title,
               callback_url

@@ -31,22 +31,19 @@ export const ShareLinkModal = ({
 
   // Use slug if available, otherwise use jobId
   const linkPath = slug || jobId;
+  // Direct application link - clean URL without Supabase references
   const applicationLink = `${window.location.origin}/apply/${linkPath}`;
-  
-  // OG-friendly link for social media sharing (goes through edge function for crawler detection)
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const ogShareLink = `${supabaseUrl}/functions/v1/og-renderer?job=${linkPath}`;
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(ogShareLink);
+      await navigator.clipboard.writeText(applicationLink);
       setCopied(true);
       toast.success("Link copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback for older browsers
       const textArea = document.createElement("textarea");
-      textArea.value = ogShareLink;
+      textArea.value = applicationLink;
       textArea.style.position = "fixed";
       textArea.style.left = "-9999px";
       document.body.appendChild(textArea);
@@ -116,7 +113,7 @@ export const ShareLinkModal = ({
           <div className="flex gap-2">
             <Input
               readOnly
-              value={ogShareLink}
+              value={applicationLink}
               className="font-mono text-sm"
             />
             <Button
@@ -143,7 +140,7 @@ export const ShareLinkModal = ({
               className="p-4 bg-white rounded-lg shadow-sm"
             >
               <QRCodeSVG
-                value={ogShareLink}
+                value={applicationLink}
                 size={180}
                 level="H"
                 includeMargin
