@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,12 @@ import {
   ArrowRight, 
   CheckCircle, 
   Loader2,
-  Briefcase
+  Briefcase,
+  FileQuestion,
+  Check
 } from "lucide-react";
 
-type DemoStep = 'job' | 'cv' | 'analyzing' | 'ready';
+type DemoStep = 'job' | 'assessment' | 'cv' | 'analyzing' | 'ready';
 
 interface DemoData {
   jobTitle: string;
@@ -23,6 +25,60 @@ interface DemoData {
   cvFileBase64: string;
 }
 
+interface SampleQuestion {
+  question: string;
+  options: string[];
+  correct: number;
+}
+
+const getSampleQuestion = (jobDesc: string): SampleQuestion => {
+  const desc = jobDesc.toLowerCase();
+  
+  if (desc.includes('react') || desc.includes('frontend') || desc.includes('javascript')) {
+    return {
+      question: "Which React hook is best suited for managing complex state logic with multiple sub-values?",
+      options: ["useState", "useReducer", "useContext", "useRef"],
+      correct: 1
+    };
+  } else if (desc.includes('python') || desc.includes('data') || desc.includes('machine learning')) {
+    return {
+      question: "Which Python library is most commonly used for data manipulation and analysis?",
+      options: ["NumPy", "Pandas", "Matplotlib", "Requests"],
+      correct: 1
+    };
+  } else if (desc.includes('java') || desc.includes('backend') || desc.includes('spring')) {
+    return {
+      question: "What design pattern is Spring Framework's dependency injection based on?",
+      options: ["Singleton", "Factory", "Inversion of Control", "Observer"],
+      correct: 2
+    };
+  } else if (desc.includes('marketing') || desc.includes('digital') || desc.includes('social media')) {
+    return {
+      question: "Which metric best indicates the effectiveness of an email marketing campaign?",
+      options: ["Impressions", "Click-through rate", "Bounce rate", "Page views"],
+      correct: 1
+    };
+  } else if (desc.includes('sales') || desc.includes('account') || desc.includes('customer')) {
+    return {
+      question: "What is the most effective approach to handle customer objections?",
+      options: ["Ignore and redirect", "Listen and acknowledge", "Offer discounts", "End the call"],
+      correct: 1
+    };
+  } else if (desc.includes('design') || desc.includes('ui') || desc.includes('ux')) {
+    return {
+      question: "What principle ensures that similar elements are perceived as related?",
+      options: ["Contrast", "Proximity", "Hierarchy", "Balance"],
+      correct: 1
+    };
+  } else {
+    return {
+      question: "What is the most important factor when evaluating a candidate's cultural fit?",
+      options: ["Technical skills", "Years of experience", "Values alignment", "Salary expectations"],
+      correct: 2
+    };
+  }
+};
+
 export const InteractiveDemo = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<DemoStep>('job');
@@ -30,6 +86,8 @@ export const InteractiveDemo = () => {
   const [jobDescription, setJobDescription] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const sampleQuestion = useMemo(() => getSampleQuestion(jobDescription), [jobDescription]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,6 +99,8 @@ export const InteractiveDemo = () => {
   const handleNext = async () => {
     if (step === 'job') {
       if (!jobTitle.trim() || !jobDescription.trim()) return;
+      setStep('assessment');
+    } else if (step === 'assessment') {
       setStep('cv');
     } else if (step === 'cv') {
       if (!cvFile) return;
@@ -119,6 +179,66 @@ export const InteractiveDemo = () => {
               disabled={!jobTitle.trim() || !jobDescription.trim()}
               className="w-full gap-2"
             >
+              Generate Assessment
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* Step: Assessment Ready */}
+        {step === 'assessment' && (
+          <div className="space-y-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Assessment Ready!</h3>
+                <p className="text-xs text-muted-foreground">Step 2: AI generated questions</p>
+              </div>
+            </div>
+
+            <div className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">
+              <span className="font-medium text-foreground">Role:</span> {jobTitle}
+            </div>
+
+            {/* Sample Question */}
+            <div className="bg-background/50 border border-border rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <FileQuestion className="w-4 h-4 text-primary" />
+                Sample Question
+              </div>
+              <p className="text-sm text-foreground">{sampleQuestion.question}</p>
+              <div className="space-y-2">
+                {sampleQuestion.options.map((option, i) => (
+                  <div 
+                    key={i}
+                    className={`flex items-center gap-2 p-2 rounded-lg text-sm ${
+                      i === sampleQuestion.correct 
+                        ? 'bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400' 
+                        : 'bg-muted/30 text-muted-foreground'
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      i === sampleQuestion.correct 
+                        ? 'border-green-500 bg-green-500' 
+                        : 'border-muted-foreground/50'
+                    }`}>
+                      {i === sampleQuestion.correct && <Check className="w-2.5 h-2.5 text-white" />}
+                    </div>
+                    {option}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Questions Summary */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-primary/5 rounded-lg p-3">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span><strong className="text-foreground">15 MCQs</strong> + <strong className="text-foreground">4 open-ended</strong> questions ready!</span>
+            </div>
+
+            <Button onClick={handleNext} className="w-full gap-2">
               Next: Upload CV
               <ArrowRight className="w-4 h-4" />
             </Button>
@@ -134,7 +254,7 @@ export const InteractiveDemo = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-foreground">Upload Resume</h3>
-                <p className="text-xs text-muted-foreground">Step 2: Add a candidate CV</p>
+                <p className="text-xs text-muted-foreground">Step 3: Add a candidate CV</p>
               </div>
             </div>
 
