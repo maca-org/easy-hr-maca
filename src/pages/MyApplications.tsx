@@ -394,157 +394,20 @@ const MyApplications = () => {
           </div>
         </div>
 
-        {/* Applications List */}
-        {applications.length === 0 ? (
-          <Card>
-            <CardContent className="pt-12 pb-12 text-center">
-              <Briefcase className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <h2 className="text-xl font-semibold mb-2">No Applications Yet</h2>
-              <p className="text-muted-foreground mb-6">
-                You haven't applied to any jobs yet. Start exploring opportunities!
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {applications.map((app) => {
-              const status = getApplicationStatus(app);
-              const StatusIcon = status.icon;
-              const canStartAssessment = app.assessment_sent && !app.completed_test;
-
-              return (
-                <Card key={app.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="pt-6">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                      {/* Job Info */}
-                      <div className="flex-1">
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 rounded-lg bg-primary/10">
-                            <Briefcase className="w-5 h-5 text-primary" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg">
-                              {app.job_openings?.title || 'Untitled Position'}
-                            </h3>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                              {app.job_openings?.description?.substring(0, 150)}
-                              {(app.job_openings?.description?.length || 0) > 150 ? '...' : ''}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Meta Info */}
-                        <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            Applied: {formatDate(app.applied_at)}
-                          </div>
-                          {app.cv_rate > 0 && (
-                            <div className="flex items-center gap-1">
-                              <FileText className="w-4 h-4" />
-                              CV Score: {app.cv_rate}%
-                            </div>
-                          )}
-                          {app.test_result !== null && (
-                            <div className="flex items-center gap-1">
-                              <CheckCircle className="w-4 h-4" />
-                              Test Score: {app.test_result}%
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Assessment Button */}
-                        {canStartAssessment && (
-                          <div className="mt-4">
-                            <Button 
-                              onClick={() => navigate(`/assessment/${app.id}`)}
-                              className="gap-2"
-                            >
-                              <Play className="w-4 h-4" />
-                              Start Assessment
-                            </Button>
-                            {app.assessment_due_date && (
-                              <p className="text-xs text-muted-foreground mt-2">
-                                Due by: {formatDate(app.assessment_due_date)}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Status Badge */}
-                      <div className="flex flex-col items-end gap-2">
-                        <Badge variant={status.variant} className="flex items-center gap-1">
-                          <StatusIcon className={`w-3 h-3 ${status.color}`} />
-                          {status.label}
-                        </Badge>
-                        
-                        {app.completed_test && app.test_completed_at && (
-                          <p className="text-xs text-muted-foreground">
-                            Completed: {formatDate(app.test_completed_at)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Recommended Jobs Section */}
-        {recommendedJobs.length > 0 && (
-          <div className="space-y-4 pt-6 border-t border-border">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold">Recommended Jobs</h2>
-            </div>
-            <p className="text-sm text-muted-foreground -mt-2">
-              Explore more opportunities and apply with one click
+        {/* Coming Soon Message */}
+        <Card>
+          <CardContent className="pt-12 pb-12 text-center">
+            <Clock className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Coming Soon</h2>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              The My Applications dashboard is currently under development. 
+              You'll soon be able to track all your job applications here.
             </p>
-            
-            <div className="grid gap-3">
-              {recommendedJobs.map((job) => (
-                <Card key={job.id} className="hover:border-primary/50 transition-colors">
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <span className="text-sm text-muted-foreground truncate">
-                            {job.company_name}
-                          </span>
-                        </div>
-                        <h3 className="font-medium mt-1 truncate">
-                          {job.title || 'Untitled Position'}
-                        </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
-                          {job.description.substring(0, 100)}...
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => handleQuickApply(job)}
-                        disabled={applyingToJob === job.id}
-                        className="shrink-0 gap-1"
-                      >
-                        {applyingToJob === job.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <>
-                            Apply
-                            <ArrowRight className="w-3 h-3" />
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+            <Button variant="outline" onClick={() => navigate('/')}>
+              Back to Home
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground pt-4">
