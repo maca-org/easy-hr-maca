@@ -6,6 +6,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { InteractiveDemo } from "@/components/landing/InteractiveDemo";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { CustomerStories } from "@/components/landing/CustomerStories";
+import { TeamSection } from "@/components/landing/TeamSection";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import logoImage from "@/assets/logo.png";
@@ -221,77 +224,24 @@ const Landing = () => {
       {/* Features Section */}
       <section id="features" ref={featuresRef} className="container mx-auto px-4 py-24">
         <ScrollReveal direction="up">
-          <div className="text-center space-y-4 mb-20">
+          <div className="text-center space-y-4 mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-              Hiring, but simpler.
+              See how it works
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Everything you need to find the perfect candidate, nothing you don't.
+              From job posting to offer letter in 4 simple steps.
             </p>
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-          <ScrollReveal direction="up" delay={0}>
-            <Card className="group hover-glow border-border/50 bg-card/50 rounded-3xl overflow-hidden hover:border-primary/30 h-full">
-              <CardContent className="p-8 space-y-5">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                  <Zap className="w-7 h-7 text-primary group-hover:animate-pulse" />
-                </div>
-                
-                <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors duration-300">Create once, relax</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Set up your job opening with just a title and description. We handle the rest — assessments, questions, scoring.
-                </p>
-              </CardContent>
-            </Card>
-          </ScrollReveal>
+        <HowItWorks />
+      </section>
 
-          <ScrollReveal direction="up" delay={0.1}>
-            <Card className="group hover-glow border-border/50 bg-card/50 rounded-3xl overflow-hidden hover:border-pink/30 h-full">
-              <CardContent className="p-8 space-y-5">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink/20 to-primary/20 flex items-center justify-center group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500">
-                  <Send className="w-7 h-7 text-pink group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
-                </div>
-                
-                <h3 className="text-xl font-semibold text-foreground group-hover:text-pink transition-colors duration-300">Send it everywhere</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Share your apply link or manually upload resumes — your choice, always. Candidates come to you.
-                </p>
-              </CardContent>
-            </Card>
-          </ScrollReveal>
-
-          <ScrollReveal direction="up" delay={0.2}>
-            <Card className="group hover-glow border-border/50 bg-card/50 rounded-3xl overflow-hidden hover:border-primary/30 h-full">
-              <CardContent className="p-8 space-y-5">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-pink/20 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                  <ClipboardCheck className="w-7 h-7 text-primary group-hover:scale-110 transition-transform duration-300" />
-                </div>
-                
-                <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors duration-300">Assess what matters</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Automatically generate assessments tailored to your job's skills and requirements. Candidates complete the test, and we score their answers instantly.
-                </p>
-              </CardContent>
-            </Card>
-          </ScrollReveal>
-
-          <ScrollReveal direction="up" delay={0.3}>
-            <Card className="group hover-glow border-border/50 bg-card/50 rounded-3xl overflow-hidden hover:border-pink/30 h-full">
-              <CardContent className="p-8 space-y-5">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink/20 to-primary/20 flex items-center justify-center group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500">
-                  <Target className="w-7 h-7 text-pink group-hover:scale-125 transition-transform duration-300" />
-                </div>
-                
-                <h3 className="text-xl font-semibold text-foreground group-hover:text-pink transition-colors duration-300">See who actually fits</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  AI-powered scores show you the best matches instantly. No more guesswork, no more spreadsheets.
-                </p>
-              </CardContent>
-            </Card>
-          </ScrollReveal>
-        </div>
+      {/* Customer Success Stories */}
+      <section className="container mx-auto px-4">
+        <ScrollReveal direction="up">
+          <CustomerStories />
+        </ScrollReveal>
       </section>
 
       {/* Pricing Section */}
@@ -307,9 +257,9 @@ const Landing = () => {
           </div>
         </ScrollReveal>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mt-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mt-16">
           {/* Free Plan */}
-          <ScrollReveal direction="left" delay={0}>
+          <ScrollReveal direction="up" delay={0}>
             <Card className="group hover-glow border-border/50 rounded-3xl bg-card/50 hover:border-border h-full">
               <CardContent className="p-8 space-y-6">
                 <div className="space-y-2">
@@ -325,11 +275,15 @@ const Landing = () => {
                 <ul className="space-y-3 pt-4">
                   <li className="flex items-center gap-3 text-muted-foreground">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span>Unlimited CV uploads</span>
+                    <span>25 candidates/month</span>
                   </li>
                   <li className="flex items-center gap-3 text-muted-foreground">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span>Basic analytics</span>
+                    <span>Unlimited job postings</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-muted-foreground">
+                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                    <span>AI-generated assessments</span>
                   </li>
                   <li className="flex items-center gap-3 text-muted-foreground">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
@@ -346,8 +300,50 @@ const Landing = () => {
             </Card>
           </ScrollReveal>
 
+          {/* Starter Plan */}
+          <ScrollReveal direction="up" delay={0.1}>
+            <Card className="group hover-glow border-border/50 rounded-3xl bg-card/50 hover:border-border h-full">
+              <CardContent className="p-8 space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-bold text-foreground">Starter</h3>
+                  <p className="text-muted-foreground text-sm">For small teams</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <span className="text-5xl font-bold text-foreground">$29</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+
+                <ul className="space-y-3 pt-4">
+                  <li className="flex items-center gap-3 text-muted-foreground">
+                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                    <span>100 candidates/month</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-muted-foreground">
+                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                    <span>Everything in Free</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-muted-foreground">
+                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                    <span>Priority email support</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-muted-foreground">
+                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                    <span>CV analysis insights</span>
+                  </li>
+                </ul>
+
+                <Link to="/auth" className="block pt-4">
+                  <Button variant="outline" className="w-full rounded-full h-12">
+                    Start Free Trial
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </ScrollReveal>
+
           {/* Pro Plan */}
-          <ScrollReveal direction="up" delay={0.15}>
+          <ScrollReveal direction="up" delay={0.2}>
             <Card className="group pro-glow border-primary/50 rounded-3xl relative bg-gradient-to-b from-primary/5 to-transparent hover:border-primary ring-2 ring-primary/20 hover:ring-primary/40 h-full">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-primary-foreground text-sm font-medium rounded-full">
                 Most Popular
@@ -366,11 +362,11 @@ const Landing = () => {
                 <ul className="space-y-3 pt-4">
                   <li className="flex items-center gap-3 text-muted-foreground">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span>Everything in Free</span>
+                    <span>250 candidates/month</span>
                   </li>
                   <li className="flex items-center gap-3 text-muted-foreground">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span>250 candidate unlocks/month</span>
+                    <span>Everything in Starter</span>
                   </li>
                   <li className="flex items-center gap-3 text-muted-foreground">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
@@ -378,7 +374,7 @@ const Landing = () => {
                   </li>
                   <li className="flex items-center gap-3 text-muted-foreground">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span>Priority support</span>
+                    <span>Offer letter templates</span>
                   </li>
                 </ul>
 
@@ -391,43 +387,44 @@ const Landing = () => {
             </Card>
           </ScrollReveal>
 
-          {/* Enterprise Plan */}
-          <ScrollReveal direction="right" delay={0.3}>
+          {/* Business Plan */}
+          <ScrollReveal direction="up" delay={0.3}>
             <Card className="group hover-glow border-border/50 rounded-3xl bg-card/50 hover:border-border h-full">
               <CardContent className="p-8 space-y-6">
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-bold text-foreground">Enterprise</h3>
+                  <h3 className="text-2xl font-bold text-foreground">Business</h3>
                   <p className="text-muted-foreground text-sm">For large organizations</p>
                 </div>
                 
                 <div className="space-y-1">
-                  <span className="text-5xl font-bold text-foreground">Custom</span>
+                  <span className="text-5xl font-bold text-foreground">$199</span>
+                  <span className="text-muted-foreground">/month</span>
                 </div>
 
                 <ul className="space-y-3 pt-4">
+                  <li className="flex items-center gap-3 text-muted-foreground">
+                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                    <span>1000 candidates/month</span>
+                  </li>
                   <li className="flex items-center gap-3 text-muted-foreground">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                     <span>Everything in Pro</span>
                   </li>
                   <li className="flex items-center gap-3 text-muted-foreground">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span>Unlimited candidate unlocks</span>
+                    <span>Dedicated account manager</span>
                   </li>
                   <li className="flex items-center gap-3 text-muted-foreground">
                     <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                     <span>Custom integrations</span>
                   </li>
-                  <li className="flex items-center gap-3 text-muted-foreground">
-                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span>Dedicated account manager</span>
-                  </li>
                 </ul>
 
-                <a href="mailto:sales@candidateassess.com" className="block pt-4">
+                <Link to="/auth" className="block pt-4">
                   <Button variant="outline" className="w-full rounded-full h-12">
                     Contact Sales
                   </Button>
-                </a>
+                </Link>
               </CardContent>
             </Card>
           </ScrollReveal>
@@ -462,6 +459,10 @@ const Landing = () => {
               </p>
             </div>
           </div>
+        </ScrollReveal>
+
+        <ScrollReveal direction="up" delay={0.2}>
+          <TeamSection />
         </ScrollReveal>
       </section>
 
