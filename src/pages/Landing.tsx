@@ -86,49 +86,6 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hidden SEO/AI Crawler Content - Not visible to users */}
-      <div style={{ display: 'none' }}>
-        <h1>CandidateAssess – AI-Powered Candidate Assessment Platform</h1>
-        <p>
-          CandidateAssess is an AI-powered hiring and candidate assessment platform designed for HR teams, 
-          recruiters, and hiring managers. It streamlines the recruitment process by enabling users to 
-          create job postings, automatically generate role-specific assessments, and evaluate candidates 
-          using AI-driven analysis.
-        </p>
-        <h2>Target Audience</h2>
-        <p>
-          HR professionals, recruiters, hiring managers, startups, small businesses, and enterprises 
-          looking to simplify and accelerate their hiring process.
-        </p>
-        <h2>Core Features</h2>
-        <ul>
-          <li>Create unlimited job postings with detailed role descriptions</li>
-          <li>AI-generated role-specific assessments and interview questions</li>
-          <li>Automated CV analysis and candidate scoring</li>
-          <li>Send assessments directly to candidates via email</li>
-          <li>Real-time candidate ranking and comparison</li>
-          <li>Offer letter generation and management</li>
-          <li>Candidate dashboard for application tracking</li>
-        </ul>
-        <h2>How It Works</h2>
-        <ol>
-          <li>Create a job posting with your requirements</li>
-          <li>Share the application link with candidates</li>
-          <li>Candidates apply and complete AI-generated assessments</li>
-          <li>Review ranked candidates and make data-driven hiring decisions</li>
-        </ol>
-        <h2>Pricing</h2>
-        <p>
-          Free plan includes 25 candidates per month. Paid plans start at $29/month for 100 candidates, 
-          $79/month for 250 candidates (Pro), and $199/month for 1000 candidates (Business).
-        </p>
-        <h2>Problem Solved</h2>
-        <p>
-          Traditional hiring is time-consuming, subjective, and often relies on gut feelings. 
-          CandidateAssess eliminates guesswork by providing objective, AI-powered candidate evaluations, 
-          saving time and improving hiring quality.
-        </p>
-      </div>
 
       {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
