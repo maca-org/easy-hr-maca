@@ -82,6 +82,9 @@ export const HowItWorks = () => {
   }, []);
 
   const scrollToStep = (index: number) => {
+    // Update the active button immediately (don’t wait for IntersectionObserver)
+    setActiveStep(index);
+
     stepRefs.current[index]?.scrollIntoView({
       behavior: "smooth",
       block: "center",
