@@ -60,14 +60,15 @@ export const HowItWorks = () => {
               return newProgress;
             });
 
-            if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            // Lower threshold (0.3) for faster, more responsive button color change
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.3) {
               setActiveStep(index);
             }
           });
         },
         {
           threshold: Array.from({ length: 20 }, (_, i) => i / 20),
-          rootMargin: "-10% 0px -10% 0px",
+          rootMargin: "-20% 0px -20% 0px",
         }
       );
 
