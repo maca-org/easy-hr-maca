@@ -436,8 +436,8 @@ const Landing = () => {
           <div className="text-center mt-8">
             <p className="text-sm text-muted-foreground">
               Questions about pricing? Contact us at{" "}
-              <a href="mailto:sales@candidateassess.com" className="text-primary hover:underline">
-                sales@candidateassess.com
+              <a href="mailto:candidateassess@gmail.com" className="text-primary hover:underline">
+                candidateassess@gmail.com
               </a>
             </p>
           </div>
@@ -494,8 +494,8 @@ const Landing = () => {
                   <p className="text-muted-foreground">
                     Have a question? We're here to help.
                   </p>
-                  <a href="mailto:support@candidateassess.com" className="text-primary hover:underline font-medium inline-block">
-                    support@candidateassess.com
+                  <a href="mailto:candidateassess@gmail.com" className="text-primary hover:underline font-medium inline-block">
+                    candidateassess@gmail.com
                   </a>
                 </CardContent>
               </Card>

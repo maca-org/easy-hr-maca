@@ -233,10 +233,10 @@ export const Header = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Email</p>
                 <a 
-                  href="mailto:support@candidateassess.com" 
+                  href="mailto:candidateassess@gmail.com" 
                   className="text-foreground font-medium hover:text-primary transition-colors"
                 >
-                  support@candidateassess.com
+                  candidateassess@gmail.com
                 </a>
               </div>
             </div>
